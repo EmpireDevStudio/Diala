@@ -4,352 +4,197 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Executive Dialer & Lead Engine</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="editorial-theme">
+<body>
 
-  <!-- ================= TOP EDITORIAL MASTHEAD ================= -->
-  <header class="masthead">
-    <div class="masthead-brand">
-      <span class="brand-monogram">EX</span>
-      <div>
-        <h1 class="brand-title">EXECUTIVE DIALER & LEADGEN</h1>
-        <p class="brand-caption">Outbound Telephony Workstation & Lead Discovery</p>
-      </div>
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="logo">
+      <span class="badge">EX</span>
+      <strong>DIALER &amp; LEADS</strong>
     </div>
 
-    <!-- Mode Selector Tabs -->
-    <nav class="view-tabs">
-      <button type="button" id="btnNavCrm" class="v-tab active" data-target="viewCrm">
-        <span class="v-icon">&#9743;</span> Dialer Cockpit
-      </button>
-      <button type="button" id="btnNavBuilder" class="v-tab" data-target="viewBuilder">
-        <span class="v-icon">&#9881;</span> Lead Generator
-      </button>
-    </nav>
+    <div class="stats">
+      <span>Total: <b id="statTotal">0</b></span>
+      <span>Fresh: <b id="statFresh">0</b></span>
+      <span>Connected: <b id="statConnected" class="text-green">0</b></span>
+      <span>Callbacks: <b id="statCallbacks" class="text-amber">0</b></span>
+    </div>
 
-    <!-- Data/ Folder & CSV Switcher -->
-    <div class="data-hub">
-      <span class="hub-label">PROSPECT LIST:</span>
-      <select id="selectActiveList" class="hub-select" title="Switch active CSV file">
-        <option value="data.csv">Data/data.csv</option>
-      </select>
-      
-      <!-- Connect Local Folder via File System API -->
-      <button type="button" id="btnConnectDataFolder" class="btn btn-xs btn-outline" title="Connect to local Data/ folder directly on disk">
-        &#128194; Connect Data/ Folder
-      </button>
-      
-      <!-- Upload one or multiple CSVs -->
-      <label class="btn btn-xs btn-outline file-label" title="Upload one or multiple CSV files from Data/ folder">
-        <span>+ Import CSV(s)</span>
-        <input type="file" id="inputCsvFiles" accept=".csv" multiple class="hidden">
+    <div class="actions">
+      <button id="btnAutoNext" class="btn btn-sm">Auto-Next: OFF</button>
+      <label class="btn btn-sm btn-outline">
+        Import CSV
+        <input type="file" id="inputCsv" accept=".csv" style="display:none">
       </label>
-    </div>
-
-    <!-- Workstation Metrics -->
-    <div class="kpi-ribbon">
-      <div class="kpi-cell"><span class="k-label">TOTAL</span><span id="metricTotal" class="k-val">0</span></div>
-      <div class="kpi-cell"><span class="k-label">DIALS</span><span id="metricDials" class="k-val">0</span></div>
-      <div class="kpi-cell"><span class="k-label">CONNECTED</span><span id="metricDone" class="k-val text-success">0</span></div>
-      <div class="kpi-cell"><span class="k-label">CALLBACKS</span><span id="metricCallbacks" class="k-val text-warning">0</span></div>
-    </div>
-
-    <!-- Global Controls -->
-    <div class="masthead-actions">
-      <button type="button" id="btnPowerDial" class="btn btn-xs btn-outline" title="Automatically advance to the next prospect upon disposition">
-        <span class="pulse-indicator"></span> Auto-Next: OFF
-      </button>
-      <button type="button" id="btnExportCurrent" class="btn btn-xs btn-primary">&darr; Export CSV</button>
+      <button id="btnExportCsv" class="btn btn-sm btn-primary">Download CSV</button>
     </div>
   </header>
 
-  <!-- ================= CRM WORKSTATION VIEW ================= -->
-  <main id="viewCrm" class="workspace-view active">
-    <div class="crm-grid">
+  <!-- Main 3-Column Layout -->
+  <div class="app-layout">
 
-      <!-- LEFT COLUMN: Pipeline Queue -->
-      <aside class="col-queue">
-        <div class="queue-mast">
-          <div class="stage-nav">
-            <button type="button" class="stage-btn active" data-stage="uncontacted">Fresh <span class="badge" id="bFresh">0</span></button>
-            <button type="button" class="stage-btn" data-stage="callback">Callbacks <span class="badge" id="bCallback">0</span></button>
-            <button type="button" class="stage-btn" data-stage="contacted">Closed <span class="badge" id="bContacted">0</span></button>
-            <button type="button" class="stage-btn" data-stage="all">All <span class="badge" id="bAll">0</span></button>
+    <!-- LEFT: Pipeline List -->
+    <aside class="sidebar">
+      <div class="filter-tabs">
+        <button class="tab-btn active" data-filter="all">All</button>
+        <button class="tab-btn" data-filter="Fresh">Fresh</button>
+        <button class="tab-btn" data-filter="Callback">Callbacks</button>
+        <button class="tab-btn" data-filter="Connected">Connected</button>
+      </div>
+
+      <input type="text" id="searchInput" class="search-box" placeholder="Search company, city, phone...">
+
+      <div id="leadList" class="lead-list"></div>
+
+      <div class="sidebar-footer">
+        <button id="btnShowAddModal" class="btn btn-sm btn-outline btn-block">+ Add Prospect</button>
+      </div>
+    </aside>
+
+    <!-- CENTER: Dialing Cockpit -->
+    <main class="cockpit">
+      <div id="emptyState" class="empty-state">
+        <h3>No prospect selected</h3>
+        <p>Pick a business on the left or generate leads using the generator tab on the right.</p>
+      </div>
+
+      <div id="leadDetail" class="lead-detail hidden">
+        <div class="lead-header">
+          <div>
+            <h2 id="leadCompany">Company Name</h2>
+            <div id="leadSub" class="sub-text">Contact &bull; City</div>
           </div>
-          <div class="search-wrap">
-            <input type="text" id="filterInput" placeholder="Filter company, city, contact..." spellcheck="false">
-          </div>
+          <button id="btnDeleteLead" class="btn btn-sm btn-danger">Delete</button>
         </div>
 
-        <div id="queueScroller" class="queue-body"></div>
-
-        <footer class="queue-foot">
-          <div class="hotkeys-guide">
-            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Browse</span>
-            <span><kbd>C</kbd> Call</span>
-            <span><kbd>1</kbd>-<kbd>4</kbd> Dispo</span>
-          </div>
-          <button type="button" id="btnOpenNewLeadModal" class="btn-link">+ Add Lead</button>
-        </footer>
-      </aside>
-
-      <!-- CENTER COLUMN: Active Lead Cockpit -->
-      <section class="col-cockpit" id="cockpitMount">
-        <div class="cockpit-placeholder">
-          <div class="placeholder-icon">&#9743;</div>
-          <h2>Select a prospect from the pipeline</h2>
-          <p>Click any company in the queue or use the Lead Generator to mine accounts into your <code>Data/</code> folder.</p>
-        </div>
-      </section>
-
-      <!-- RIGHT COLUMN: Web Intel & Location -->
-      <aside class="col-intel">
-        <div class="intel-tabs-row">
-          <div class="intel-tabs">
-            <button type="button" class="intel-btn active" data-panel="panelWeb">Live Website</button>
-            <button type="button" class="intel-btn" data-panel="panelMap">Google Maps</button>
-            <button type="button" class="intel-btn" data-panel="panelIntel">Quick Outreach</button>
-          </div>
-          <a id="btnExternalWeb" href="#" target="_blank" rel="noopener noreferrer" class="open-ext-link">External &nearr;</a>
-        </div>
-
-        <div class="intel-content">
-          <!-- Web Panel -->
-          <div id="panelWeb" class="panel-box active">
-            <div class="address-ribbon">
-              <span id="intelDisplayUrl" class="url-text">about:blank</span>
-              <button type="button" id="btnRefreshFrame" class="btn-icon" title="Reload iframe">&#8635;</button>
-            </div>
-            <div class="frame-container">
-              <iframe id="webIframe" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
-              <div id="frameFallbackNotice" class="frame-shield hidden">
-                <div class="shield-message">
-                  <span class="shield-icon">&#127760;</span>
-                  <p>Website refuses embedding due to X-Frame security policy.</p>
-                  <a id="btnFallbackOpen" href="#" target="_blank" class="btn btn-sm btn-primary">Open in New Window &nearr;</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Maps Panel -->
-          <div id="panelMap" class="panel-box">
-            <div class="address-ribbon">
-              <span id="intelDisplayLocation" class="url-text">Ontario, Canada</span>
-            </div>
-            <div class="frame-container">
-              <iframe id="mapIframe" loading="lazy"></iframe>
-            </div>
-          </div>
-
-          <!-- Outreach Panel -->
-          <div id="panelIntel" class="panel-box outreach-box">
-            <div class="outreach-card">
-              <h4>External Dossier Searches</h4>
-              <div class="dossier-links">
-                <a id="dossierGoogle" href="#" target="_blank" class="btn btn-sm btn-outline">Google Business Profile</a>
-                <a id="dossierLinkedIn" href="#" target="_blank" class="btn btn-sm btn-outline">LinkedIn Decision Makers</a>
-              </div>
-            </div>
-            <div class="outreach-card">
-              <h4>Direct Email Copy</h4>
-              <textarea id="outreachTemplate" class="outreach-textarea" rows="7">Hi [Name],
-
-I came across [Company] in [City] and wanted to connect regarding your current operations.
-
-Do you have 5 minutes this week for a brief call?
-
-Best regards,</textarea>
-              <button type="button" id="btnCopyEmail" class="btn btn-sm btn-outline" style="margin-top:6px;">Copy to Clipboard</button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-    </div>
-  </main>
-
-  <!-- ================= LEAD GENERATOR VIEW ================= -->
-  <main id="viewBuilder" class="workspace-view">
-    <div class="builder-grid">
-
-      <!-- LEFT: Discovery Controls -->
-      <aside class="builder-controls">
-        <div class="editorial-card">
-          <div class="card-head">
-            <h3>1. Target Municipalities</h3>
-            <div class="card-links">
-              <button type="button" id="btnCitiesSelectAll" class="btn-link">Select All</button>
-              <span class="sep">&bull;</span>
-              <button type="button" id="btnCitiesClear" class="btn-link">Clear</button>
-            </div>
-          </div>
-          <input type="text" id="citySearchBox" class="editorial-input" placeholder="Search cities (e.g. Toronto, Hamilton)...">
-          <div id="citiesChecklist" class="checklist-container"></div>
-          <div id="citiesCountBadge" class="helper-text">0 municipalities selected</div>
-        </div>
-
-        <div class="editorial-card">
-          <div class="card-head">
-            <h3>2. Target Industries / Keywords</h3>
-          </div>
-          <input type="text" id="builderKeywordsInput" class="editorial-input" value="Cannabis Dispensary, Cocktail Bars, Breweries, Restaurants">
-          <p class="helper-text">Comma-separated industry terms or custom keywords.</p>
-        </div>
-
-        <div class="editorial-card">
-          <div class="card-head">
-            <h3>3. Geodesic Grid Coverage</h3>
-          </div>
-          <div class="grid-inputs-row">
+        <!-- Phone Action Strip -->
+        <div class="dial-strip">
+          <a id="btnCallLead" href="tel:" class="btn-call">
+            <span class="call-icon">&#9742;</span>
             <div>
-              <label>Width (km)</label>
-              <input type="number" id="builderGridWidth" class="editorial-input" value="18" min="2" max="60">
+              <div class="call-label">CLICK TO CALL (C)</div>
+              <div id="leadPhone" class="call-phone">+1 (000) 000-0000</div>
             </div>
-            <div>
-              <label>Height (km)</label>
-              <input type="number" id="builderGridHeight" class="editorial-input" value="18" min="2" max="60">
-            </div>
-            <div>
-              <label>Cols</label>
-              <input type="number" id="builderGridCols" class="editorial-input" value="2" min="1" max="4">
-            </div>
-            <div>
-              <label>Rows</label>
-              <input type="number" id="builderGridRows" class="editorial-input" value="2" min="1" max="4">
-            </div>
-          </div>
+          </a>
+          <a id="btnEmailLead" href="mailto:" class="btn-email">Send Email</a>
         </div>
 
-        <div class="editorial-card">
-          <div class="card-head">
-            <h3>4. Save Destination in Data/</h3>
-          </div>
-          <input type="text" id="builderOutputFilename" class="editorial-input" value="leads_ontario.csv" placeholder="my_list.csv">
-          <p class="helper-text">Saved as a distinct CSV list in your <code>Data/</code> folder.</p>
+        <!-- Dispositions (Hotkeys 1-4) -->
+        <div class="dispo-bar">
+          <button class="btn-dispo dispo-noanswer" data-stage="No Answer">1. No Answer</button>
+          <button class="btn-dispo dispo-callback" data-stage="Callback">2. Callback</button>
+          <button class="btn-dispo dispo-connected" data-stage="Connected">3. Connected</button>
+          <button class="btn-dispo dispo-dnc" data-stage="DNC">4. DNC</button>
         </div>
 
-        <div class="builder-trigger-group">
-          <button type="button" id="btnStartScraping" class="btn btn-primary btn-block btn-lg">Mine Qualified Leads</button>
-          <button type="button" id="btnHaltScraping" class="btn btn-danger btn-block btn-lg hidden">Cancel Process</button>
-        </div>
-      </aside>
-
-      <!-- RIGHT: Interactive Map Visualizer & Live Terminal -->
-      <section class="builder-viewport">
-        <!-- Live Map Follow -->
-        <div class="map-wrapper">
-          <div class="map-status-bar">
-            <span><strong>Geodesic Grid Scanner</strong> &bull; Leaflet Auto-Pan</span>
-            <span id="scannerStatusText" class="status-tag">Idle</span>
+        <!-- Fields -->
+        <div class="lead-fields">
+          <div class="field">
+            <label>Decision Maker</label>
+            <input type="text" id="fieldLeadName" class="input-line">
           </div>
-          <div id="liveScrapeMap"></div>
-        </div>
-
-        <!-- Terminal & Real-Time Stats -->
-        <div class="console-wrapper">
-          <div class="console-stats">
-            <div class="c-stat"><span id="statFound" class="c-val">0</span><span class="c-lbl">Places Extracted</span></div>
-            <div class="c-stat"><span id="statPhones" class="c-val text-success">0</span><span class="c-lbl">Phones Normalized</span></div>
-            <div class="c-stat"><span id="statWebsites" class="c-val">0</span><span class="c-lbl">Websites Found</span></div>
-            <div class="c-stat"><span id="statSaved" class="c-val text-primary">0</span><span class="c-lbl">Saved to List</span></div>
+          <div class="field">
+            <label>City</label>
+            <input type="text" id="fieldLeadCity" class="input-line">
           </div>
-
-          <div class="progress-bar-rail">
-            <div id="scrapeProgressFill" class="progress-bar-core"></div>
+          <div class="field span-2">
+            <label>Street Address</label>
+            <input type="text" id="fieldLeadAddress" class="input-line">
           </div>
-
-          <div id="scrapeConsoleTerminal" class="console-terminal">
-            <div class="term-line info">[Engine Ready] Select target municipalities and industries, then click 'Mine Qualified Leads'.</div>
-          </div>
-
-          <div class="console-actions">
-            <button type="button" id="btnPushHarvestToCrm" class="btn btn-success">Load Leads Into Dialer Cockpit</button>
-            <button type="button" id="btnDownloadHarvestCsv" class="btn btn-outline">&darr; Download CSV File</button>
+          <div class="field span-2">
+            <label>Strategic Call Notes (Auto-saved)</label>
+            <textarea id="fieldLeadNotes" rows="5" class="notes-box" placeholder="Take call notes here..."></textarea>
           </div>
         </div>
-      </section>
+      </div>
+    </main>
 
-    </div>
-  </main>
+    <!-- RIGHT: Lead Generator Tool -->
+    <aside class="generator-panel">
+      <h3>Quick Lead Generator</h3>
+      <p class="desc">Create instantly dialable, localized Ontario target lists.</p>
 
-  <!-- ================= ACTIVE CALL HUD ================= -->
-  <aside id="activeCallHud" class="call-banner hidden">
-    <div class="call-banner-info">
-      <span class="pulse-emerald"></span>
-      <span id="hudProspectName">In Call...</span>
-    </div>
-    <div id="hudTimerClock" class="hud-timer">00:00</div>
-    <button type="button" id="btnEndCallHud" class="btn btn-xs btn-danger">End Call</button>
-  </aside>
+      <div class="form-group">
+        <label>Target City</label>
+        <select id="genCity" class="input-line">
+          <option value="Toronto">Toronto (416 / 647)</option>
+          <option value="Mississauga">Mississauga (905)</option>
+          <option value="Hamilton">Hamilton (905)</option>
+          <option value="Ottawa">Ottawa (613)</option>
+          <option value="London">London (519)</option>
+          <option value="Waterloo">Waterloo / Kitchener (519)</option>
+        </select>
+      </div>
 
-  <!-- ================= ADD / EDIT LEAD MODAL ================= -->
-  <div id="modalAccount" class="modal-backdrop hidden">
-    <div class="modal-window">
-      <header class="modal-mast">
-        <h3 id="modalHeading">Edit Prospect</h3>
-        <button type="button" id="btnCloseAccountModal" class="btn-close">&times;</button>
-      </header>
-      <form id="formAccount" class="modal-form">
-        <input type="hidden" id="fieldId">
-        <div class="field-row span-2">
-          <label>Company Name *</label>
-          <input type="text" id="fieldCompany" required>
+      <div class="form-group">
+        <label>Industry / Vertical</label>
+        <select id="genIndustry" class="input-line">
+          <option value="Cannabis Dispensary">Cannabis Dispensaries</option>
+          <option value="Cocktail Bar">Cocktail Bars &amp; Lounges</option>
+          <option value="Craft Brewery">Craft Breweries</option>
+          <option value="Italian Restaurant">Fine Dining / Restaurants</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="genCount" value="6" min="1" max="25" class="input-line">
+      </div>
+
+      <button id="btnGenerateLeads" class="btn btn-primary btn-block">Generate &amp; Add Leads</button>
+
+      <div class="hotkeys-box">
+        <strong>Hotkeys</strong>
+        <div><kbd>&uarr;</kbd> <kbd>&darr;</kbd> Next / Previous</div>
+        <div><kbd>C</kbd> Launch Call</div>
+        <div><kbd>1</kbd> No Answer</div>
+        <div><kbd>2</kbd> Callback</div>
+        <div><kbd>3</kbd> Connected</div>
+        <div><kbd>4</kbd> Do Not Call</div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Add Lead Modal -->
+  <div id="addModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>Add Prospect</h3>
+      <form id="addLeadForm">
+        <div class="form-group">
+          <label>Company *</label>
+          <input type="text" id="newCompany" required class="input-line">
         </div>
-        <div class="field-row">
+        <div class="form-group">
           <label>Contact Name</label>
-          <input type="text" id="fieldName">
+          <input type="text" id="newName" class="input-line">
         </div>
-        <div class="field-row">
-          <label>Job Title</label>
-          <input type="text" id="fieldRole">
-        </div>
-        <div class="field-row">
+        <div class="form-group">
           <label>Phone Number *</label>
-          <input type="text" id="fieldPhone" required>
+          <input type="text" id="newPhone" required class="input-line">
         </div>
-        <div class="field-row">
-          <label>Email Address</label>
-          <input type="email" id="fieldEmail">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="newEmail" class="input-line">
         </div>
-        <div class="field-row span-2">
-          <label>Website URL</label>
-          <input type="url" id="fieldWebsite">
-        </div>
-        <div class="field-row">
+        <div class="form-group">
           <label>City</label>
-          <input type="text" id="fieldCity">
+          <input type="text" id="newCity" value="Toronto" class="input-line">
         </div>
-        <div class="field-row">
-          <label>Postal Code</label>
-          <input type="text" id="fieldPostalCode">
-        </div>
-        <div class="field-row span-2">
+        <div class="form-group">
           <label>Street Address</label>
-          <input type="text" id="fieldAddress">
+          <input type="text" id="newAddress" class="input-line">
         </div>
-        <div class="field-row span-2">
-          <label>Notes & Context</label>
-          <textarea id="fieldNotes" rows="3"></textarea>
+        <div class="modal-actions">
+          <button type="button" id="btnCancelAdd" class="btn btn-sm">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary">Save Prospect</button>
         </div>
-        <footer class="modal-actions span-2">
-          <button type="button" id="btnCancelModal" class="btn btn-outline">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Prospect</button>
-        </footer>
       </form>
     </div>
   </div>
 
-  <!-- Notification Toast -->
-  <div id="editorialToast" class="toast-card hidden"></div>
-
-  <!-- Corrected script filename matching app.js -->
   <script src="app.js"></script>
 </body>
 </html>
