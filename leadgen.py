@@ -12,10 +12,9 @@ import os
 import sys
 import csv
 import json
-import socket
 import logging
 from typing import List, Dict, Any
-from flask import Flask, send_from_directory, request, jsonify, Response
+from flask import Flask, send_from_directory, request, jsonify
 
 # ---------------------------------------------------------------------------
 # Logging & Paths Configuration
@@ -123,7 +122,6 @@ def load_list_data():
     Reads any requested CSV file from the Data/ directory and returns normalized records.
     """
     filename = request.args.get("file", "data.csv").strip()
-    # Strip any directory traversal
     filename = os.path.basename(filename)
     if not filename.endswith(".csv"):
         filename += ".csv"
@@ -136,11 +134,9 @@ def load_list_data():
     try:
         with open(filepath, mode="r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
-            fieldnames = [fn.lower().strip() for fn in (reader.fieldnames or [])]
             for idx, row in enumerate(reader):
                 cleaned_row: Dict[str, str] = {}
                 for col in CSV_COLUMNS:
-                    # Case-insensitive match on columns
                     val = ""
                     for k, v in row.items():
                         if k and k.lower().strip() == col:
@@ -189,7 +185,6 @@ def save_list_data():
                 row_dict = {col: str(r.get(col, "")).strip() for col in CSV_COLUMNS}
                 writer.writerow(row_dict)
 
-        # Atomic move to prevent partial writes
         os.replace(temp_path, filepath)
         logger.info(f"Persisted {len(records)} leads to Data/{filename}")
         return jsonify({"status": "saved", "file": filename, "count": len(records)})

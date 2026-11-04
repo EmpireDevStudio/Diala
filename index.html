@@ -23,12 +23,12 @@
       </div>
     </div>
 
-    <!-- Mode Selector -->
+    <!-- Mode Selector Tabs -->
     <nav class="view-tabs">
-      <button id="btnNavCrm" class="v-tab active" data-target="viewCrm">
+      <button type="button" id="btnNavCrm" class="v-tab active" data-target="viewCrm">
         <span class="v-icon">&phone;</span> Dialer Cockpit
       </button>
-      <button id="btnNavBuilder" class="v-tab" data-target="viewBuilder">
+      <button type="button" id="btnNavBuilder" class="v-tab" data-target="viewBuilder">
         <span class="v-icon">&#9881;</span> Lead Generator
       </button>
     </nav>
@@ -41,12 +41,12 @@
       </select>
       
       <!-- Connect Local Folder via File System API -->
-      <button id="btnConnectDataFolder" class="btn btn-xs btn-outline" title="Connect to local Data/ folder using File System API">
+      <button type="button" id="btnConnectDataFolder" class="btn btn-xs btn-outline" title="Connect to local Data/ folder directly on disk">
         &#128194; Connect Data/ Folder
       </button>
       
-      <!-- Fallback Multiple CSV Importer -->
-      <label class="btn btn-xs btn-outline file-label" title="Upload one or multiple CSV files">
+      <!-- Upload one or multiple CSVs -->
+      <label class="btn btn-xs btn-outline file-label" title="Upload one or multiple CSV files from Data/ folder">
         <span>+ Import CSV(s)</span>
         <input type="file" id="inputCsvFiles" accept=".csv" multiple class="hidden">
       </label>
@@ -62,10 +62,10 @@
 
     <!-- Global Controls -->
     <div class="masthead-actions">
-      <button id="btnPowerDial" class="btn btn-xs btn-outline" title="Automatically advance to the next prospect upon disposition">
+      <button type="button" id="btnPowerDial" class="btn btn-xs btn-outline" title="Automatically advance to the next prospect upon disposition">
         <span class="pulse-indicator"></span> Auto-Next: OFF
       </button>
-      <button id="btnExportCurrent" class="btn btn-xs btn-primary">&darr; Export CSV</button>
+      <button type="button" id="btnExportCurrent" class="btn btn-xs btn-primary">&darr; Export CSV</button>
     </div>
   </header>
 
@@ -77,10 +77,10 @@
       <aside class="col-queue">
         <div class="queue-mast">
           <div class="stage-nav">
-            <button class="stage-btn active" data-stage="uncontacted">Fresh <span class="badge" id="bFresh">0</span></button>
-            <button class="stage-btn" data-stage="callback">Callbacks <span class="badge" id="bCallback">0</span></button>
-            <button class="stage-btn" data-stage="contacted">Closed <span class="badge" id="bContacted">0</span></button>
-            <button class="stage-btn" data-stage="all">All <span class="badge" id="bAll">0</span></button>
+            <button type="button" class="stage-btn active" data-stage="uncontacted">Fresh <span class="badge" id="bFresh">0</span></button>
+            <button type="button" class="stage-btn" data-stage="callback">Callbacks <span class="badge" id="bCallback">0</span></button>
+            <button type="button" class="stage-btn" data-stage="contacted">Closed <span class="badge" id="bContacted">0</span></button>
+            <button type="button" class="stage-btn" data-stage="all">All <span class="badge" id="bAll">0</span></button>
           </div>
           <div class="search-wrap">
             <input type="text" id="filterInput" placeholder="Filter company, city, contact..." spellcheck="false">
@@ -95,7 +95,7 @@
             <span><kbd>C</kbd> Call</span>
             <span><kbd>1</kbd>-<kbd>4</kbd> Dispo</span>
           </div>
-          <button id="btnOpenNewLeadModal" class="btn-link">+ Add Lead</button>
+          <button type="button" id="btnOpenNewLeadModal" class="btn-link">+ Add Lead</button>
         </footer>
       </aside>
 
@@ -112,9 +112,9 @@
       <aside class="col-intel">
         <div class="intel-tabs-row">
           <div class="intel-tabs">
-            <button class="intel-btn active" data-panel="panelWeb">Live Website</button>
-            <button class="intel-btn" data-panel="panelMap">Google Maps</button>
-            <button class="intel-btn" data-panel="panelIntel">Quick Outreach</button>
+            <button type="button" class="intel-btn active" data-panel="panelWeb">Live Website</button>
+            <button type="button" class="intel-btn" data-panel="panelMap">Google Maps</button>
+            <button type="button" class="intel-btn" data-panel="panelIntel">Quick Outreach</button>
           </div>
           <a id="btnExternalWeb" href="#" target="_blank" rel="noopener noreferrer" class="open-ext-link">External &nearr;</a>
         </div>
@@ -124,14 +124,14 @@
           <div id="panelWeb" class="panel-box active">
             <div class="address-ribbon">
               <span id="intelDisplayUrl" class="url-text">about:blank</span>
-              <button id="btnRefreshFrame" class="btn-icon" title="Reload iframe">&#8635;</button>
+              <button type="button" id="btnRefreshFrame" class="btn-icon" title="Reload iframe">&#8635;</button>
             </div>
             <div class="frame-container">
               <iframe id="webIframe" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
               <div id="frameFallbackNotice" class="frame-shield hidden">
                 <div class="shield-message">
                   <span class="shield-icon">&#127760;</span>
-                  <p>Website refuses embedding due to X-Frame security header.</p>
+                  <p>Website refuses embedding due to X-Frame security policy.</p>
                   <a id="btnFallbackOpen" href="#" target="_blank" class="btn btn-sm btn-primary">Open in New Window &nearr;</a>
                 </div>
               </div>
@@ -166,7 +166,7 @@ I came across [Company] in [City] and wanted to connect regarding your current o
 Do you have 5 minutes this week for a brief call?
 
 Best regards,</textarea>
-              <button id="btnCopyEmail" class="btn btn-sm btn-outline" style="margin-top:6px;">Copy to Clipboard</button>
+              <button type="button" id="btnCopyEmail" class="btn btn-sm btn-outline" style="margin-top:6px;">Copy to Clipboard</button>
             </div>
           </div>
         </div>
@@ -185,9 +185,9 @@ Best regards,</textarea>
           <div class="card-head">
             <h3>1. Target Municipalities</h3>
             <div class="card-links">
-              <button id="btnCitiesSelectAll" class="btn-link">Select All</button>
+              <button type="button" id="btnCitiesSelectAll" class="btn-link">Select All</button>
               <span class="sep">&bull;</span>
-              <button id="btnCitiesClear" class="btn-link">Clear</button>
+              <button type="button" id="btnCitiesClear" class="btn-link">Clear</button>
             </div>
           </div>
           <input type="text" id="citySearchBox" class="editorial-input" placeholder="Search cities (e.g. Toronto, Hamilton)...">
@@ -236,8 +236,8 @@ Best regards,</textarea>
         </div>
 
         <div class="builder-trigger-group">
-          <button id="btnStartScraping" class="btn btn-primary btn-block btn-lg">Mine Qualified Leads</button>
-          <button id="btnHaltScraping" class="btn btn-danger btn-block btn-lg hidden">Cancel Process</button>
+          <button type="button" id="btnStartScraping" class="btn btn-primary btn-block btn-lg">Mine Qualified Leads</button>
+          <button type="button" id="btnHaltScraping" class="btn btn-danger btn-block btn-lg hidden">Cancel Process</button>
         </div>
       </aside>
 
@@ -270,8 +270,8 @@ Best regards,</textarea>
           </div>
 
           <div class="console-actions">
-            <button id="btnPushHarvestToCrm" class="btn btn-success">Load Leads Into Dialer Cockpit</button>
-            <button id="btnDownloadHarvestCsv" class="btn btn-outline">&darr; Download CSV File</button>
+            <button type="button" id="btnPushHarvestToCrm" class="btn btn-success">Load Leads Into Dialer Cockpit</button>
+            <button type="button" id="btnDownloadHarvestCsv" class="btn btn-outline">&darr; Download CSV File</button>
           </div>
         </div>
       </section>
@@ -286,7 +286,7 @@ Best regards,</textarea>
       <span id="hudProspectName">In Call...</span>
     </div>
     <div id="hudTimerClock" class="hud-timer">00:00</div>
-    <button id="btnEndCallHud" class="btn btn-xs btn-danger">End Call</button>
+    <button type="button" id="btnEndCallHud" class="btn btn-xs btn-danger">End Call</button>
   </aside>
 
   <!-- ================= ADD / EDIT LEAD MODAL ================= -->
@@ -294,7 +294,7 @@ Best regards,</textarea>
     <div class="modal-window">
       <header class="modal-mast">
         <h3 id="modalHeading">Edit Prospect</h3>
-        <button id="btnCloseAccountModal" class="btn-close">&times;</button>
+        <button type="button" id="btnCloseAccountModal" class="btn-close">&times;</button>
       </header>
       <form id="formAccount" class="modal-form">
         <input type="hidden" id="fieldId">
