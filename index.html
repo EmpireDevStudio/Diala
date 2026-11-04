@@ -3,193 +3,239 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Executive Dialer & Lead Engine</title>
+  <title>Executive Dialer & Google Maps Lead Engine</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Top Bar -->
+  <!-- Top Masthead -->
   <header class="topbar">
-    <div class="logo">
+    <div class="brand">
       <span class="badge">EX</span>
-      <strong>DIALER &amp; LEADS</strong>
+      <strong>DIALER &amp; MAPS LEADGEN</strong>
     </div>
 
-    <div class="stats">
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button id="tabNavCockpit" class="nav-btn active" data-view="viewCockpit">&#9742; Dialer Cockpit</button>
+      <button id="tabNavMaps" class="nav-btn" data-view="viewMaps">&#127758; Google Maps Discovery</button>
+    </nav>
+
+    <!-- Workstation KPI Stats -->
+    <div class="metrics">
       <span>Total: <b id="statTotal">0</b></span>
       <span>Fresh: <b id="statFresh">0</b></span>
       <span>Connected: <b id="statConnected" class="text-green">0</b></span>
       <span>Callbacks: <b id="statCallbacks" class="text-amber">0</b></span>
     </div>
 
-    <div class="actions">
+    <div class="mast-actions">
       <button id="btnAutoNext" class="btn btn-sm">Auto-Next: OFF</button>
       <label class="btn btn-sm btn-outline">
         Import CSV
         <input type="file" id="inputCsv" accept=".csv" style="display:none">
       </label>
-      <button id="btnExportCsv" class="btn btn-sm btn-primary">Download CSV</button>
+      <button id="btnExportCsv" class="btn btn-sm btn-primary">&darr; Export CSV</button>
     </div>
   </header>
 
-  <!-- Main 3-Column Layout -->
-  <div class="app-layout">
+  <!-- ================= VIEW 1: DIALER COCKPIT ================= -->
+  <main id="viewCockpit" class="view-panel active">
+    <div class="cockpit-layout">
 
-    <!-- LEFT: Pipeline List -->
-    <aside class="sidebar">
-      <div class="filter-tabs">
-        <button class="tab-btn active" data-filter="all">All</button>
-        <button class="tab-btn" data-filter="Fresh">Fresh</button>
-        <button class="tab-btn" data-filter="Callback">Callbacks</button>
-        <button class="tab-btn" data-filter="Connected">Connected</button>
-      </div>
-
-      <input type="text" id="searchInput" class="search-box" placeholder="Search company, city, phone...">
-
-      <div id="leadList" class="lead-list"></div>
-
-      <div class="sidebar-footer">
-        <button id="btnShowAddModal" class="btn btn-sm btn-outline btn-block">+ Add Prospect</button>
-      </div>
-    </aside>
-
-    <!-- CENTER: Dialing Cockpit -->
-    <main class="cockpit">
-      <div id="emptyState" class="empty-state">
-        <h3>No prospect selected</h3>
-        <p>Pick a business on the left or generate leads using the generator tab on the right.</p>
-      </div>
-
-      <div id="leadDetail" class="lead-detail hidden">
-        <div class="lead-header">
-          <div>
-            <h2 id="leadCompany">Company Name</h2>
-            <div id="leadSub" class="sub-text">Contact &bull; City</div>
-          </div>
-          <button id="btnDeleteLead" class="btn btn-sm btn-danger">Delete</button>
+      <!-- LEFT: Pipeline Queue -->
+      <aside class="queue-sidebar">
+        <div class="filter-row">
+          <button class="stage-filter-btn active" data-filter="all">All</button>
+          <button class="stage-filter-btn" data-filter="Fresh">Fresh</button>
+          <button class="stage-filter-btn" data-filter="Callback">Callbacks</button>
+          <button class="stage-filter-btn" data-filter="Connected">Closed</button>
         </div>
 
-        <!-- Phone Action Strip -->
-        <div class="dial-strip">
-          <a id="btnCallLead" href="tel:" class="btn-call">
-            <span class="call-icon">&#9742;</span>
+        <input type="text" id="queueSearch" class="search-input" placeholder="Search accounts, cities, numbers...">
+
+        <div id="queueList" class="queue-scroll"></div>
+
+        <div class="queue-footer">
+          <div class="hotkeys-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Browse &bull; <kbd>C</kbd> Dial &bull; <kbd>1-4</kbd> Dispo</div>
+          <button id="btnShowAddModal" class="btn btn-sm btn-outline btn-block">+ Add Single Lead</button>
+        </div>
+      </aside>
+
+      <!-- CENTER: Calling Cockpit -->
+      <section class="cockpit-center">
+        <div id="cockpitPlaceholder" class="placeholder-box">
+          <div class="placeholder-icon">&#9742;</div>
+          <h3>Select a prospect to begin dialing</h3>
+          <p>Pick a business on the left or switch to the Google Maps tab to extract new accounts.</p>
+        </div>
+
+        <div id="cockpitBody" class="cockpit-body hidden">
+          <div class="cockpit-mast">
             <div>
-              <div class="call-label">CLICK TO CALL (C)</div>
-              <div id="leadPhone" class="call-phone">+1 (000) 000-0000</div>
+              <h2 id="leadCompany">Company Name</h2>
+              <div id="leadSubtitle" class="lead-subhead">Decision Maker &bull; Location</div>
             </div>
-          </a>
-          <a id="btnEmailLead" href="mailto:" class="btn-email">Send Email</a>
+            <button id="btnDeleteCurrentLead" class="btn btn-sm btn-danger">&times; Remove Lead</button>
+          </div>
+
+          <!-- Dialing Trigger Strip -->
+          <div class="action-strip">
+            <a id="btnCallAction" href="tel:" class="btn-call-trigger">
+              <span class="call-symbol">&#9742;</span>
+              <div>
+                <span class="call-text">LAUNCH PHONE CALL (C)</span>
+                <span id="leadPhone" class="call-digits">+1 (000) 000-0000</span>
+              </div>
+            </a>
+            <a id="btnEmailAction" href="mailto:" class="btn-email-trigger">
+              <span style="font-weight:700;">&commat; Send Email</span>
+              <span id="leadEmailSub" style="font-size:11px; color:#6b7280;">No email recorded</span>
+            </a>
+          </div>
+
+          <!-- 4 Disposition Buttons -->
+          <div class="dispo-grid">
+            <button class="btn-dispo dispo-noanswer" data-stage="No Answer">1. No Answer</button>
+            <button class="btn-dispo dispo-callback" data-stage="Callback">2. Callback</button>
+            <button class="btn-dispo dispo-connected" data-stage="Connected">3. Connected</button>
+            <button class="btn-dispo dispo-dnc" data-stage="DNC">4. Do Not Call</button>
+          </div>
+
+          <!-- Fields -->
+          <div class="fields-grid">
+            <div class="field-item">
+              <label>Decision Maker</label>
+              <input type="text" id="fieldLeadName" class="form-input">
+            </div>
+            <div class="field-item">
+              <label>City</label>
+              <input type="text" id="fieldLeadCity" class="form-input">
+            </div>
+            <div class="field-item span-2">
+              <label>Street Address</label>
+              <input type="text" id="fieldLeadAddress" class="form-input">
+            </div>
+            <div class="field-item span-2">
+              <label>Website</label>
+              <input type="url" id="fieldLeadWebsite" class="form-input">
+            </div>
+            <div class="field-item span-2">
+              <label>Live Call Notes (Auto-saved)</label>
+              <textarea id="fieldLeadNotes" rows="4" class="notes-input" placeholder="Type key takeaways, next steps, gatekeeper notes..."></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Embedded Google Maps Viewer for Active Lead -->
+      <aside class="cockpit-maps-side">
+        <div class="side-header">
+          <span><strong>Live Google Maps Card</strong></span>
+          <a id="btnOpenExternalGMap" href="#" target="_blank" class="link-ext">Open in Google Maps &nearr;</a>
+        </div>
+        <div class="side-frame-wrap">
+          <iframe id="leadGMapFrame" loading="lazy" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ================= VIEW 2: GOOGLE MAPS DISCOVERY ================= -->
+  <main id="viewMaps" class="view-panel">
+    <div class="maps-builder-layout">
+
+      <!-- LEFT: Search Controls & Quick Card Paste -->
+      <aside class="maps-sidebar">
+        <div class="card-box">
+          <h3>1. Search Google Maps Directly</h3>
+          <p class="helper">Enter your keyword &amp; Ontario municipality:</p>
+          <input type="text" id="mapSearchQuery" class="form-input" value="Cocktail Bars">
+          <select id="mapCitySelect" class="form-input">
+            <option value="Toronto">Toronto, ON</option>
+            <option value="Mississauga">Mississauga, ON</option>
+            <option value="Hamilton">Hamilton, ON</option>
+            <option value="Ottawa">Ottawa, ON</option>
+            <option value="London">London, ON</option>
+            <option value="Waterloo">Waterloo / Kitchener, ON</option>
+            <option value="Barrie">Barrie, ON</option>
+          </select>
+
+          <div class="btn-stack">
+            <button id="btnOpenGoogleMapsTab" class="btn btn-outline btn-block">
+              &#128279; Open Real Google Maps Search Tab
+            </button>
+            <button id="btnFetchMapsLeads" class="btn btn-primary btn-block">
+              &darr; Auto-Extract Leads From Maps (No Key)
+            </button>
+          </div>
         </div>
 
-        <!-- Dispositions (Hotkeys 1-4) -->
-        <div class="dispo-bar">
-          <button class="btn-dispo dispo-noanswer" data-stage="No Answer">1. No Answer</button>
-          <button class="btn-dispo dispo-callback" data-stage="Callback">2. Callback</button>
-          <button class="btn-dispo dispo-connected" data-stage="Connected">3. Connected</button>
-          <button class="btn-dispo dispo-dnc" data-stage="DNC">4. DNC</button>
+        <div class="card-box">
+          <h3>2. Paste Google Maps Business Card</h3>
+          <p class="helper">Highlight &amp; copy any business sidebar in Google Maps, then paste below to instantly extract phone, address, and name:</p>
+          <textarea id="rawCardPasteArea" rows="5" class="notes-input" placeholder="Paste business card info here (e.g. &#10;BarChef&#10;4.5 stars &#10;472 Queen St W, Toronto&#10;+1 416-868-4800)"></textarea>
+          <button id="btnParseCardText" class="btn btn-sm btn-outline btn-block" style="margin-top:6px;">
+            Parse &amp; Add Lead to Queue
+          </button>
         </div>
 
-        <!-- Fields -->
-        <div class="lead-fields">
-          <div class="field">
-            <label>Decision Maker</label>
-            <input type="text" id="fieldLeadName" class="input-line">
-          </div>
-          <div class="field">
-            <label>City</label>
-            <input type="text" id="fieldLeadCity" class="input-line">
-          </div>
-          <div class="field span-2">
-            <label>Street Address</label>
-            <input type="text" id="fieldLeadAddress" class="input-line">
-          </div>
-          <div class="field span-2">
-            <label>Strategic Call Notes (Auto-saved)</label>
-            <textarea id="fieldLeadNotes" rows="5" class="notes-box" placeholder="Take call notes here..."></textarea>
-          </div>
+        <div id="harvestCountBanner" class="harvest-banner hidden">
+          <span id="harvestCountText">0 leads mined</span>
+          <button id="btnTransferToDialer" class="btn btn-xs btn-primary">Switch to Dialer</button>
         </div>
-      </div>
-    </main>
+      </aside>
 
-    <!-- RIGHT: Lead Generator Tool -->
-    <aside class="generator-panel">
-      <h3>Quick Lead Generator</h3>
-      <p class="desc">Create instantly dialable, localized Ontario target lists.</p>
+      <!-- RIGHT: Interactive Live Google Maps Explorer Frame -->
+      <section class="maps-viewport">
+        <div class="viewport-header">
+          <span id="mapsStatusLabel">Showing Google Maps Search Results</span>
+          <span class="secure-tag">Zero API Keys Required</span>
+        </div>
+        <div class="gmaps-frame-container">
+          <iframe id="discoveryGMapFrame" loading="lazy" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </section>
 
-      <div class="form-group">
-        <label>Target City</label>
-        <select id="genCity" class="input-line">
-          <option value="Toronto">Toronto (416 / 647)</option>
-          <option value="Mississauga">Mississauga (905)</option>
-          <option value="Hamilton">Hamilton (905)</option>
-          <option value="Ottawa">Ottawa (613)</option>
-          <option value="London">London (519)</option>
-          <option value="Waterloo">Waterloo / Kitchener (519)</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Industry / Vertical</label>
-        <select id="genIndustry" class="input-line">
-          <option value="Cannabis Dispensary">Cannabis Dispensaries</option>
-          <option value="Cocktail Bar">Cocktail Bars &amp; Lounges</option>
-          <option value="Craft Brewery">Craft Breweries</option>
-          <option value="Italian Restaurant">Fine Dining / Restaurants</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" id="genCount" value="6" min="1" max="25" class="input-line">
-      </div>
-
-      <button id="btnGenerateLeads" class="btn btn-primary btn-block">Generate &amp; Add Leads</button>
-
-      <div class="hotkeys-box">
-        <strong>Hotkeys</strong>
-        <div><kbd>&uarr;</kbd> <kbd>&darr;</kbd> Next / Previous</div>
-        <div><kbd>C</kbd> Launch Call</div>
-        <div><kbd>1</kbd> No Answer</div>
-        <div><kbd>2</kbd> Callback</div>
-        <div><kbd>3</kbd> Connected</div>
-        <div><kbd>4</kbd> Do Not Call</div>
-      </div>
-    </aside>
-
-  </div>
+    </div>
+  </main>
 
   <!-- Add Lead Modal -->
-  <div id="addModal" class="modal hidden">
-    <div class="modal-box">
-      <h3>Add Prospect</h3>
-      <form id="addLeadForm">
-        <div class="form-group">
-          <label>Company *</label>
-          <input type="text" id="newCompany" required class="input-line">
+  <div id="addLeadModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-mast">
+        <h3>Add Prospect Manually</h3>
+        <button id="btnCloseModal" class="close-x">&times;</button>
+      </div>
+      <form id="addLeadForm" class="modal-form">
+        <div class="field-item span-2">
+          <label>Company Name *</label>
+          <input type="text" id="newLeadCompany" required class="form-input">
         </div>
-        <div class="form-group">
+        <div class="field-item">
           <label>Contact Name</label>
-          <input type="text" id="newName" class="input-line">
+          <input type="text" id="newLeadName" class="form-input">
         </div>
-        <div class="form-group">
+        <div class="field-item">
           <label>Phone Number *</label>
-          <input type="text" id="newPhone" required class="input-line">
+          <input type="text" id="newLeadPhone" required class="form-input">
         </div>
-        <div class="form-group">
+        <div class="field-item">
           <label>Email</label>
-          <input type="email" id="newEmail" class="input-line">
+          <input type="email" id="newLeadEmail" class="form-input">
         </div>
-        <div class="form-group">
+        <div class="field-item">
           <label>City</label>
-          <input type="text" id="newCity" value="Toronto" class="input-line">
+          <input type="text" id="newLeadCity" value="Toronto" class="form-input">
         </div>
-        <div class="form-group">
+        <div class="field-item span-2">
           <label>Street Address</label>
-          <input type="text" id="newAddress" class="input-line">
+          <input type="text" id="newLeadAddress" class="form-input">
         </div>
-        <div class="modal-actions">
-          <button type="button" id="btnCancelAdd" class="btn btn-sm">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary">Save Prospect</button>
+        <div class="modal-actions span-2">
+          <button type="button" id="btnCancelModal" class="btn btn-sm">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary">Save Lead</button>
         </div>
       </form>
     </div>

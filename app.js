@@ -1,90 +1,82 @@
 /**
- * Executive Tele-Dialer & Lead Engine - Rock Solid Edition
+ * Executive Tele-Dialer & Google Maps Lead Engine
+ * Zero API Keys - Direct Sync with Data/data.csv
  */
 (() => {
   'use strict';
 
-  // --- STATE ---
+  // --- APPLICATION STATE ---
   let leads = [];
   let filteredLeads = [];
   let selectedId = null;
   let activeFilter = 'all';
   let autoNext = false;
-  let isServerConnected = false;
+  let isServer = false;
 
-  const STORAGE_KEY = 'exec_dialer_leads_v1';
-
-  // City Area Codes for realistic telephone generation
-  const AREA_CODES = {
-    'Toronto': '416',
-    'Mississauga': '905',
-    'Hamilton': '905',
-    'Ottawa': '613',
-    'London': '519',
-    'Waterloo': '519'
-  };
+  const STORAGE_KEY = 'exec_dialer_leads_gmaps_v2';
 
   // --- INITIALIZATION ---
   async function init() {
-    setupEventListeners();
-    await loadLeads();
+    registerEvents();
+    await loadInitialLeads();
     renderQueue();
-    updateStats();
+    updateMetrics();
 
     if (leads.length > 0) {
       selectLead(leads[0].id);
     }
+    updateDiscoveryMapFrame();
   }
 
   // --- DATA LOADING & PERSISTENCE ---
-  async function loadLeads() {
-    // 1. Try Python API first
+  async function loadInitialLeads() {
     try {
       const res = await fetch('/api/leads');
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           leads = data;
-          isServerConnected = true;
+          isServer = true;
           return;
         }
       }
     } catch (e) {
-      // Python server not running, fallback to localStorage
+      // Local server not active, fallback to localStorage
     }
 
-    // 2. Try LocalStorage
-    const local = localStorage.getItem(STORAGE_KEY);
-    if (local) {
+    const localData = localStorage.getItem(STORAGE_KEY);
+    if (localData) {
       try {
-        leads = JSON.parse(local);
+        leads = JSON.parse(localData);
         return;
       } catch (e) {}
     }
 
-    // 3. Fallback Seed
+    // Default fallback seed
     leads = [
       {
         id: '1',
-        company: '6ix Dispensary',
-        name: 'Store Manager',
-        phone: '+1 (647) 222-7770',
-        email: 'admin@6ixdispensary.com',
-        city: 'Toronto',
-        street_address: '863 Bloor St W',
-        stage: 'Fresh',
-        notes: 'Bloorcourt location'
-      },
-      {
-        id: '2',
-        company: 'Civil Liberties',
-        name: 'Bar Lead',
+        company: 'Civil Liberties Bar',
+        name: 'General Manager',
         phone: '+1 (416) 546-5634',
         email: 'info@civillibertiesbar.com',
         city: 'Toronto',
         street_address: '878 Bloor St W',
+        website: 'https://civillibertiesbar.com',
         stage: 'Fresh',
-        notes: 'Cocktail lounge on Bloor'
+        notes: 'Verified cocktail bar'
+      },
+      {
+        id: '2',
+        company: 'BarChef',
+        name: 'Bar Lead',
+        phone: '+1 (416) 868-4800',
+        email: 'info@barchef.com',
+        city: 'Toronto',
+        street_address: '472 Queen St W',
+        website: 'https://barchef.com',
+        stage: 'Fresh',
+        notes: 'Queen West lounge'
       }
     ];
     persistLeads();
@@ -93,91 +85,102 @@
   function persistLeads() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
 
-    // Also sync to server if running
-    if (isServerConnected) {
+    if (isServer) {
       fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leads)
       }).catch(() => {});
     }
-    updateStats();
+    updateMetrics();
   }
 
-  // --- UI RENDERING ---
+  // --- QUEUE RENDERING ---
   function renderQueue() {
-    const listEl = document.getElementById('leadList');
-    listEl.innerHTML = '';
+    const queueEl = document.getElementById('queueList');
+    queueEl.innerHTML = '';
 
-    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const query = document.getElementById('queueSearch').value.toLowerCase().trim();
 
     filteredLeads = leads.filter(l => {
       const matchFilter = (activeFilter === 'all') || (l.stage === activeFilter);
-      const matchQuery = !query ||
+      const matchSearch = !query ||
         l.company.toLowerCase().includes(query) ||
         (l.city && l.city.toLowerCase().includes(query)) ||
         (l.phone && l.phone.includes(query)) ||
         (l.name && l.name.toLowerCase().includes(query));
-      return matchFilter && matchQuery;
+      return matchFilter && matchSearch;
     });
 
     if (filteredLeads.length === 0) {
-      listEl.innerHTML = `<div style="text-align:center; padding:30px 10px; color:#9ca3af;">No prospects match</div>`;
+      queueEl.innerHTML = `<div style="text-align:center; padding:32px 10px; color:#9ca3af;">No accounts in view</div>`;
       return;
     }
 
     filteredLeads.forEach(lead => {
-      const item = document.createElement('div');
-      item.className = `lead-item ${lead.id === selectedId ? 'active' : ''}`;
-      item.onclick = () => selectLead(lead.id);
+      const row = document.createElement('div');
+      row.className = `queue-item ${lead.id === selectedId ? 'active' : ''}`;
+      row.onclick = () => selectLead(lead.id);
 
-      item.innerHTML = `
+      row.innerHTML = `
         <div>
-          <div class="lead-item-name">${escapeHtml(lead.company)}</div>
-          <div class="lead-item-sub">${escapeHtml(lead.city || 'Ontario')} &bull; ${escapeHtml(lead.phone)}</div>
+          <div class="q-title">${escapeHtml(lead.company)}</div>
+          <div class="q-sub">${escapeHtml(lead.city || 'ON')} &bull; ${escapeHtml(lead.phone || 'No phone')}</div>
         </div>
-        <span class="stage-tag ${escapeHtml(lead.stage || 'Fresh')}">${escapeHtml(lead.stage || 'Fresh')}</span>
+        <span class="tag ${escapeHtml(lead.stage || 'Fresh')}">${escapeHtml(lead.stage || 'Fresh')}</span>
       `;
-      listEl.appendChild(item);
+      queueEl.appendChild(row);
     });
   }
 
+  // --- LEAD SELECTION & GOOGLE MAPS EMBEDDING ---
   function selectLead(id) {
     selectedId = id;
     const lead = leads.find(l => l.id === id);
 
-    const empty = document.getElementById('emptyState');
-    const detail = document.getElementById('leadDetail');
+    const ph = document.getElementById('cockpitPlaceholder');
+    const body = document.getElementById('cockpitBody');
+    const mapFrame = document.getElementById('leadGMapFrame');
+    const extLink = document.getElementById('btnOpenExternalGMap');
 
     if (!lead) {
-      empty.classList.remove('hidden');
-      detail.classList.add('hidden');
+      ph.classList.remove('hidden');
+      body.classList.add('hidden');
+      mapFrame.src = 'about:blank';
       renderQueue();
       return;
     }
 
-    empty.classList.add('hidden');
-    detail.classList.remove('hidden');
+    ph.classList.add('hidden');
+    body.classList.remove('hidden');
 
     document.getElementById('leadCompany').textContent = lead.company;
-    document.getElementById('leadSub').textContent = `${lead.name || 'Decision Maker'} • ${lead.city || 'Ontario'}`;
+    document.getElementById('leadSubtitle').textContent = `${lead.name || 'Decision Maker'} • ${lead.city || 'Ontario'}`;
     document.getElementById('leadPhone').textContent = lead.phone || 'No phone';
 
-    const callBtn = document.getElementById('btnCallLead');
+    const callBtn = document.getElementById('btnCallAction');
     callBtn.href = lead.phone ? `tel:${encodeURIComponent(lead.phone)}` : '#';
 
-    const emailBtn = document.getElementById('btnEmailLead');
-    emailBtn.href = lead.email ? `mailto:${encodeURIComponent(lead.email)}?subject=Direct Inquiry` : 'mailto:';
+    const emailBtn = document.getElementById('btnEmailAction');
+    emailBtn.href = lead.email ? `mailto:${encodeURIComponent(lead.email)}` : 'mailto:';
+    document.getElementById('leadEmailSub').textContent = lead.email || 'No email recorded';
 
     document.getElementById('fieldLeadName').value = lead.name || '';
     document.getElementById('fieldLeadCity').value = lead.city || '';
     document.getElementById('fieldLeadAddress').value = lead.street_address || '';
+    document.getElementById('fieldLeadWebsite').value = lead.website || '';
     document.getElementById('fieldLeadNotes').value = lead.notes || '';
+
+    // Free Google Maps Search URL (Zero API Key)
+    const mapQuery = `${lead.company} ${lead.street_address || ''} ${lead.city || 'Ontario'}`.trim();
+    const encoded = encodeURIComponent(mapQuery);
+    mapFrame.src = `https://maps.google.com/maps?q=${encoded}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+    extLink.href = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
 
     renderQueue();
   }
 
-  function updateStats() {
+  function updateMetrics() {
     document.getElementById('statTotal').textContent = leads.length;
     document.getElementById('statFresh').textContent = leads.filter(l => (l.stage || 'Fresh') === 'Fresh').length;
     document.getElementById('statConnected').textContent = leads.filter(l => l.stage === 'Connected').length;
@@ -193,62 +196,131 @@
     renderQueue();
 
     if (autoNext) {
-      navigateQueue(1);
+      stepQueue(1);
     } else {
       selectLead(lead.id);
     }
   }
 
-  function navigateQueue(direction) {
+  function stepQueue(dir) {
     if (filteredLeads.length === 0) return;
     const curIdx = filteredLeads.findIndex(l => l.id === selectedId);
-    let nextIdx = curIdx + direction;
+    let nextIdx = curIdx + dir;
     if (nextIdx >= filteredLeads.length) nextIdx = 0;
     if (nextIdx < 0) nextIdx = filteredLeads.length - 1;
     selectLead(filteredLeads[nextIdx].id);
   }
 
-  // --- LEAD GENERATOR ---
-  function generateLeads() {
-    const city = document.getElementById('genCity').value;
-    const industry = document.getElementById('genIndustry').value;
-    const count = parseInt(document.getElementById('genCount').value, 10) || 5;
+  // --- GOOGLE MAPS DISCOVERY PANEL ---
+  function updateDiscoveryMapFrame() {
+    const q = document.getElementById('mapSearchQuery').value || 'Cocktail Bars';
+    const city = document.getElementById('mapCitySelect').value || 'Toronto';
+    const frame = document.getElementById('discoveryGMapFrame');
+    const label = document.getElementById('mapsStatusLabel');
 
-    const areaCode = AREA_CODES[city] || '416';
-    const prefixes = ['The Royal', 'Pinnacle', 'Apex', 'Crown', 'Silver', 'Craft', 'Heritage', 'Northern'];
-    const streets = ['King St W', 'Queen St E', 'Dundas St', 'Richmond St', 'Main St', 'Wellington St'];
+    const fullQuery = `${q} in ${city} Ontario`;
+    label.textContent = `Google Maps Explorer: "${fullQuery}"`;
+    frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(fullQuery)}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+  }
 
-    const newItems = [];
-    for (let i = 0; i < count; i++) {
-      const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
-      const street = streets[Math.floor(Math.random() * streets.length)];
-      const num = Math.floor(Math.random() * 800) + 12;
-      const comp = `${pfx} ${industry} of ${city}`;
-      const phone = `+1 (${areaCode}) ${Math.floor(Math.random() * 700 + 200)}-${Math.floor(Math.random() * 8999 + 1000)}`;
+  function openExternalGoogleMapsTab() {
+    const q = document.getElementById('mapSearchQuery').value || 'Cocktail Bars';
+    const city = document.getElementById('mapCitySelect').value || 'Toronto';
+    const url = `https://www.google.com/maps/search/${encodeURIComponent(q + ' in ' + city + ' Ontario')}`;
+    window.open(url, '_blank');
+  }
 
-      newItems.push({
-        id: String(Date.now() + i),
-        company: comp,
-        name: 'General Manager',
-        phone: phone,
-        email: `contact@${pfx.toLowerCase()}${city.toLowerCase()}.ca`,
-        city: city,
-        street_address: `${num} ${street}`,
-        stage: 'Fresh',
-        notes: `Generated list: ${industry}`
+  async function fetchMapsLeadsBackend() {
+    const q = document.getElementById('mapSearchQuery').value || 'Cocktail Bars';
+    const city = document.getElementById('mapCitySelect').value || 'Toronto';
+    const btn = document.getElementById('btnFetchMapsLeads');
+
+    btn.textContent = 'Mining Google Maps...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/scrape-maps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q, city: city })
       });
+      const data = await res.json();
+      if (data && data.leads && data.leads.length > 0) {
+        leads = [...data.leads, ...leads];
+        persistLeads();
+        renderQueue();
+
+        const banner = document.getElementById('harvestCountBanner');
+        const txt = document.getElementById('harvestCountText');
+        banner.classList.remove('hidden');
+        txt.textContent = `Extracted ${data.leads.length} leads!`;
+        selectLead(data.leads[0].id);
+      }
+    } catch (e) {
+      alert('Could not pull from server. Ensure python3 leadgen.py is running.');
+    } finally {
+      btn.textContent = '↓ Auto-Extract Leads From Maps (No Key)';
+      btn.disabled = false;
+    }
+  }
+
+  // --- GOOGLE MAPS BUSINESS CARD QUICK-PASTE PARSER ---
+  function parsePastedCardText() {
+    const raw = document.getElementById('rawCardPasteArea').value.trim();
+    if (!raw) return alert('Please paste text copied from a Google Maps listing.');
+
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const company = lines[0] || 'Unknown Business';
+
+    // Regex for North American Phone Numbers
+    const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/;
+    const phoneMatch = raw.match(phoneRegex);
+    const phone = phoneMatch ? `+1 (${phoneMatch[1]}) ${phoneMatch[2]}-${phoneMatch[3]}` : '+1 (416) 555-0199';
+
+    // Regex for Website
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.(?:ca|com|org))/i;
+    const urlMatch = raw.match(urlRegex);
+    const website = urlMatch ? (urlMatch[0].startsWith('http') ? urlMatch[0] : `https://${urlMatch[0]}`) : '';
+
+    // Search for address-like string
+    let streetAddress = '';
+    const city = document.getElementById('mapCitySelect').value || 'Toronto';
+    for (const line of lines) {
+      if (/\b(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Way)\b/i.test(line)) {
+        streetAddress = line;
+        break;
+      }
+    }
+    if (!streetAddress && lines.length > 2) {
+      streetAddress = lines[2];
     }
 
-    leads = [...newItems, ...leads];
+    const newLead = {
+      id: String(Date.now()),
+      company: company,
+      name: 'General Manager',
+      phone: phone,
+      email: `info@${company.toLowerCase().replace(/[^a-z0-9]/g, '')}.ca`,
+      city: city,
+      street_address: streetAddress || 'Ontario Street',
+      website: website,
+      stage: 'Fresh',
+      notes: 'Pasted from Google Maps listing'
+    };
+
+    leads.unshift(newLead);
     persistLeads();
     renderQueue();
-    selectLead(newItems[0].id);
+    selectLead(newLead.id);
+
+    document.getElementById('rawCardPasteArea').value = '';
+    document.getElementById('tabNavCockpit').click();
   }
 
   // --- CSV IMPORT & EXPORT ---
   function exportCsv() {
     if (leads.length === 0) return alert('No leads to export.');
-    const headers = ['company', 'name', 'phone', 'email', 'city', 'street_address', 'stage', 'notes'];
+    const headers = ['company', 'name', 'phone', 'email', 'city', 'street_address', 'website', 'stage', 'notes'];
     const rows = leads.map(l => headers.map(h => `"${String(l[h] || '').replace(/"/g, '""')}"`).join(','));
     const csvContent = [headers.join(','), ...rows].join('\r\n');
 
@@ -261,53 +333,57 @@
     URL.revokeObjectURL(url);
   }
 
-  function importCsvFile(file) {
+  function importCsv(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target.result;
-      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
-      if (lines.length < 2) return alert('Invalid CSV format.');
-
+      const lines = e.target.result.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return;
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
       const parsed = [];
 
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        if (cols.length === 0 || !cols[0]) continue;
-
         const obj = { id: String(Date.now() + i) };
-        headers.forEach((h, idx) => {
-          obj[h] = cols[idx] || '';
-        });
+        headers.forEach((h, idx) => { obj[h] = cols[idx] || ''; });
         if (!obj.stage) obj.stage = 'Fresh';
         parsed.push(obj);
       }
 
-      if (parsed.length > 0) {
-        leads = [...parsed, ...leads];
-        persistLeads();
-        renderQueue();
-        selectLead(parsed[0].id);
-        alert(`Imported ${parsed.length} leads successfully!`);
-      }
+      leads = [...parsed, ...leads];
+      persistLeads();
+      renderQueue();
+      if (parsed.length > 0) selectLead(parsed[0].id);
     };
     reader.readAsText(file);
   }
 
-  // --- EVENTS ---
-  function setupEventListeners() {
-    // Filter tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+  // --- EVENT REGISTRATION ---
+  function registerEvents() {
+    // Navigation tabs
+    document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.onclick = () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.view).classList.add('active');
+      };
+    });
+
+    document.getElementById('btnTransferToDialer').onclick = () => {
+      document.getElementById('tabNavCockpit').click();
+    };
+
+    // Filter buttons
+    document.querySelectorAll('.stage-filter-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.stage-filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         activeFilter = btn.dataset.filter;
         renderQueue();
       };
     });
 
-    // Search
-    document.getElementById('searchInput').oninput = () => renderQueue();
+    document.getElementById('queueSearch').oninput = () => renderQueue();
 
     // Auto-Next toggle
     const btnAuto = document.getElementById('btnAutoNext');
@@ -331,21 +407,22 @@
       }
     };
 
-    // Inline field updates
-    ['fieldLeadName', 'fieldLeadCity', 'fieldLeadAddress'].forEach(fieldId => {
+    // Form inputs auto-save
+    ['fieldLeadName', 'fieldLeadCity', 'fieldLeadAddress', 'fieldLeadWebsite'].forEach(fieldId => {
       document.getElementById(fieldId).onchange = (e) => {
         const lead = leads.find(l => l.id === selectedId);
         if (!lead) return;
         if (fieldId === 'fieldLeadName') lead.name = e.target.value;
         if (fieldId === 'fieldLeadCity') lead.city = e.target.value;
         if (fieldId === 'fieldLeadAddress') lead.street_address = e.target.value;
+        if (fieldId === 'fieldLeadWebsite') lead.website = e.target.value;
         persistLeads();
       };
     });
 
     // Delete lead
-    document.getElementById('btnDeleteLead').onclick = () => {
-      if (!confirm('Delete this prospect?')) return;
+    document.getElementById('btnDeleteCurrentLead').onclick = () => {
+      if (!confirm('Remove this account?')) return;
       leads = leads.filter(l => l.id !== selectedId);
       persistLeads();
       selectedId = null;
@@ -354,31 +431,36 @@
       else selectLead(null);
     };
 
-    // Generator
-    document.getElementById('btnGenerateLeads').onclick = generateLeads;
+    // Discovery Google Maps buttons
+    document.getElementById('mapSearchQuery').onchange = updateDiscoveryMapFrame;
+    document.getElementById('mapCitySelect').onchange = updateDiscoveryMapFrame;
+    document.getElementById('btnOpenGoogleMapsTab').onclick = openExternalGoogleMapsTab;
+    document.getElementById('btnFetchMapsLeads').onclick = fetchMapsLeadsBackend;
+    document.getElementById('btnParseCardText').onclick = parsePastedCardText;
 
     // Export & Import
     document.getElementById('btnExportCsv').onclick = exportCsv;
-    const inputCsv = document.getElementById('inputCsv');
-    inputCsv.onchange = (e) => {
-      if (e.target.files.length > 0) importCsvFile(e.target.files[0]);
+    document.getElementById('inputCsv').onchange = (e) => {
+      if (e.target.files.length > 0) importCsv(e.target.files[0]);
     };
 
-    // Add Lead Modal
-    const modal = document.getElementById('addModal');
+    // Manual Add Modal
+    const modal = document.getElementById('addLeadModal');
     document.getElementById('btnShowAddModal').onclick = () => modal.classList.remove('hidden');
-    document.getElementById('btnCancelAdd').onclick = () => modal.classList.add('hidden');
+    document.getElementById('btnCloseModal').onclick = () => modal.classList.add('hidden');
+    document.getElementById('btnCancelModal').onclick = () => modal.classList.add('hidden');
 
     document.getElementById('addLeadForm').onsubmit = (e) => {
       e.preventDefault();
       const newLead = {
         id: String(Date.now()),
-        company: document.getElementById('newCompany').value.trim(),
-        name: document.getElementById('newName').value.trim(),
-        phone: document.getElementById('newPhone').value.trim(),
-        email: document.getElementById('newEmail').value.trim(),
-        city: document.getElementById('newCity').value.trim(),
-        street_address: document.getElementById('newAddress').value.trim(),
+        company: document.getElementById('newLeadCompany').value.trim(),
+        name: document.getElementById('newLeadName').value.trim(),
+        phone: document.getElementById('newLeadPhone').value.trim(),
+        email: document.getElementById('newLeadEmail').value.trim(),
+        city: document.getElementById('newLeadCity').value.trim(),
+        street_address: document.getElementById('newLeadAddress').value.trim(),
+        website: '',
         stage: 'Fresh',
         notes: ''
       };
@@ -394,8 +476,8 @@
       const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-      if (e.key === 'ArrowDown') { e.preventDefault(); navigateQueue(1); }
-      if (e.key === 'ArrowUp') { e.preventDefault(); navigateQueue(-1); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); stepQueue(1); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); stepQueue(-1); }
       if (e.key === 'c' || e.key === 'C') {
         const lead = leads.find(l => l.id === selectedId);
         if (lead && lead.phone) window.location.href = `tel:${lead.phone}`;
