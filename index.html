@@ -3,335 +3,351 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Executive LeadGen & Outbound Dialer</title>
+  <title>Executive Dialer & Lead Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-dark">
+<body class="editorial-theme">
 
-  <!-- ================= TOP NAVIGATION & TELEMETRY ================= -->
-  <header class="top-nav">
-    <div class="nav-brand">
-      <div class="brand-logo">EX</div>
+  <!-- ================= TOP EDITORIAL MASTHEAD ================= -->
+  <header class="masthead">
+    <div class="masthead-brand">
+      <span class="brand-monogram">EX</span>
       <div>
-        <h1 class="brand-title">EXECUTIVE SUITE</h1>
-        <p class="brand-sub">Lead Discovery & Outbound Cockpit</p>
+        <h1 class="brand-title">EXECUTIVE DIALER & LEADGEN</h1>
+        <p class="brand-caption">Outbound Telephony Workstation & Lead Discovery</p>
       </div>
     </div>
 
-    <!-- Mode Switcher -->
-    <div class="view-switcher">
-      <button id="viewBtnCrm" class="view-btn active" data-view="viewCrm">
-        <span class="icon">&phone;</span> Dialer CRM
+    <!-- Mode Selector -->
+    <nav class="view-tabs">
+      <button id="btnNavCrm" class="v-tab active" data-target="viewCrm">
+        <span class="v-icon">&phone;</span> Dialer Cockpit
       </button>
-      <button id="viewBtnBuilder" class="view-btn" data-view="viewBuilder">
-        <span class="icon">&#9881;</span> Lead Generator
+      <button id="btnNavBuilder" class="v-tab" data-target="viewBuilder">
+        <span class="v-icon">&#9881;</span> Lead Generator
       </button>
-    </div>
+    </nav>
 
-    <!-- Active List Selector (Data/ folder sync) -->
-    <div class="list-picker-wrap">
-      <label for="listSelector" class="picker-lbl">ACTIVE LIST:</label>
-      <select id="listSelector" class="picker-select">
+    <!-- Data/ Folder & CSV Switcher -->
+    <div class="data-hub">
+      <span class="hub-label">PROSPECT LIST:</span>
+      <select id="selectActiveList" class="hub-select" title="Switch active CSV file">
         <option value="data.csv">Data/data.csv</option>
-        <option value="__new__">+ New Prospect List...</option>
       </select>
-    </div>
-
-    <!-- Global KPIs -->
-    <div class="kpi-strip">
-      <div class="kpi-pill"><span class="kpi-k">LEADS</span><span id="kpiTotal" class="kpi-v">0</span></div>
-      <div class="kpi-pill"><span class="kpi-k">DIALED</span><span id="kpiDials" class="kpi-v">0</span></div>
-      <div class="kpi-pill"><span class="kpi-k">CONNECTED</span><span id="kpiConnected" class="kpi-v text-success">0</span></div>
-      <div class="kpi-pill"><span class="kpi-k">CALLBACKS</span><span id="kpiCallbacks" class="kpi-v text-warning">0</span></div>
-    </div>
-
-    <!-- Global Action Bar -->
-    <div class="nav-actions">
-      <button id="btnAutoNext" class="btn btn-sm btn-outline" title="Auto-advance queue upon disposition">
-        <span class="dot-beacon"></span> Auto-Next: OFF
+      
+      <!-- Connect Local Folder via File System API -->
+      <button id="btnConnectDataFolder" class="btn btn-xs btn-outline" title="Connect to local Data/ folder using File System API">
+        &#128194; Connect Data/ Folder
       </button>
-      <label class="btn btn-sm btn-outline file-btn">
-        <span>&uarr; Import CSV</span>
-        <input type="file" id="fileCsvPicker" accept=".csv" class="hidden">
+      
+      <!-- Fallback Multiple CSV Importer -->
+      <label class="btn btn-xs btn-outline file-label" title="Upload one or multiple CSV files">
+        <span>+ Import CSV(s)</span>
+        <input type="file" id="inputCsvFiles" accept=".csv" multiple class="hidden">
       </label>
-      <button id="btnExportActiveCsv" class="btn btn-sm btn-primary">&darr; Export to Data/</button>
+    </div>
+
+    <!-- Workstation Metrics -->
+    <div class="kpi-ribbon">
+      <div class="kpi-cell"><span class="k-label">TOTAL</span><span id="metricTotal" class="k-val">0</span></div>
+      <div class="kpi-cell"><span class="k-label">DIALS</span><span id="metricDials" class="k-val">0</span></div>
+      <div class="kpi-cell"><span class="k-label">CONNECTED</span><span id="metricDone" class="k-val text-success">0</span></div>
+      <div class="kpi-cell"><span class="k-label">CALLBACKS</span><span id="metricCallbacks" class="k-val text-warning">0</span></div>
+    </div>
+
+    <!-- Global Controls -->
+    <div class="masthead-actions">
+      <button id="btnPowerDial" class="btn btn-xs btn-outline" title="Automatically advance to the next prospect upon disposition">
+        <span class="pulse-indicator"></span> Auto-Next: OFF
+      </button>
+      <button id="btnExportCurrent" class="btn btn-xs btn-primary">&darr; Export CSV</button>
     </div>
   </header>
 
   <!-- ================= CRM WORKSTATION VIEW ================= -->
-  <div id="viewCrm" class="app-view active">
-    <div class="crm-layout">
+  <main id="viewCrm" class="workspace-view active">
+    <div class="crm-grid">
 
-      <!-- LEFT: Pipeline Queue -->
-      <aside class="pane pane-left">
-        <div class="pane-head">
-          <div class="queue-filter-tabs">
-            <button class="q-tab active" data-stage="uncontacted">Fresh <span class="tag" id="tagFresh">0</span></button>
-            <button class="q-tab" data-stage="callback">Callbacks <span class="tag" id="tagCallback">0</span></button>
-            <button class="q-tab" data-stage="contacted">Closed <span class="tag" id="tagContacted">0</span></button>
-            <button class="q-tab" data-stage="all">All <span class="tag" id="tagAll">0</span></button>
+      <!-- LEFT COLUMN: Pipeline Queue -->
+      <aside class="col-queue">
+        <div class="queue-mast">
+          <div class="stage-nav">
+            <button class="stage-btn active" data-stage="uncontacted">Fresh <span class="badge" id="bFresh">0</span></button>
+            <button class="stage-btn" data-stage="callback">Callbacks <span class="badge" id="bCallback">0</span></button>
+            <button class="stage-btn" data-stage="contacted">Closed <span class="badge" id="bContacted">0</span></button>
+            <button class="stage-btn" data-stage="all">All <span class="badge" id="bAll">0</span></button>
           </div>
-          <div class="search-box">
-            <input type="text" id="queueSearch" placeholder="Search company, phone, city..." spellcheck="false">
+          <div class="search-wrap">
+            <input type="text" id="filterInput" placeholder="Filter company, city, contact..." spellcheck="false">
           </div>
         </div>
 
-        <div id="queueContainer" class="lead-scroller"></div>
+        <div id="queueScroller" class="queue-body"></div>
 
-        <div class="pane-foot queue-footer">
-          <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Select</span>
-          <span><kbd>C</kbd> Dial</span>
-          <span><kbd>1</kbd>-<kbd>4</kbd> Dispo</span>
-          <button id="btnAddNewLead" class="btn-text">+ Add Lead</button>
-        </div>
+        <footer class="queue-foot">
+          <div class="hotkeys-guide">
+            <span><kbd>&uarr;</kbd><kbd>&darr;</kbd> Browse</span>
+            <span><kbd>C</kbd> Call</span>
+            <span><kbd>1</kbd>-<kbd>4</kbd> Dispo</span>
+          </div>
+          <button id="btnOpenNewLeadModal" class="btn-link">+ Add Lead</button>
+        </footer>
       </aside>
 
-      <!-- CENTER: Active Cockpit -->
-      <main class="pane pane-center" id="cockpitContainer">
-        <!-- Rendered dynamically via app.js -->
-        <div class="empty-state">
-          <div class="empty-state-icon">&phone;</div>
-          <h3>Select a prospect to open cockpit</h3>
-          <p>Choose an account from the pipeline queue or run the Lead Generator to mine new accounts.</p>
+      <!-- CENTER COLUMN: Active Lead Cockpit -->
+      <section class="col-cockpit" id="cockpitMount">
+        <div class="cockpit-placeholder">
+          <div class="placeholder-icon">&phone;</div>
+          <h2>Select a prospect from the pipeline</h2>
+          <p>Click any company in the queue or use the Lead Generator to mine accounts into your <code>Data/</code> folder.</p>
         </div>
-      </main>
+      </section>
 
-      <!-- RIGHT: Intel HUD -->
-      <aside class="pane pane-right">
-        <div class="intel-tabs-bar">
+      <!-- RIGHT COLUMN: Web Intel & Location -->
+      <aside class="col-intel">
+        <div class="intel-tabs-row">
           <div class="intel-tabs">
-            <button class="itab active" data-target="panelWebsite">Live Website</button>
-            <button class="itab" data-target="panelMap">Google Map</button>
-            <button class="itab" data-target="panelDeep">Dossier</button>
+            <button class="intel-btn active" data-panel="panelWeb">Live Website</button>
+            <button class="intel-btn" data-panel="panelMap">Google Maps</button>
+            <button class="intel-btn" data-panel="panelIntel">Quick Outreach</button>
           </div>
-          <a id="extLinkUrl" href="#" target="_blank" rel="noopener noreferrer" class="link-external">External &nearr;</a>
+          <a id="btnExternalWeb" href="#" target="_blank" rel="noopener noreferrer" class="open-ext-link">External &nearr;</a>
         </div>
 
-        <div class="intel-body">
-          <!-- Web Frame View -->
-          <div id="panelWebsite" class="intel-panel active">
-            <div class="url-bar">
-              <span id="intelUrlText" class="url-label">about:blank</span>
-              <button id="btnReloadWeb" class="btn-icon" title="Reload Frame">&#8635;</button>
+        <div class="intel-content">
+          <!-- Web Panel -->
+          <div id="panelWeb" class="panel-box active">
+            <div class="address-ribbon">
+              <span id="intelDisplayUrl" class="url-text">about:blank</span>
+              <button id="btnRefreshFrame" class="btn-icon" title="Reload iframe">&#8635;</button>
             </div>
-            <div class="frame-wrap">
-              <iframe id="frameWebsite" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
-              <div id="frameFallback" class="fallback-overlay hidden">
-                <p>Website denies inline preview (X-Frame-Options restricted).</p>
-                <a id="btnLaunchExternal" href="#" target="_blank" class="btn btn-sm btn-primary">Open Website in New Tab &nearr;</a>
+            <div class="frame-container">
+              <iframe id="webIframe" sandbox="allow-scripts allow-forms allow-popups allow-same-origin"></iframe>
+              <div id="frameFallbackNotice" class="frame-shield hidden">
+                <div class="shield-message">
+                  <span class="shield-icon">&#127760;</span>
+                  <p>Website refuses embedding due to X-Frame security header.</p>
+                  <a id="btnFallbackOpen" href="#" target="_blank" class="btn btn-sm btn-primary">Open in New Window &nearr;</a>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Maps Frame View -->
-          <div id="panelMap" class="intel-panel">
-            <div class="url-bar">
-              <span id="intelMapQuery" class="url-label">Location</span>
+          <!-- Maps Panel -->
+          <div id="panelMap" class="panel-box">
+            <div class="address-ribbon">
+              <span id="intelDisplayLocation" class="url-text">Ontario, Canada</span>
             </div>
-            <div class="frame-wrap">
-              <iframe id="frameMap" loading="lazy"></iframe>
+            <div class="frame-container">
+              <iframe id="mapIframe" loading="lazy"></iframe>
             </div>
           </div>
 
-          <!-- Deep Intel Dossier -->
-          <div id="panelDeep" class="intel-panel dossier-panel">
-            <div class="dossier-card">
-              <h4>Direct Lookup Shortcuts</h4>
-              <div class="shortcuts-grid">
-                <a id="btnSearchGoogle" href="#" target="_blank" class="btn btn-sm btn-outline">Google Business</a>
-                <a id="btnSearchLinkedIn" href="#" target="_blank" class="btn btn-sm btn-outline">LinkedIn Executive Search</a>
-                <a id="btnSearchNews" href="#" target="_blank" class="btn btn-sm btn-outline">Corporate News</a>
+          <!-- Outreach Panel -->
+          <div id="panelIntel" class="panel-box outreach-box">
+            <div class="outreach-card">
+              <h4>External Dossier Searches</h4>
+              <div class="dossier-links">
+                <a id="dossierGoogle" href="#" target="_blank" class="btn btn-sm btn-outline">Google Business Profile</a>
+                <a id="dossierLinkedIn" href="#" target="_blank" class="btn btn-sm btn-outline">LinkedIn Decision Makers</a>
               </div>
             </div>
-            <div class="dossier-card">
-              <h4>Outbound Email Template</h4>
-              <textarea id="quickEmailTemplate" class="dossier-text" rows="8">Hi [Name],
+            <div class="outreach-card">
+              <h4>Direct Email Copy</h4>
+              <textarea id="outreachTemplate" class="outreach-textarea" rows="7">Hi [Name],
 
-I noticed your establishment in [City] and wanted to reach out regarding optimizing your operations. 
+I came across [Company] in [City] and wanted to connect regarding your current operations.
 
-Do you have 5 minutes this Thursday for a brief chat?
+Do you have 5 minutes this week for a brief call?
 
 Best regards,</textarea>
-              <button id="btnCopyEmailTemplate" class="btn btn-sm btn-outline" style="margin-top:6px;">Copy Template</button>
+              <button id="btnCopyEmail" class="btn btn-sm btn-outline" style="margin-top:6px;">Copy to Clipboard</button>
             </div>
           </div>
         </div>
       </aside>
 
     </div>
-  </div>
+  </main>
 
-  <!-- ================= LIST BUILDER & PROSPECTING VIEW ================= -->
-  <div id="viewBuilder" class="app-view">
-    <div class="builder-layout">
+  <!-- ================= LEAD GENERATOR VIEW ================= -->
+  <main id="viewBuilder" class="workspace-view">
+    <div class="builder-grid">
 
-      <!-- LEFT: Discovery Parameters -->
-      <aside class="builder-sidebar">
-        <div class="box-section">
-          <div class="box-title">
-            <span>Target Municipalities (Ontario)</span>
-            <div class="pill-btns">
-              <button id="btnSelectAllCities" class="btn-micro">All</button>
-              <button id="btnClearCities" class="btn-micro">Clear</button>
+      <!-- LEFT: Discovery Controls -->
+      <aside class="builder-controls">
+        <div class="editorial-card">
+          <div class="card-head">
+            <h3>1. Target Municipalities</h3>
+            <div class="card-links">
+              <button id="btnCitiesSelectAll" class="btn-link">Select All</button>
+              <span class="sep">&bull;</span>
+              <button id="btnCitiesClear" class="btn-link">Clear</button>
             </div>
           </div>
-          <input type="text" id="cityFilterInput" class="input-dark" placeholder="Filter cities...">
-          <div id="citiesListContainer" class="checklist-box"></div>
-          <div id="citiesSelectedCount" class="subtle-note">0 municipalities selected</div>
+          <input type="text" id="citySearchBox" class="editorial-input" placeholder="Search cities (e.g. Toronto, Hamilton)...">
+          <div id="citiesChecklist" class="checklist-container"></div>
+          <div id="citiesCountBadge" class="helper-text">0 municipalities selected</div>
         </div>
 
-        <div class="box-section">
-          <div class="box-title">Industry / Keywords</div>
-          <input type="text" id="builderKeywords" class="input-dark" value="Cannabis Dispensary, Cocktail Bars, Distilleries, Breweries, Restaurants">
-          <p class="field-hint">Comma-separated target sectors or custom business categories.</p>
+        <div class="editorial-card">
+          <div class="card-head">
+            <h3>2. Target Industries / Keywords</h3>
+          </div>
+          <input type="text" id="builderKeywordsInput" class="editorial-input" value="Cannabis Dispensary, Cocktail Bars, Breweries, Restaurants">
+          <p class="helper-text">Comma-separated industry terms or custom keywords.</p>
         </div>
 
-        <div class="box-section">
-          <div class="box-title">Geodesic Grid Resolution</div>
-          <div class="input-grid">
+        <div class="editorial-card">
+          <div class="card-head">
+            <h3>3. Geodesic Grid Coverage</h3>
+          </div>
+          <div class="grid-inputs-row">
             <div>
               <label>Width (km)</label>
-              <input type="number" id="gridWidthKm" class="input-dark" value="20" min="4" max="100">
+              <input type="number" id="builderGridWidth" class="editorial-input" value="18" min="2" max="60">
             </div>
             <div>
               <label>Height (km)</label>
-              <input type="number" id="gridHeightKm" class="input-dark" value="20" min="4" max="100">
+              <input type="number" id="builderGridHeight" class="editorial-input" value="18" min="2" max="60">
             </div>
             <div>
-              <label>Columns</label>
-              <input type="number" id="gridCols" class="input-dark" value="2" min="1" max="8">
+              <label>Cols</label>
+              <input type="number" id="builderGridCols" class="editorial-input" value="2" min="1" max="4">
             </div>
             <div>
               <label>Rows</label>
-              <input type="number" id="gridRows" class="input-dark" value="2" min="1" max="8">
+              <input type="number" id="builderGridRows" class="editorial-input" value="2" min="1" max="4">
             </div>
           </div>
         </div>
 
-        <div class="box-section">
-          <div class="box-title">Save Destination</div>
-          <input type="text" id="targetCsvFileName" class="input-dark" value="ontario_leads.csv" placeholder="filename.csv">
-          <p class="field-hint">Saved inside the <code>Data/</code> directory.</p>
+        <div class="editorial-card">
+          <div class="card-head">
+            <h3>4. Save Destination in Data/</h3>
+          </div>
+          <input type="text" id="builderOutputFilename" class="editorial-input" value="leads_ontario.csv" placeholder="my_list.csv">
+          <p class="helper-text">Saved as a distinct CSV list in your <code>Data/</code> folder.</p>
         </div>
 
-        <div class="builder-actions">
-          <button id="btnStartScrape" class="btn btn-primary btn-block">Start Mining Leads</button>
-          <button id="btnStopScrape" class="btn btn-danger btn-block hidden">Halt Scanner</button>
+        <div class="builder-trigger-group">
+          <button id="btnStartScraping" class="btn btn-primary btn-block btn-lg">Mine Qualified Leads</button>
+          <button id="btnHaltScraping" class="btn btn-danger btn-block btn-lg hidden">Cancel Process</button>
         </div>
       </aside>
 
-      <!-- RIGHT: Interactive Geo-Scan Visualization & Console -->
-      <main class="builder-main">
+      <!-- RIGHT: Interactive Map Visualizer & Live Terminal -->
+      <section class="builder-viewport">
         <!-- Live Map Follow -->
-        <div class="map-card">
-          <div class="card-bar">
-            <span>Live Geodesic Tracker</span>
-            <span id="trackerStatusBadge" class="status-badge">Idle</span>
+        <div class="map-wrapper">
+          <div class="map-status-bar">
+            <span><strong>Geodesic Grid Scanner</strong> &bull; Leaflet Auto-Pan</span>
+            <span id="scannerStatusText" class="status-tag">Idle</span>
           </div>
-          <div id="leafletMap"></div>
+          <div id="liveScrapeMap"></div>
         </div>
 
-        <!-- Terminal & Stats Strip -->
-        <div class="stats-card">
-          <div class="stats-row">
-            <div class="metric"><span class="m-val" id="bStatDiscovered">0</span><span class="m-lbl">Businesses Extracted</span></div>
-            <div class="metric"><span class="m-val" id="bStatEnriched">0</span><span class="m-lbl">Enriched (Phones)</span></div>
-            <div class="metric"><span class="m-val" id="bStatEmails">0</span><span class="m-lbl">Emails Found</span></div>
-            <div class="metric"><span class="m-val" id="bStatAdded">0</span><span class="m-lbl">Saved to List</span></div>
+        <!-- Terminal & Real-Time Stats -->
+        <div class="console-wrapper">
+          <div class="console-stats">
+            <div class="c-stat"><span id="statFound" class="c-val">0</span><span class="c-lbl">Places Extracted</span></div>
+            <div class="c-stat"><span id="statPhones" class="c-val text-success">0</span><span class="c-lbl">Phones Normalized</span></div>
+            <div class="c-stat"><span id="statWebsites" class="c-val">0</span><span class="c-lbl">Websites Found</span></div>
+            <div class="c-stat"><span id="statSaved" class="c-val text-primary">0</span><span class="c-lbl">Saved to List</span></div>
           </div>
 
-          <div class="progress-track">
-            <div id="scrapeProgressBar" class="progress-bar-fill"></div>
+          <div class="progress-bar-rail">
+            <div id="scrapeProgressFill" class="progress-bar-core"></div>
           </div>
 
-          <div class="terminal-shell" id="builderTerminal">
-            <div class="t-line info">[Ready] Multi-source Ontario Lead Mining Engine loaded. Select cities and click Start.</div>
+          <div id="scrapeConsoleTerminal" class="console-terminal">
+            <div class="term-line info">[Engine Ready] Select target municipalities and industries, then click 'Mine Qualified Leads'.</div>
           </div>
 
-          <div class="results-actions">
-            <button id="btnPushToCrm" class="btn btn-success">Load Harvested Leads Into Active Dialer CRM</button>
+          <div class="console-actions">
+            <button id="btnPushHarvestToCrm" class="btn btn-success">Load Leads Into Dialer Cockpit</button>
             <button id="btnDownloadHarvestCsv" class="btn btn-outline">&darr; Download CSV File</button>
           </div>
         </div>
-      </main>
+      </section>
 
     </div>
-  </div>
+  </main>
 
-  <!-- ================= IN-CALL ACTIVE HUD ================= -->
-  <aside id="callHud" class="call-hud hidden">
-    <div class="hud-content">
-      <span class="pulse-ring"></span>
-      <span id="hudEntityName" class="hud-entity">Dialing...</span>
+  <!-- ================= ACTIVE CALL HUD ================= -->
+  <aside id="activeCallHud" class="call-banner hidden">
+    <div class="call-banner-info">
+      <span class="pulse-emerald"></span>
+      <span id="hudProspectName">In Call...</span>
     </div>
-    <div id="hudCallTimer" class="hud-timer">00:00</div>
-    <button id="btnEndHudCall" class="btn btn-sm btn-danger">End Call</button>
+    <div id="hudTimerClock" class="hud-timer">00:00</div>
+    <button id="btnEndCallHud" class="btn btn-xs btn-danger">End Call</button>
   </aside>
 
-  <!-- ================= EDIT / ADD LEAD MODAL ================= -->
-  <div id="leadModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modalTitle">Edit Account</h3>
-        <button class="modal-close" id="btnCloseModal">&times;</button>
-      </div>
-      <form id="leadForm" class="modal-form">
-        <input type="hidden" id="fId">
-        <div class="form-row col-2">
+  <!-- ================= ADD / EDIT LEAD MODAL ================= -->
+  <div id="modalAccount" class="modal-backdrop hidden">
+    <div class="modal-window">
+      <header class="modal-mast">
+        <h3 id="modalHeading">Edit Prospect</h3>
+        <button id="btnCloseAccountModal" class="btn-close">&times;</button>
+      </header>
+      <form id="formAccount" class="modal-form">
+        <input type="hidden" id="fieldId">
+        <div class="field-row span-2">
           <label>Company Name *</label>
-          <input type="text" id="fCompany" required>
+          <input type="text" id="fieldCompany" required>
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>Contact Name</label>
-          <input type="text" id="fName">
+          <input type="text" id="fieldName">
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>Job Title</label>
-          <input type="text" id="fJobTitle">
+          <input type="text" id="fieldRole">
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>Phone Number *</label>
-          <input type="text" id="fPhone" required>
+          <input type="text" id="fieldPhone" required>
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>Email Address</label>
-          <input type="email" id="fEmail">
+          <input type="email" id="fieldEmail">
         </div>
-        <div class="form-row col-2">
+        <div class="field-row span-2">
           <label>Website URL</label>
-          <input type="url" id="fWebsite">
+          <input type="url" id="fieldWebsite">
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>City</label>
-          <input type="text" id="fCity">
+          <input type="text" id="fieldCity">
         </div>
-        <div class="form-row">
+        <div class="field-row">
           <label>Postal Code</label>
-          <input type="text" id="fPostalCode">
+          <input type="text" id="fieldPostalCode">
         </div>
-        <div class="form-row col-2">
+        <div class="field-row span-2">
           <label>Street Address</label>
-          <input type="text" id="fAddress">
+          <input type="text" id="fieldAddress">
         </div>
-        <div class="form-row col-2">
-          <label>Notes & Intelligence</label>
-          <textarea id="fNotes" rows="3"></textarea>
+        <div class="field-row span-2">
+          <label>Notes & Context</label>
+          <textarea id="fieldNotes" rows="3"></textarea>
         </div>
-        <div class="modal-footer col-2">
-          <button type="button" class="btn btn-outline" id="btnCancelModal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-        </div>
+        <footer class="modal-actions span-2">
+          <button type="button" id="btnCancelModal" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Prospect</button>
+        </footer>
       </form>
     </div>
   </div>
 
-  <!-- Toast Notification Hub -->
-  <div id="toastMessage" class="toast-box hidden"></div>
+  <!-- Notification Toast -->
+  <div id="editorialToast" class="toast-card hidden"></div>
 
   <script src="app.js"></script>
 </body>

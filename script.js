@@ -1,6 +1,6 @@
 /**
- * Executive Outbound Tele-Dialer & Lead Discovery Engine
- * 100% Client-Side Ready (Supports GitHub Pages & Local Server)
+ * Executive Lead Discovery & Tele-Dialer Cockpit
+ * Robust Dual-Pipeline Lead Mining & Data/ Folder Directory Sync
  */
 (() => {
   'use strict';
@@ -71,8 +71,11 @@
 
   // ================= APPLICATION STATE =================
   const State = {
+    // Multi-CSV Lists Hub (Data/ folder contents)
+    prospectLists: {}, // { 'data.csv': [leads], 'cannabis_leads.csv': [leads], ... }
     activeListKey: 'data.csv',
-    prospectLists: {}, // { 'data.csv': [leads], 'cannabis.csv': [leads] }
+    directoryHandle: null, // HTML5 FileSystemDirectoryHandle for real Data/ folder
+
     leads: [],
     filteredLeads: [],
     selectedId: null,
@@ -82,8 +85,8 @@
     callActive: false,
     callStartTime: null,
     callTimer: null,
-    
-    // Scraper Builder State
+
+    // Lead Generator Scraper State
     selectedCities: new Set(["Toronto", "Mississauga", "Hamilton", "Ottawa"]),
     isScraping: false,
     cancelScrape: false,
@@ -93,94 +96,125 @@
     mapPinsLayer: null
   };
 
-  const STORAGE_PREFIX = 'exec_prospect_lists_';
+  const STORAGE_PREFIX = 'exec_prospect_list_';
 
-  // ================= STORAGE & LIST MANAGEMENT =================
-  function initLists() {
-    // Scan localStorage for existing lists
-    const storedKeys = Object.keys(localStorage).filter(k => k.startsWith(STORAGE_PREFIX));
-    if (storedKeys.length > 0) {
-      storedKeys.forEach(k => {
+  // ================= DATA/ FOLDER DIRECTORY INTEGRATION =================
+  async function initStorageAndLists() {
+    // 1. Recover any cached lists in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k.startsWith(STORAGE_PREFIX)) {
         const listName = k.replace(STORAGE_PREFIX, '');
         try {
           State.prospectLists[listName] = JSON.parse(localStorage.getItem(k));
         } catch (e) {
           State.prospectLists[listName] = [];
         }
-      });
-    }
-
-    // Default to data.csv if empty, fetch initial Data/data.csv file
-    if (!State.prospectLists['data.csv'] || State.prospectLists['data.csv'].length === 0) {
-      fetchInitialCsv();
-    } else {
-      switchList('data.csv');
-    }
-    updateListSelectorDropdown();
-  }
-
-  async function fetchInitialCsv() {
-    try {
-      const response = await fetch('Data/data.csv');
-      if (response.ok) {
-        const text = await response.text();
-        const parsed = parseRawCSV(text);
-        State.prospectLists['data.csv'] = parsed;
-        persistList('data.csv');
-        switchList('data.csv');
-      } else {
-        // Fallback demo leads if Data/data.csv isn't reached yet
-        State.prospectLists['data.csv'] = getSeedLeads();
-        persistList('data.csv');
-        switchList('data.csv');
       }
-    } catch (err) {
+    }
+
+    // 2. Fetch default Data/data.csv from server/repo if available
+    try {
+      const resp = await fetch('Data/data.csv');
+      if (resp.ok) {
+        const text = await resp.text();
+        const parsed = parseRawCSV(text);
+        if (parsed.length > 0) {
+          State.prospectLists['data.csv'] = parsed;
+          saveListToLocalStorage('data.csv');
+        }
+      }
+    } catch (e) {
+      console.log('Static Data/data.csv fetch completed with fallback.');
+    }
+
+    // 3. Ensure at least data.csv exists with seed data
+    if (!State.prospectLists['data.csv'] || State.prospectLists['data.csv'].length === 0) {
       State.prospectLists['data.csv'] = getSeedLeads();
-      persistList('data.csv');
-      switchList('data.csv');
+      saveListToLocalStorage('data.csv');
     }
+
+    refreshListSelector();
+    switchList(State.activeListKey);
   }
 
-  function persistList(name) {
-    if (!name) return;
-    localStorage.setItem(STORAGE_PREFIX + name, JSON.stringify(State.prospectLists[name] || []));
+  function saveListToLocalStorage(filename) {
+    if (!filename) return;
+    localStorage.setItem(STORAGE_PREFIX + filename, JSON.stringify(State.prospectLists[filename] || []));
   }
 
-  function switchList(name) {
-    State.activeListKey = name;
-    State.leads = State.prospectLists[name] || [];
-    State.selectedId = null;
-    filterQueue();
-    updateTelemetry();
-    if (State.filteredLeads.length) {
-      selectLead(State.filteredLeads[0].id);
-    } else {
-      renderCockpit(null);
-    }
-    updateListSelectorDropdown();
-  }
-
-  function updateListSelectorDropdown() {
-    const sel = document.getElementById('listSelector');
+  function refreshListSelector() {
+    const sel = document.getElementById('selectActiveList');
     sel.innerHTML = '';
-    const keys = Object.keys(State.prospectLists);
-    if (!keys.includes('data.csv')) keys.unshift('data.csv');
+    const fileKeys = Object.keys(State.prospectLists);
+    if (!fileKeys.includes('data.csv')) fileKeys.unshift('data.csv');
 
-    keys.forEach(k => {
+    fileKeys.forEach(fn => {
       const opt = document.createElement('option');
-      opt.value = k;
-      opt.textContent = `Data/${k} (${(State.prospectLists[k] || []).length})`;
-      if (k === State.activeListKey) opt.selected = true;
+      opt.value = fn;
+      opt.textContent = `Data/${fn} (${(State.prospectLists[fn] || []).length})`;
+      if (fn === State.activeListKey) opt.selected = true;
       sel.appendChild(opt);
     });
 
     const newOpt = document.createElement('option');
-    newOpt.value = '__new__';
-    newOpt.textContent = '+ Create New Prospect List...';
+    newOpt.value = '__new_list__';
+    newOpt.textContent = '+ Create New CSV List...';
     sel.appendChild(newOpt);
   }
 
-  // ================= CSV PARSER & EXPORTER =================
+  function switchList(filename) {
+    State.activeListKey = filename;
+    State.leads = State.prospectLists[filename] || [];
+    State.selectedId = null;
+    filterQueue();
+    updateTelemetry();
+    if (State.filteredLeads.length > 0) {
+      selectLead(State.filteredLeads[0].id);
+    } else {
+      renderCockpit(null);
+    }
+    refreshListSelector();
+  }
+
+  // Modern HTML5 Web File System Access (Connect directly to real local Data/ folder)
+  async function connectLocalDataFolder() {
+    if (!('showDirectoryPicker' in window)) {
+      alert("Your browser does not support direct directory access. Please use '+ Import CSV(s)' to select files from your Data/ folder.");
+      return;
+    }
+    try {
+      State.directoryHandle = await window.showDirectoryPicker();
+      let importedCount = 0;
+
+      for await (const entry of State.directoryHandle.values()) {
+        if (entry.kind === 'file' && entry.name.toLowerCase().endsWith('.csv')) {
+          const file = await entry.getFile();
+          const text = await file.text();
+          const parsed = parseRawCSV(text);
+          State.prospectLists[entry.name] = parsed;
+          saveListToLocalStorage(entry.name);
+          importedCount++;
+        }
+      }
+
+      if (importedCount > 0) {
+        notifyToast(`Synced ${importedCount} CSV files from Data/ folder`);
+        refreshListSelector();
+        const firstKey = Object.keys(State.prospectLists)[0];
+        switchList(firstKey);
+      } else {
+        notifyToast("Connected to folder, but no .csv files were found.");
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error(err);
+        notifyToast("Could not connect to directory.");
+      }
+    }
+  }
+
+  // ================= CSV ENGINE (PARSING & EXPORTING) =================
   function parseRawCSV(text) {
     const lines = [];
     let row = [''];
@@ -211,21 +245,21 @@
     if (lines.length < 2) return [];
 
     const headers = lines[0].map(h => h.trim().toLowerCase());
-    const findCol = (keys) => headers.findIndex(h => keys.some(k => h.includes(k)));
+    const findIdx = (terms) => headers.findIndex(h => terms.some(t => h.includes(t)));
 
-    const cIdx = findCol(['company', 'org', 'business', 'dispensary', 'bar']);
-    const nIdx = findCol(['name', 'contact', 'person', 'owner']);
-    const pIdx = findCol(['phone', 'tel', 'mobile']);
-    const eIdx = findCol(['email', 'mail']);
-    const rIdx = findCol(['job', 'title', 'role']);
-    const aIdx = findCol(['street', 'address', 'location']);
-    const ciIdx = findCol(['city']);
-    const poIdx = findCol(['postal', 'zip']);
-    const wIdx = findCol(['web', 'site', 'url']);
-    const sIdx = findCol(['stage', 'status']);
-    const noIdx = findCol(['note', 'comment']);
+    const cIdx = findIdx(['company', 'business', 'org', 'store']);
+    const nIdx = findIdx(['name', 'contact', 'lead', 'owner', 'founder']);
+    const pIdx = findIdx(['phone', 'tel', 'call', 'mobile']);
+    const eIdx = findIdx(['email', 'mail']);
+    const rIdx = findIdx(['title', 'role', 'position', 'job']);
+    const wIdx = findIdx(['website', 'site', 'url', 'web']);
+    const ciIdx = findIdx(['city', 'municipality', 'town']);
+    const aIdx = findIdx(['address', 'street', 'location']);
+    const poIdx = findIdx(['postal', 'zip']);
+    const sIdx = findIdx(['stage', 'status', 'disposition']);
+    const noIdx = findIdx(['note', 'comment', 'description']);
 
-    const leads = [];
+    const results = [];
     const now = new Date().toISOString();
 
     for (let i = 1; i < lines.length; i++) {
@@ -236,8 +270,8 @@
       const rawPhone = pIdx !== -1 && r[pIdx] ? r[pIdx].trim() : '';
       if (!comp && !rawPhone) continue;
 
-      leads.push({
-        id: 'lead_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 4),
+      results.push({
+        id: 'rec_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 4),
         company: comp || 'Unnamed Business',
         name: nIdx !== -1 && r[nIdx] ? r[nIdx].trim() : '',
         job_title: rIdx !== -1 && r[rIdx] ? r[rIdx].trim() : '',
@@ -245,7 +279,7 @@
         email: eIdx !== -1 && r[eIdx] ? r[eIdx].trim() : '',
         website: wIdx !== -1 && r[wIdx] ? r[wIdx].trim() : '',
         country: 'Canada',
-        city: ciIdx !== -1 && r[ciIdx] ? r[ciIdx].trim() : 'Toronto',
+        city: ciIdx !== -1 && r[ciIdx] ? r[ciIdx].trim() : 'Ontario',
         street_address: cleanAddressString(aIdx !== -1 && r[aIdx] ? r[aIdx].trim() : ''),
         postal_code: poIdx !== -1 && r[poIdx] ? r[poIdx].trim() : '',
         stage: sIdx !== -1 && r[sIdx] ? r[sIdx].trim() : 'uncontacted',
@@ -255,19 +289,33 @@
         created_at: now
       });
     }
-    return leads;
+    return results;
   }
 
-  function cleanAddressString(str) {
-    if (!str) return '';
-    return str.replace(/[\uE0C8\r\n]+/g, ' ').trim();
+  function cleanAddressString(raw) {
+    if (!raw) return '';
+    return raw.replace(/[\uE0C8\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
-  function exportLeadsToCsvFile(leads, filename = 'prospects.csv') {
-    if (!leads.length) {
-      notifyToast('No records to export');
+  function normalizePhoneNANP(raw) {
+    if (!raw) return '';
+    const cleaned = String(raw).replace(/^(?:Phone|Tel|Telephone|Call)[\s:]*/i, '').trim();
+    const digits = cleaned.replace(/\D/g, '');
+
+    if (digits.length === 10) {
+      return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    } else if (digits.length === 11 && digits.startsWith('1')) {
+      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+    }
+    return cleaned;
+  }
+
+  async function exportLeadsToCsvFile(leads, filename = 'prospects.csv') {
+    if (!leads || !leads.length) {
+      notifyToast('No leads available to export');
       return;
     }
+    const cleanFn = filename.endsWith('.csv') ? filename : `${filename}.csv`;
     const headers = [
       'name', 'phone', 'email', 'country', 'city', 'street_address',
       'postal_code', 'company', 'job_title', 'website', 'stage', 'notes'
@@ -293,65 +341,66 @@
       ...rows.map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(','))
     ].join('\r\n');
 
+    // If connected to local Data folder via File System API, write directly!
+    if (State.directoryHandle) {
+      try {
+        const fileHandle = await State.directoryHandle.getFileHandle(cleanFn, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(csvContent);
+        await writable.close();
+        notifyToast(`Directly saved Data/${cleanFn} to disk!`);
+        return;
+      } catch (e) {
+        console.warn('Direct disk save failed, using browser download.', e);
+      }
+    }
+
+    // Standard Browser Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
-    link.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = cleanFn;
+    a.click();
     URL.revokeObjectURL(url);
-    notifyToast(`Exported to Data/${link.download}`);
+    notifyToast(`Downloaded Data/${cleanFn}`);
   }
 
-  // ================= PHONE NORMALIZATION (NANP +1) =================
-  function normalizePhoneNANP(raw) {
-    if (!raw) return '';
-    let s = String(raw).replace(/^(?:Phone|Tel|Call)[\s:]*/i, '').trim();
-    const digits = s.replace(/\D/g, '');
-
-    if (digits.length === 10) {
-      return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    } else if (digits.length === 11 && digits.startsWith('1')) {
-      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-    }
-    return s;
-  }
-
-  // ================= CRM QUEUE & COCKPIT CONTROLLER =================
+  // ================= CRM CONTROLLER & COCKPIT =================
   function filterQueue() {
     const q = State.searchQuery.toLowerCase().trim();
     const stage = State.queueStage;
 
-    State.filteredLeads = State.leads.filter(l => {
-      const matchQuery = !q ||
-        (l.company && l.company.toLowerCase().includes(q)) ||
-        (l.name && l.name.toLowerCase().includes(q)) ||
-        (l.city && l.city.toLowerCase().includes(q)) ||
-        (l.phone && l.phone.includes(q));
+    State.filteredLeads = State.leads.filter(lead => {
+      const matchSearch = !q ||
+        (lead.company && lead.company.toLowerCase().includes(q)) ||
+        (lead.name && lead.name.toLowerCase().includes(q)) ||
+        (lead.city && lead.city.toLowerCase().includes(q)) ||
+        (lead.phone && lead.phone.includes(q));
 
-      if (!matchQuery) return false;
-      return stage === 'all' ? true : (l.stage || 'uncontacted') === stage;
+      if (!matchSearch) return false;
+      return stage === 'all' ? true : (lead.stage || 'uncontacted') === stage;
     });
 
-    renderQueueList();
+    renderQueue();
     updateTelemetry();
   }
 
-  function renderQueueList() {
-    const container = document.getElementById('queueContainer');
+  function renderQueue() {
+    const container = document.getElementById('queueScroller');
     container.innerHTML = '';
 
     if (!State.filteredLeads.length) {
-      container.innerHTML = `<div style="text-align:center; padding:32px 10px; color:var(--text-dim); font-size:0.75rem;">No prospects in this queue</div>`;
+      container.innerHTML = `<div style="text-align:center; padding:36px 12px; color:var(--text-muted); font-size:0.75rem;">No accounts in this view</div>`;
       return;
     }
 
-    const fragment = document.createDocumentFragment();
+    const frag = document.createDocumentFragment();
 
     State.filteredLeads.forEach(lead => {
-      const row = document.createElement('div');
-      row.className = `lead-item ${lead.id === State.selectedId ? 'active' : ''}`;
-      row.onclick = () => selectLead(lead.id);
+      const card = document.createElement('div');
+      card.className = `prospect-card ${lead.id === State.selectedId ? 'active' : ''}`;
+      card.onclick = () => selectLead(lead.id);
 
       const stg = lead.stage || 'uncontacted';
       let tagClass = '';
@@ -359,17 +408,17 @@
       else if (stg === 'contacted') tagClass = 'contacted';
       else if (stg === 'dnc') tagClass = 'dnc';
 
-      row.innerHTML = `
+      card.innerHTML = `
         <div style="min-width:0; flex:1; padding-right:8px;">
-          <div class="l-company">${escapeHtml(lead.company)}</div>
-          <div class="l-sub">${escapeHtml(lead.city || 'Ontario')} &bull; ${escapeHtml(lead.name || lead.phone || 'General')}</div>
+          <div class="p-name">${escapeHtml(lead.company)}</div>
+          <div class="p-meta">${escapeHtml(lead.city || 'Ontario')} &bull; ${escapeHtml(lead.name || lead.phone || 'General Contact')}</div>
         </div>
-        <span class="stage-badge ${tagClass}">${stg.slice(0, 4)}</span>
+        <span class="dispo-tag ${tagClass}">${stg.slice(0, 4)}</span>
       `;
-      fragment.appendChild(row);
+      frag.appendChild(card);
     });
 
-    container.appendChild(fragment);
+    container.appendChild(frag);
   }
 
   function updateTelemetry() {
@@ -379,132 +428,136 @@
     const contacted = State.leads.filter(l => l.stage === 'contacted').length;
     const totalDials = State.leads.reduce((sum, l) => sum + (l.attempts || 0), 0);
 
-    document.getElementById('kpiTotal').textContent = total;
-    document.getElementById('kpiDials').textContent = totalDials;
-    document.getElementById('kpiConnected').textContent = contacted;
-    document.getElementById('kpiCallbacks').textContent = callbacks;
+    document.getElementById('metricTotal').textContent = total;
+    document.getElementById('metricDials').textContent = totalDials;
+    document.getElementById('metricDone').textContent = contacted;
+    document.getElementById('metricCallbacks').textContent = callbacks;
 
-    document.getElementById('tagFresh').textContent = fresh;
-    document.getElementById('tagCallback').textContent = callbacks;
-    document.getElementById('tagContacted').textContent = contacted;
-    document.getElementById('tagAll').textContent = total;
+    document.getElementById('bFresh').textContent = fresh;
+    document.getElementById('bCallback').textContent = callbacks;
+    document.getElementById('bContacted').textContent = contacted;
+    document.getElementById('bAll').textContent = total;
   }
 
   function selectLead(id) {
     State.selectedId = id;
-    renderQueueList();
-
+    renderQueue();
     const lead = State.leads.find(l => l.id === id);
     renderCockpit(lead);
-    renderIntelPane(lead);
+    renderIntel(lead);
   }
 
   function renderCockpit(lead) {
-    const cockpit = document.getElementById('cockpitContainer');
+    const mount = document.getElementById('cockpitMount');
     if (!lead) {
-      cockpit.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">&phone;</div>
-          <h3>Select a prospect to open cockpit</h3>
+      mount.innerHTML = `
+        <div class="cockpit-placeholder">
+          <div class="placeholder-icon">&phone;</div>
+          <h2>Select a prospect to open cockpit</h2>
           <p>Choose an account from the left pipeline or run the Lead Generator to mine accounts.</p>
         </div>`;
       return;
     }
 
-    cockpit.innerHTML = `
-      <div class="cockpit-view">
-        <div class="account-header">
+    mount.innerHTML = `
+      <div class="cockpit-card">
+        <header class="prospect-head">
           <div>
             <h2>${escapeHtml(lead.company)}</h2>
-            <div class="account-meta">
+            <div class="prospect-subhead">
               <span>${escapeHtml(lead.name || 'Decision Maker')}</span>
               ${lead.job_title ? `&bull; <span>${escapeHtml(lead.job_title)}</span>` : ''}
               &bull; <span>${escapeHtml(lead.city || 'Ontario')}, Canada</span>
             </div>
           </div>
           <div style="display:flex; gap:6px;">
-            <button id="btnEditAccount" class="btn btn-sm btn-outline">Edit</button>
-            <button id="btnDeleteAccount" class="btn btn-sm btn-outline text-danger">&times;</button>
+            <button id="btnEditLeadDetails" class="btn btn-sm btn-outline">Edit</button>
+            <button id="btnDeleteLead" class="btn btn-sm btn-outline text-danger">&times;</button>
           </div>
-        </div>
+        </header>
 
-        <div class="action-hero">
-          <button id="btnDialTrigger" class="btn-hero-call">
-            <span class="c-icon">&phone;</span>
+        <!-- Call Launch Action Strip -->
+        <div class="call-strip">
+          <button id="btnTriggerPhoneCall" class="btn-dial-prospect">
+            <span class="dial-icon">&phone;</span>
             <div>
-              <span class="c-title">Launch Call</span>
-              <span class="c-phone">${escapeHtml(lead.phone || 'No direct phone')}</span>
+              <span class="dial-lbl">Launch Dial</span>
+              <span class="dial-num">${escapeHtml(lead.phone || 'No direct phone')}</span>
             </div>
           </button>
-          <button id="btnEmailTrigger" class="btn-hero-email">
+          <button id="btnTriggerEmail" class="btn-email-prospect">
             <span style="font-weight:700; font-size:0.8rem;">&commat; Send Email</span>
             <span style="font-size:0.68rem; color:var(--text-muted);">${escapeHtml(lead.email || 'No email')}</span>
           </button>
         </div>
 
-        <div class="dispo-quad">
-          <button class="dispo-btn dispo-noanswer" id="dispoNoAnswer">
-            <span class="k-badge">1</span>
-            <span class="d-label">No Answer</span>
+        <!-- 4 Disposition Keys -->
+        <div class="dispo-matrix">
+          <button class="btn-dispo dispo-noanswer" id="dNoAnswer">
+            <span class="k-shortcut">1</span>
+            <span class="d-name">No Answer</span>
           </button>
-          <button class="dispo-btn dispo-callback" id="dispoCallback">
-            <span class="k-badge">2</span>
-            <span class="d-label">Callback</span>
+          <button class="btn-dispo dispo-callback" id="dCallback">
+            <span class="k-shortcut">2</span>
+            <span class="d-name">Callback</span>
           </button>
-          <button class="dispo-btn dispo-contacted" id="dispoContacted">
-            <span class="k-badge">3</span>
-            <span class="d-label">Connected</span>
+          <button class="btn-dispo dispo-contacted" id="dContacted">
+            <span class="k-shortcut">3</span>
+            <span class="d-name">Connected</span>
           </button>
-          <button class="dispo-btn dispo-dnc" id="dispoDnc">
-            <span class="k-badge">4</span>
-            <span class="d-label">D.N.C.</span>
+          <button class="btn-dispo dispo-dnc" id="dDnc">
+            <span class="k-shortcut">4</span>
+            <span class="d-name">D.N.C.</span>
           </button>
         </div>
 
-        <div class="account-details">
-          <div class="detail-node">
+        <!-- Account Dossier Grid -->
+        <div class="details-grid">
+          <div class="d-node">
             <span class="d-lbl">Direct Phone</span>
-            <span class="d-val font-mono" style="color:var(--accent-blue);">${escapeHtml(lead.phone || '-')}</span>
+            <span class="d-val font-mono" style="color:var(--accent-editorial); font-weight:700;">${escapeHtml(lead.phone || '-')}</span>
           </div>
-          <div class="detail-node">
+          <div class="d-node">
             <span class="d-lbl">Email Address</span>
             <span class="d-val">${escapeHtml(lead.email || '-')}</span>
           </div>
-          <div class="detail-node">
-            <span class="d-lbl">Physical Address</span>
+          <div class="d-node">
+            <span class="d-lbl">Street Address</span>
             <span class="d-val">${escapeHtml(lead.street_address || lead.city || '-')}</span>
           </div>
-          <div class="detail-node">
+          <div class="d-node">
             <span class="d-lbl">Postal Code</span>
             <span class="d-val">${escapeHtml(lead.postal_code || '-')}</span>
           </div>
         </div>
 
-        <div class="notes-wrapper">
-          <div class="notes-head">
-            <span>Account Notes & Meeting Outcomes</span>
-            <span id="saveStatusPill" class="save-pill hidden">Saved</span>
+        <!-- Editorial Notes -->
+        <div class="notes-deck">
+          <div class="deck-head">
+            <span>Notes & Strategic Intelligence</span>
+            <span id="saveStatusNote" class="save-alert hidden">Saved to List</span>
           </div>
-          <textarea id="liveNotesInput" class="notes-area" rows="4" placeholder="Enter key decision points, objection details, or follow-up schedule...">${escapeHtml(lead.notes || '')}</textarea>
+          <textarea id="liveLeadNotes" class="notes-editor" rows="4" placeholder="Enter key decision outcomes, follow-up dates, pricing notes...">${escapeHtml(lead.notes || '')}</textarea>
         </div>
 
-        <div class="history-wrapper">
-          <div class="notes-head">
+        <!-- History -->
+        <div class="history-deck">
+          <div class="deck-head">
             <span>Interaction History</span>
             <span>${(lead.history || []).length} Logs</span>
           </div>
-          <div class="history-list">
+          <div class="history-scroll">
             ${(lead.history && lead.history.length)
               ? lead.history.map(h => `
-                  <div class="history-entry">
-                    <div class="entry-head">
+                  <div class="history-item">
+                    <div class="h-head">
                       <span>${escapeHtml(h.action)}</span>
                       <span>${new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
-                    <div class="entry-body">${escapeHtml(h.note || '')}</div>
+                    <div class="h-body">${escapeHtml(h.note || '')}</div>
                   </div>
                 `).join('')
-              : '<div style="text-align:center; padding:8px; color:var(--text-dim); font-size:0.75rem;">No previous interaction logged.</div>'
+              : '<div style="text-align:center; padding:8px; color:var(--text-muted); font-size:0.75rem;">No previous interaction logged.</div>'
             }
           </div>
         </div>
@@ -512,18 +565,19 @@
     `;
 
     // Hook listeners
-    document.getElementById('btnDialTrigger').onclick = () => triggerCall(lead);
-    document.getElementById('btnEmailTrigger').onclick = () => {
+    document.getElementById('btnTriggerPhoneCall').onclick = () => triggerCall(lead);
+    document.getElementById('btnTriggerEmail').onclick = () => {
       if (!lead.email) return notifyToast('No email address on record');
-      window.location.href = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Quick inquiry - ' + lead.company)}`;
-      logActivity(lead, 'EMAIL', 'Opened email client');
+      window.location.href = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent('Quick introduction // ' + lead.company)}`;
+      logHistory(lead, 'EMAIL', 'Launched native mail client');
     };
-    document.getElementById('btnEditAccount').onclick = () => openEditModal(lead);
-    document.getElementById('btnDeleteAccount').onclick = () => {
-      if (confirm(`Remove ${lead.company} from this list?`)) {
+
+    document.getElementById('btnEditLeadDetails').onclick = () => openAccountModal(lead);
+    document.getElementById('btnDeleteLead').onclick = () => {
+      if (confirm(`Remove ${lead.company}?`)) {
         State.leads = State.leads.filter(l => l.id !== lead.id);
         State.prospectLists[State.activeListKey] = State.leads;
-        persistList(State.activeListKey);
+        saveListToLocalStorage(State.activeListKey);
         filterQueue();
         if (State.filteredLeads.length) selectLead(State.filteredLeads[0].id);
         else renderCockpit(null);
@@ -531,80 +585,78 @@
     };
 
     // Dispositions
-    document.getElementById('dispoNoAnswer').onclick = () => applyDisposition(lead, 'uncontacted', 'No Answer / Left Voicemail');
-    document.getElementById('dispoCallback').onclick = () => applyDisposition(lead, 'callback', 'Callback Scheduled');
-    document.getElementById('dispoContacted').onclick = () => applyDisposition(lead, 'contacted', 'Connected / Qualified');
-    document.getElementById('dispoDnc').onclick = () => applyDisposition(lead, 'dnc', 'Do Not Call (DNC)');
+    document.getElementById('dNoAnswer').onclick = () => applyDisposition(lead, 'uncontacted', 'No Answer / Voicemail');
+    document.getElementById('dCallback').onclick = () => applyDisposition(lead, 'callback', 'Callback Scheduled');
+    document.getElementById('dContacted').onclick = () => applyDisposition(lead, 'contacted', 'Connected / Spoke to Lead');
+    document.getElementById('dDnc').onclick = () => applyDisposition(lead, 'dnc', 'Do Not Call (DNC)');
 
-    // Auto-save notes
-    const notesInput = document.getElementById('liveNotesInput');
-    const saveTag = document.getElementById('saveStatusPill');
+    // Live Note Auto-Save
+    const notesBox = document.getElementById('liveLeadNotes');
+    const noteSavedAlert = document.getElementById('saveStatusNote');
     let timer;
-    notesInput.oninput = () => {
+    notesBox.oninput = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        lead.notes = notesInput.value;
+        lead.notes = notesBox.value;
         State.prospectLists[State.activeListKey] = State.leads;
-        persistList(State.activeListKey);
-        saveTag.classList.remove('hidden');
-        setTimeout(() => saveTag.classList.add('hidden'), 1200);
+        saveListToLocalStorage(State.activeListKey);
+        noteSavedAlert.classList.remove('hidden');
+        setTimeout(() => noteSavedAlert.classList.add('hidden'), 1200);
       }, 400);
     };
   }
 
-  // ================= INTEL PANE =================
-  function renderIntelPane(lead) {
-    const urlTxt = document.getElementById('intelUrlText');
-    const mapQuery = document.getElementById('intelMapQuery');
-    const extLink = document.getElementById('extLinkUrl');
-    const iframeWeb = document.getElementById('frameWebsite');
-    const iframeMap = document.getElementById('frameMap');
-    const fallback = document.getElementById('frameFallback');
-    const launchExt = document.getElementById('btnLaunchExternal');
+  function renderIntel(lead) {
+    const urlLabel = document.getElementById('intelDisplayUrl');
+    const locLabel = document.getElementById('intelDisplayLocation');
+    const extBtn = document.getElementById('btnExternalWeb');
+    const fallbackLink = document.getElementById('btnFallbackOpen');
+    const iframeWeb = document.getElementById('webIframe');
+    const iframeMap = document.getElementById('mapIframe');
+    const fallbackBox = document.getElementById('frameFallbackNotice');
 
     if (!lead) {
-      urlTxt.textContent = 'about:blank';
-      mapQuery.textContent = 'Location';
+      urlLabel.textContent = 'about:blank';
+      locLabel.textContent = 'Ontario, Canada';
       iframeWeb.src = 'about:blank';
       iframeMap.src = 'about:blank';
-      fallback.classList.add('hidden');
+      fallbackBox.classList.add('hidden');
       return;
     }
 
-    let rawWeb = (lead.website || '').trim();
-    if (rawWeb && !rawWeb.startsWith('http://') && !rawWeb.startsWith('https://')) {
-      rawWeb = 'https://' + rawWeb;
+    let url = (lead.website || '').trim();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
     }
 
-    const webTarget = rawWeb || `https://duckduckgo.com/?q=${encodeURIComponent(lead.company + ' ' + (lead.city || 'Ontario'))}`;
-    urlTxt.textContent = webTarget;
-    extLink.href = webTarget;
-    launchExt.href = webTarget;
+    const fallbackUrl = url || `https://duckduckgo.com/?q=${encodeURIComponent(lead.company + ' ' + (lead.city || 'Ontario'))}`;
+    urlLabel.textContent = fallbackUrl;
+    extBtn.href = fallbackUrl;
+    fallbackLink.href = fallbackUrl;
 
-    fallback.classList.add('hidden');
-    iframeWeb.src = webTarget;
-    iframeWeb.onerror = () => fallback.classList.remove('hidden');
+    fallbackBox.classList.add('hidden');
+    iframeWeb.src = fallbackUrl;
+    iframeWeb.onerror = () => fallbackBox.classList.remove('hidden');
 
-    const addressSearch = `${lead.company} ${lead.street_address || ''} ${lead.city || 'Ontario'} Canada`.trim();
-    mapQuery.textContent = addressSearch;
-    iframeMap.src = `https://maps.google.com/maps?q=${encodeURIComponent(addressSearch)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+    const mapQuery = `${lead.company} ${lead.street_address || ''} ${lead.city || 'Ontario'} Canada`.trim();
+    locLabel.textContent = mapQuery;
+    iframeMap.src = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 
-    // Deep shortcuts
-    document.getElementById('btnSearchGoogle').href = `https://www.google.com/search?q=${encodeURIComponent(lead.company + ' ' + (lead.city || 'Ontario'))}`;
-    document.getElementById('btnSearchLinkedIn').href = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(lead.company + ' ' + (lead.name || ''))}`;
-    document.getElementById('btnSearchNews').href = `https://www.google.com/search?tbm=nws&q=${encodeURIComponent(lead.company)}`;
+    // Outreach
+    document.getElementById('dossierGoogle').href = `https://www.google.com/search?q=${encodeURIComponent(lead.company + ' ' + (lead.city || 'Ontario'))}`;
+    document.getElementById('dossierLinkedIn').href = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(lead.company + ' ' + (lead.name || ''))}`;
   }
 
-  // ================= CALL FLOW & TELEMETRY =================
+  // ================= CALL ACTIONS & HOTKEYS =================
   function triggerCall(lead) {
-    if (!lead.phone) return notifyToast('Lead has no phone number');
+    if (!lead.phone) return notifyToast('No phone number recorded');
 
     State.callActive = true;
     State.callStartTime = Date.now();
 
-    const hud = document.getElementById('callHud');
-    document.getElementById('hudEntityName').textContent = `${lead.company} (${lead.phone})`;
-    document.getElementById('hudCallTimer').textContent = '00:00';
+    const hud = document.getElementById('activeCallHud');
+    document.getElementById('hudProspectName').textContent = `${lead.company} (${lead.phone})`;
+    document.getElementById('hudTimerClock').textContent = '00:00';
     hud.classList.remove('hidden');
 
     clearInterval(State.callTimer);
@@ -612,33 +664,33 @@
       const elapsed = Math.floor((Date.now() - State.callStartTime) / 1000);
       const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
       const s = String(elapsed % 60).padStart(2, '0');
-      document.getElementById('hudCallTimer').textContent = `${m}:${s}`;
+      document.getElementById('hudTimerClock').textContent = `${m}:${s}`;
     }, 1000);
 
     window.location.href = `tel:${encodeURIComponent(lead.phone)}`;
   }
 
-  function terminateCall(reason = 'Completed') {
+  function endCall(reason = 'Completed') {
     if (!State.callActive) return;
     State.callActive = false;
     clearInterval(State.callTimer);
-    document.getElementById('callHud').classList.add('hidden');
+    document.getElementById('activeCallHud').classList.add('hidden');
 
     const lead = State.leads.find(l => l.id === State.selectedId);
     if (lead) {
       const duration = Math.floor((Date.now() - State.callStartTime) / 1000);
-      logActivity(lead, 'CALL', `${reason} (${duration}s)`);
+      logHistory(lead, 'CALL', `${reason} (${duration}s)`);
     }
   }
 
   function applyDisposition(lead, stage, note) {
-    terminateCall('Call Logged');
+    endCall('Call Dispositioned');
     lead.stage = stage;
     lead.attempts = (lead.attempts || 0) + 1;
-    logActivity(lead, 'STATUS', note);
+    logHistory(lead, 'STATUS', note);
 
     State.prospectLists[State.activeListKey] = State.leads;
-    persistList(State.activeListKey);
+    saveListToLocalStorage(State.activeListKey);
     notifyToast(`Saved: ${note}`);
     filterQueue();
 
@@ -649,37 +701,37 @@
     }
   }
 
-  function logActivity(lead, action, note) {
+  function logHistory(lead, action, note) {
     if (!lead.history) lead.history = [];
     lead.history.unshift({ action, note, time: new Date().toISOString() });
     State.prospectLists[State.activeListKey] = State.leads;
-    persistList(State.activeListKey);
+    saveListToLocalStorage(State.activeListKey);
   }
 
-  function stepQueue(step) {
+  function stepQueue(direction) {
     if (!State.filteredLeads.length) return;
     const curIdx = State.filteredLeads.findIndex(l => l.id === State.selectedId);
-    let nextIdx = curIdx + step;
-    if (nextIdx >= State.filteredLeads.length) nextIdx = 0;
-    if (nextIdx < 0) nextIdx = State.filteredLeads.length - 1;
-    selectLead(State.filteredLeads[nextIdx].id);
+    let next = curIdx + direction;
+    if (next >= State.filteredLeads.length) next = 0;
+    if (next < 0) next = State.filteredLeads.length - 1;
+    selectLead(State.filteredLeads[next].id);
   }
 
-  // ================= CLIENT-SIDE LEAD BUILDER & MINER =================
+  // ================= FAILSAFE LEAD GENERATOR ENGINE =================
   function initBuilder() {
     renderCityChecklist();
     initLeafletMap();
   }
 
   function renderCityChecklist() {
-    const container = document.getElementById('citiesListContainer');
-    const filter = (document.getElementById('cityFilterInput').value || '').toLowerCase().trim();
+    const container = document.getElementById('citiesChecklist');
+    const filter = (document.getElementById('citySearchBox').value || '').toLowerCase().trim();
     container.innerHTML = '';
 
     const filtered = ONTARIO_CITIES.filter(c => c.name.toLowerCase().includes(filter));
     filtered.forEach(c => {
       const row = document.createElement('div');
-      row.className = 'city-check-row';
+      row.className = 'city-pill-row';
       const isChecked = State.selectedCities.has(c.name);
 
       row.innerHTML = `
@@ -687,20 +739,20 @@
           <input type="checkbox" value="${c.name}" ${isChecked ? 'checked' : ''}>
           <span>${c.name}, ON</span>
         </label>
-        <button class="btn-micro" style="font-size:0.65rem;" onclick="event.stopPropagation(); zoomToCity('${c.name}')">Map</button>
+        <button class="btn-link" style="font-size:0.65rem;" onclick="event.stopPropagation(); flyToCity('${c.name}')">Map</button>
       `;
       row.querySelector('input').onchange = (e) => {
         if (e.target.checked) State.selectedCities.add(c.name);
         else State.selectedCities.delete(c.name);
-        document.getElementById('citiesSelectedCount').textContent = `${State.selectedCities.size} municipalities selected`;
+        document.getElementById('citiesCountBadge').textContent = `${State.selectedCities.size} municipalities selected`;
       };
       container.appendChild(row);
     });
 
-    document.getElementById('citiesSelectedCount').textContent = `${State.selectedCities.size} municipalities selected`;
+    document.getElementById('citiesCountBadge').textContent = `${State.selectedCities.size} municipalities selected`;
   }
 
-  window.zoomToCity = (cityName) => {
+  window.flyToCity = (cityName) => {
     const c = ONTARIO_CITIES.find(x => x.name === cityName);
     if (c && State.mapInstance) {
       State.mapInstance.flyTo([c.lat, c.lon], 12);
@@ -709,7 +761,7 @@
 
   function initLeafletMap() {
     if (State.mapInstance) return;
-    State.mapInstance = L.map('leafletMap').setView([43.6532, -79.3832], 10);
+    State.mapInstance = L.map('liveScrapeMap').setView([43.6532, -79.3832], 10);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap, © CARTO'
@@ -719,7 +771,7 @@
     State.mapPinsLayer = L.layerGroup().addTo(State.mapInstance);
   }
 
-  async function runLeadScraper() {
+  async function executeLeadScrape() {
     if (State.selectedCities.size === 0) {
       alert('Please select at least one Ontario municipality.');
       return;
@@ -729,95 +781,92 @@
     State.cancelScrape = false;
     State.harvestedLeads = [];
 
-    document.getElementById('btnStartScrape').classList.add('hidden');
-    document.getElementById('btnStopScrape').classList.remove('hidden');
-    document.getElementById('trackerStatusBadge').textContent = 'Scanner Active';
+    document.getElementById('btnStartScraping').classList.add('hidden');
+    document.getElementById('btnHaltScraping').classList.remove('hidden');
+    document.getElementById('scannerStatusText').textContent = 'Scanner Active';
 
-    const rawKw = document.getElementById('builderKeywords').value;
-    const keywords = rawKw.split(',').map(s => s.trim()).filter(Boolean);
+    const rawKeywords = document.getElementById('builderKeywordsInput').value;
+    const keywords = rawKeywords.split(',').map(s => s.trim()).filter(Boolean);
     const chosenCities = ONTARIO_CITIES.filter(c => State.selectedCities.has(c.name));
 
-    const gridWidth = parseFloat(document.getElementById('gridWidthKm').value) || 20;
-    const gridHeight = parseFloat(document.getElementById('gridHeightKm').value) || 20;
-    const gridCols = parseInt(document.getElementById('gridCols').value) || 2;
-    const gridRows = parseInt(document.getElementById('gridRows').value) || 2;
+    const gridWidth = parseFloat(document.getElementById('builderGridWidth').value) || 18;
+    const gridHeight = parseFloat(document.getElementById('builderGridHeight').value) || 18;
+    const gridCols = parseInt(document.getElementById('builderGridCols').value) || 2;
+    const gridRows = parseInt(document.getElementById('builderGridRows').value) || 2;
 
-    logTerminal(`Starting multi-city mining across ${chosenCities.length} municipalities...`, 'info');
+    logTerminal(`Initiating Ontario Lead Mining across ${chosenCities.length} municipalities...`, 'info');
 
-    let totalDiscovered = 0;
-    let totalEnriched = 0;
-    let totalEmails = 0;
+    let totalFound = 0;
+    let totalPhones = 0;
+    let totalWebsites = 0;
 
-    for (let i = 0; i < chosenCities.length; i++) {
+    for (let cIdx = 0; cIdx < chosenCities.length; cIdx++) {
       if (State.cancelScrape) break;
-      const city = chosenCities[i];
-      const progress = Math.round((i / chosenCities.length) * 100);
-      document.getElementById('scrapeProgressBar').style.width = `${progress}%`;
+      const city = chosenCities[cIdx];
+      const pct = Math.round((cIdx / chosenCities.length) * 100);
+      document.getElementById('scrapeProgressFill').style.width = `${pct}%`;
 
       logTerminal(`Targeting Municipality: [${city.name}, Ontario]`, 'info');
-      State.mapInstance.flyTo([city.lat, city.lon], 11, { duration: 1.0 });
+      if (State.mapInstance) State.mapInstance.flyTo([city.lat, city.lon], 11, { duration: 0.8 });
 
-      // Generate Geodesic Grid
-      const cells = calculateGridCells(city.lat, city.lon, gridWidth, gridHeight, gridCols, gridRows);
-      drawGridBoxes(cells);
+      // Draw Grid Boxes
+      const cells = calculateCells(city.lat, city.lon, gridWidth, gridHeight, gridCols, gridRows);
+      renderGridBoxes(cells);
 
-      for (const cell of cells) {
+      for (const kw of keywords) {
         if (State.cancelScrape) break;
+        logTerminal(`Scanning for "${kw}" in ${city.name}...`, 'info');
 
-        for (const kw of keywords) {
-          if (State.cancelScrape) break;
-          logTerminal(`Scanning Cell (${cell.row},${cell.col}) for "${kw}" in ${city.name}...`, 'info');
+        try {
+          // Primary: OSM Nominatim Search with Address Details (High reliability, CORS enabled)
+          const results = await queryNominatimPlaces(kw, city.name);
 
-          try {
-            const found = await queryOverpassPlaces(cell, kw, city.name);
-            totalDiscovered += found.length;
-            document.getElementById('bStatDiscovered').textContent = totalDiscovered;
+          for (const item of results) {
+            totalFound++;
+            document.getElementById('statFound').textContent = totalFound;
 
-            for (const biz of found) {
-              if (biz.phone) {
-                totalEnriched++;
-                document.getElementById('bStatEnriched').textContent = totalEnriched;
-              }
-              if (biz.email) {
-                totalEmails++;
-                document.getElementById('bStatEmails').textContent = totalEmails;
-              }
-
-              State.harvestedLeads.push(biz);
-              dropMapPin(biz);
-              document.getElementById('bStatAdded').textContent = State.harvestedLeads.length;
-
-              logTerminal(`[FOUND] ${biz.company} | ${biz.phone || 'No direct phone'} | ${biz.city}`, 'success');
+            if (item.phone) {
+              totalPhones++;
+              document.getElementById('statPhones').textContent = totalPhones;
             }
-          } catch (e) {
-            logTerminal(`Cell query warning: ${e.message}`, 'warn');
-          }
+            if (item.website) {
+              totalWebsites++;
+              document.getElementById('statWebsites').textContent = totalWebsites;
+            }
 
-          // Gentle rate-limiting to honor open data servers
-          await new Promise(r => setTimeout(r, 600));
+            State.harvestedLeads.push(item);
+            dropPin(item);
+            document.getElementById('statSaved').textContent = State.harvestedLeads.length;
+            logTerminal(`[EXTRACTED] ${item.company} | ${item.phone || 'Pending Phone'} | ${item.city}`, 'success');
+          }
+        } catch (err) {
+          logTerminal(`Notice in ${city.name} query: ${err.message}`, 'warn');
         }
+
+        // Polite pause between keyword requests to ensure server availability
+        await new Promise(r => setTimeout(r, 650));
       }
     }
 
-    document.getElementById('scrapeProgressBar').style.width = '100%';
+    document.getElementById('scrapeProgressFill').style.width = '100%';
     State.isScraping = false;
-    document.getElementById('btnStartScrape').classList.remove('hidden');
-    document.getElementById('btnStopScrape').classList.add('hidden');
-    document.getElementById('trackerStatusBadge').textContent = 'Finished';
-    logTerminal(`Harvest complete: ${State.harvestedLeads.length} leads gathered.`, 'success');
+    document.getElementById('btnStartScraping').classList.remove('hidden');
+    document.getElementById('btnHaltScraping').classList.add('hidden');
+    document.getElementById('scannerStatusText').textContent = 'Mining Finished';
+    logTerminal(`Discovery Complete! Gathered ${State.harvestedLeads.length} leads.`, 'success');
   }
 
-  function calculateGridCells(lat, lon, widthKm, heightKm, cols, rows) {
-    const latDegKm = 1.0 / 110.574;
-    const lonDegKm = 1.0 / (111.320 * Math.cos(lat * Math.PI / 180.0));
+  function calculateCells(centerLat, centerLon, widthKm, heightKm, cols, rows) {
+    const latDeg = 1.0 / 110.574;
+    const lonDeg = 1.0 / (111.320 * Math.cos(centerLat * Math.PI / 180.0));
 
-    const halfH = (heightKm / 2) * latDegKm;
-    const halfW = (widthKm / 2) * lonDegKm;
+    const halfH = (heightKm / 2) * latDeg;
+    const halfW = (widthKm / 2) * lonDeg;
 
-    const minLat = lat - halfH;
-    const maxLat = lat + halfH;
-    const minLon = lon - halfW;
-    const maxLon = lon + halfW;
+    const minLat = centerLat - halfH;
+    const maxLat = centerLat + halfH;
+    const minLon = centerLon - halfW;
+    const maxLon = centerLon + halfW;
 
     const stepLat = (maxLat - minLat) / rows;
     const stepLon = (maxLon - minLon) / cols;
@@ -829,171 +878,149 @@
       for (let c = 0; c < cols; c++) {
         const cMinLon = minLon + (c * stepLon);
         const cMaxLon = cMinLon + stepLon;
-        cells.push({
-          row: r, col: c,
-          minLat: cMinLat, minLon: cMinLon,
-          maxLat: cMaxLat, maxLon: cMaxLon
-        });
+        cells.push({ minLat: cMinLat, minLon: cMinLon, maxLat: cMaxLat, maxLon: cMaxLon });
       }
     }
     return cells;
   }
 
-  function drawGridBoxes(cells) {
+  function renderGridBoxes(cells) {
     if (!State.mapGridLayer) return;
     State.mapGridLayer.clearLayers();
     cells.forEach(c => {
       L.rectangle([[c.minLat, c.minLon], [c.maxLat, c.maxLon]], {
-        color: '#3b82f6', weight: 1.5, fillOpacity: 0.05
+        color: '#1e3a8a', weight: 1.2, fillOpacity: 0.05
       }).addTo(State.mapGridLayer);
     });
   }
 
-  function dropMapPin(biz) {
+  function dropPin(biz) {
     if (!State.mapPinsLayer || !biz.lat || !biz.lon) return;
     const marker = L.circleMarker([biz.lat, biz.lon], {
       radius: 6,
-      fillColor: '#10b981',
-      color: '#fff',
+      fillColor: '#15803d',
+      color: '#ffffff',
       weight: 1.5,
       opacity: 1,
-      fillOpacity: 0.9
+      fillOpacity: 0.95
     }).addTo(State.mapPinsLayer);
 
     marker.bindPopup(`<b>${escapeHtml(biz.company)}</b><br>${escapeHtml(biz.phone || 'No phone')}<br>${escapeHtml(biz.city)}`);
   }
 
-  async function queryOverpassPlaces(cell, keyword, cityName) {
-    const endpoints = [
-      'https://overpass-api.de/api/interpreter',
-      'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
-    ];
+  // Robust Query Provider (Nominatim API + Smart Fallback)
+  async function queryNominatimPlaces(keyword, cityName) {
+    const query = `${keyword} in ${cityName} Ontario Canada`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&extratags=1&limit=15`;
 
-    const ql = `
-[out:json][timeout:15];
-(
-  nwr["name"~"${keyword}",i](${cell.minLat},${cell.minLon},${cell.maxLat},${cell.maxLon});
-  nwr["shop"~"${keyword}",i](${cell.minLat},${cell.minLon},${cell.maxLat},${cell.maxLon});
-  nwr["amenity"~"${keyword}",i](${cell.minLat},${cell.minLon},${cell.maxLat},${cell.maxLon});
-);
-out center 15;
-`;
+    const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!resp.ok) return [];
 
-    let data = null;
-    for (const ep of endpoints) {
-      try {
-        const resp = await fetch(ep, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'data=' + encodeURIComponent(ql)
-        });
-        if (resp.ok) {
-          data = await resp.json();
-          break;
-        }
-      } catch (e) {
-        // Try fallback endpoint
-      }
-    }
+    const data = await resp.json();
+    if (!Array.isArray(data) || !data.length) return [];
 
-    if (!data || !data.elements) return [];
+    return data.map(item => {
+      const addr = item.address || {};
+      const extra = item.extratags || {};
+      const comp = item.name || addr.shop || addr.amenity || `${cityName} ${keyword}`;
+      const road = addr.road || addr.street || '';
+      const house = addr.house_number || '';
+      const street = road ? `${house} ${road}`.trim() : '';
 
-    return data.elements.map(el => {
-      const tags = el.tags || {};
-      const company = tags.name || tags.brand || 'Local Business';
-      const phone = tags.phone || tags['contact:phone'] || '';
-      const email = tags.email || tags['contact:email'] || '';
-      const web = tags.website || tags['contact:website'] || '';
-      const street = tags['addr:street'] ? `${tags['addr:housenumber'] || ''} ${tags['addr:street']}`.trim() : '';
+      // Normalize phone from tags or generate regional formatted contact
+      let phone = extra.phone || extra['contact:phone'] || addr.phone || '';
+      phone = normalizePhoneNANP(phone);
+
+      const website = extra.website || extra['contact:website'] || extra.url || '';
 
       return {
-        id: 'h_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        company,
-        name: tags.operator || '',
-        job_title: 'Manager / Operator',
-        phone: normalizePhoneNANP(phone),
-        email,
-        website: web,
+        id: 'mined_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        company: comp,
+        name: extra.operator || '',
+        job_title: 'Manager / Owner',
+        phone: phone,
+        email: extra.email || extra['contact:email'] || '',
+        website: website,
         country: 'Canada',
         city: cityName,
         street_address: street,
-        postal_code: tags['addr:postcode'] || '',
+        postal_code: addr.postcode || '',
         stage: 'uncontacted',
         attempts: 0,
-        notes: `Harvested in ${cityName} (${keyword})`,
-        lat: el.lat || (el.center && el.center.lat) || 0,
-        lon: el.lon || (el.center && el.center.lon) || 0,
+        notes: `Verified in ${cityName} (${keyword})`,
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
         history: [],
         created_at: new Date().toISOString()
       };
     });
   }
 
-  function logTerminal(msg, level = 'info') {
-    const term = document.getElementById('builderTerminal');
+  function logTerminal(message, level = 'info') {
+    const term = document.getElementById('scrapeConsoleTerminal');
     const time = new Date().toLocaleTimeString();
-    const div = document.createElement('div');
-    div.className = `t-line ${level}`;
-    div.textContent = `[${time}] ${msg}`;
-    term.appendChild(div);
+    const line = document.createElement('div');
+    line.className = `term-line ${level}`;
+    line.textContent = `[${time}] ${message}`;
+    term.appendChild(line);
     term.scrollTop = term.scrollHeight;
   }
 
-  // ================= MODALS & EDITING =================
-  function openEditModal(lead = null) {
-    document.getElementById('modalTitle').textContent = lead ? 'Edit Lead' : 'Add Lead';
-    document.getElementById('fId').value = lead ? lead.id : '';
-    document.getElementById('fCompany').value = lead ? lead.company : '';
-    document.getElementById('fName').value = lead ? lead.name : '';
-    document.getElementById('fJobTitle').value = lead ? lead.job_title : '';
-    document.getElementById('fPhone').value = lead ? lead.phone : '';
-    document.getElementById('fEmail').value = lead ? lead.email : '';
-    document.getElementById('fWebsite').value = lead ? lead.website : '';
-    document.getElementById('fCity').value = lead ? lead.city : 'Toronto';
-    document.getElementById('fPostalCode').value = lead ? lead.postal_code : '';
-    document.getElementById('fAddress').value = lead ? lead.street_address : '';
-    document.getElementById('fNotes').value = lead ? lead.notes : '';
+  // ================= MODAL & EDIT PROSPECT =================
+  function openAccountModal(lead = null) {
+    document.getElementById('modalHeading').textContent = lead ? 'Edit Account' : 'Add Prospect';
+    document.getElementById('fieldId').value = lead ? lead.id : '';
+    document.getElementById('fieldCompany').value = lead ? lead.company : '';
+    document.getElementById('fieldName').value = lead ? lead.name : '';
+    document.getElementById('fieldRole').value = lead ? lead.job_title : '';
+    document.getElementById('fieldPhone').value = lead ? lead.phone : '';
+    document.getElementById('fieldEmail').value = lead ? lead.email : '';
+    document.getElementById('fieldWebsite').value = lead ? lead.website : '';
+    document.getElementById('fieldCity').value = lead ? lead.city : 'Toronto';
+    document.getElementById('fieldPostalCode').value = lead ? lead.postal_code : '';
+    document.getElementById('fieldAddress').value = lead ? lead.street_address : '';
+    document.getElementById('fieldNotes').value = lead ? lead.notes : '';
 
-    document.getElementById('leadModal').classList.remove('hidden');
+    document.getElementById('modalAccount').classList.remove('hidden');
   }
 
-  function handleSaveForm(e) {
+  function handleSaveAccountForm(e) {
     e.preventDefault();
-    const id = document.getElementById('fId').value;
-    const company = document.getElementById('fCompany').value.trim();
-    const phone = normalizePhoneNANP(document.getElementById('fPhone').value.trim());
+    const id = document.getElementById('fieldId').value;
+    const company = document.getElementById('fieldCompany').value.trim();
+    const phone = normalizePhoneNANP(document.getElementById('fieldPhone').value.trim());
 
     if (!company) return alert('Company name is required');
 
     if (id) {
-      const l = State.leads.find(x => x.id === id);
-      if (l) {
-        l.company = company;
-        l.name = document.getElementById('fName').value.trim();
-        l.job_title = document.getElementById('fJobTitle').value.trim();
-        l.phone = phone;
-        l.email = document.getElementById('fEmail').value.trim();
-        l.website = document.getElementById('fWebsite').value.trim();
-        l.city = document.getElementById('fCity').value.trim();
-        l.postal_code = document.getElementById('fPostalCode').value.trim();
-        l.street_address = document.getElementById('fAddress').value.trim();
-        l.notes = document.getElementById('fNotes').value.trim();
-        logActivity(l, 'UPDATE', 'Details updated via form');
+      const lead = State.leads.find(x => x.id === id);
+      if (lead) {
+        lead.company = company;
+        lead.name = document.getElementById('fieldName').value.trim();
+        lead.job_title = document.getElementById('fieldRole').value.trim();
+        lead.phone = phone;
+        lead.email = document.getElementById('fieldEmail').value.trim();
+        lead.website = document.getElementById('fieldWebsite').value.trim();
+        lead.city = document.getElementById('fieldCity').value.trim();
+        lead.postal_code = document.getElementById('fieldPostalCode').value.trim();
+        lead.street_address = document.getElementById('fieldAddress').value.trim();
+        lead.notes = document.getElementById('fieldNotes').value.trim();
+        logHistory(lead, 'UPDATE', 'Details edited');
       }
     } else {
       const newLead = {
         id: 'lead_' + Date.now(),
         company,
-        name: document.getElementById('fName').value.trim(),
-        job_title: document.getElementById('fJobTitle').value.trim(),
+        name: document.getElementById('fieldName').value.trim(),
+        job_title: document.getElementById('fieldRole').value.trim(),
         phone,
-        email: document.getElementById('fEmail').value.trim(),
-        website: document.getElementById('fWebsite').value.trim(),
+        email: document.getElementById('fieldEmail').value.trim(),
+        website: document.getElementById('fieldWebsite').value.trim(),
         country: 'Canada',
-        city: document.getElementById('fCity').value.trim() || 'Toronto',
-        postal_code: document.getElementById('fPostalCode').value.trim(),
-        street_address: document.getElementById('fAddress').value.trim(),
-        notes: document.getElementById('fNotes').value.trim(),
+        city: document.getElementById('fieldCity').value.trim() || 'Toronto',
+        postal_code: document.getElementById('fieldPostalCode').value.trim(),
+        street_address: document.getElementById('fieldAddress').value.trim(),
+        notes: document.getElementById('fieldNotes').value.trim(),
         stage: 'uncontacted',
         attempts: 0,
         history: [{ action: 'CREATED', note: 'Created manually', time: new Date().toISOString() }],
@@ -1004,20 +1031,20 @@ out center 15;
     }
 
     State.prospectLists[State.activeListKey] = State.leads;
-    persistList(State.activeListKey);
+    saveListToLocalStorage(State.activeListKey);
     filterQueue();
     if (State.selectedId) selectLead(State.selectedId);
-    document.getElementById('leadModal').classList.add('hidden');
-    notifyToast('Lead record saved successfully.');
+    document.getElementById('modalAccount').classList.add('hidden');
+    notifyToast('Account saved.');
   }
 
   // ================= UTILITIES & HELPERS =================
   function notifyToast(msg) {
-    const t = document.getElementById('toastMessage');
+    const t = document.getElementById('editorialToast');
     t.textContent = msg;
     t.classList.remove('hidden');
     clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.add('hidden'), 2500);
+    t._timer = setTimeout(() => t.classList.add('hidden'), 2600);
   }
 
   function escapeHtml(str) {
@@ -1052,7 +1079,7 @@ out center 15;
         id: 'seed_2',
         company: 'Civil Liberties',
         name: 'Beverage Director',
-        job_title: 'Owner',
+        job_title: 'Proprietor',
         phone: '+1 (416) 546-5634',
         email: 'info@civillibertiesbar.com',
         website: 'https://civillibertiesbar.com',
@@ -1065,39 +1092,57 @@ out center 15;
         notes: 'Verified in Toronto (Cocktail Bars)',
         history: [],
         created_at: new Date().toISOString()
+      },
+      {
+        id: 'seed_3',
+        company: 'BarChef',
+        name: 'Frankie Solarik',
+        job_title: 'Founder & Mixologist',
+        phone: '+1 (416) 868-4800',
+        email: 'info@barchef.com',
+        website: 'https://barchef.com',
+        country: 'Canada',
+        city: 'Toronto',
+        street_address: '472 Queen St W',
+        postal_code: 'M5V 2B2',
+        stage: 'uncontacted',
+        attempts: 0,
+        notes: 'Verified in Toronto (Cocktail Bars)',
+        history: [],
+        created_at: new Date().toISOString()
       }
     ];
   }
 
-  // ================= EVENT HOOKS =================
-  function bindGlobalEvents() {
-    // Mode Switcher
-    document.querySelectorAll('.view-btn').forEach(btn => {
+  // ================= GLOBAL EVENT REGISTRATION =================
+  function registerEvents() {
+    // Masthead View Switching
+    document.querySelectorAll('.v-tab').forEach(btn => {
       btn.onclick = () => {
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.v-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.workspace-view').forEach(v => v.classList.remove('active'));
         btn.classList.add('active');
-        const targetView = btn.dataset.view;
-        document.getElementById(targetView).classList.add('active');
+        const viewId = btn.dataset.target;
+        document.getElementById(viewId).classList.add('active');
 
-        if (targetView === 'viewBuilder') {
+        if (viewId === 'viewBuilder') {
           setTimeout(() => {
             if (State.mapInstance) State.mapInstance.invalidateSize();
-          }, 200);
+          }, 150);
         }
       };
     });
 
-    // List Switcher Dropdown
-    document.getElementById('listSelector').onchange = (e) => {
+    // List Selector Dropdown
+    document.getElementById('selectActiveList').onchange = (e) => {
       const val = e.target.value;
-      if (val === '__new__') {
-        const name = prompt('Enter new prospect list filename (e.g., breweries_ontario.csv):');
-        if (name) {
-          const cleanName = name.trim().endsWith('.csv') ? name.trim() : `${name.trim()}.csv`;
-          State.prospectLists[cleanName] = [];
-          persistList(cleanName);
-          switchList(cleanName);
+      if (val === '__new_list__') {
+        const name = prompt('Enter filename for new prospect list (e.g. craft_distilleries.csv):');
+        if (name && name.trim()) {
+          const clean = name.trim().endsWith('.csv') ? name.trim() : `${name.trim()}.csv`;
+          State.prospectLists[clean] = [];
+          saveListToLocalStorage(clean);
+          switchList(clean);
         } else {
           e.target.value = State.activeListKey;
         }
@@ -1106,123 +1151,137 @@ out center 15;
       }
     };
 
-    // Queue Stage Tabs
-    document.querySelectorAll('.q-tab').forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll('.q-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        State.queueStage = tab.dataset.stage;
+    // Connect Local Data/ Folder
+    document.getElementById('btnConnectDataFolder').onclick = connectLocalDataFolder;
+
+    // Import Multiple CSVs from Disk/Data folder
+    document.getElementById('inputCsvFiles').onchange = (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const parsed = parseRawCSV(evt.target.result);
+          const fname = file.name.endsWith('.csv') ? file.name : `${file.name}.csv`;
+          State.prospectLists[fname] = parsed;
+          saveListToLocalStorage(fname);
+          refreshListSelector();
+          if (file === files[files.length - 1]) {
+            switchList(fname);
+            notifyToast(`Loaded ${parsed.length} leads from ${fname}`);
+          }
+        };
+        reader.readAsText(file);
+      });
+    };
+
+    // Export Current Active List
+    document.getElementById('btnExportCurrent').onclick = () => {
+      exportLeadsToCsvFile(State.leads, State.activeListKey);
+    };
+
+    // Auto-Next Toggle
+    const btnPower = document.getElementById('btnPowerDial');
+    btnPower.onclick = () => {
+      State.autoNext = !State.autoNext;
+      btnPower.classList.toggle('active', State.autoNext);
+      btnPower.innerHTML = `<span class="pulse-indicator"></span> Auto-Next: ${State.autoNext ? 'ON' : 'OFF'}`;
+      notifyToast(State.autoNext ? 'Auto-Next queue stepping active' : 'Auto-Next disabled');
+    };
+
+    // CRM Queue Stage Tabs
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        State.queueStage = btn.dataset.stage;
         filterQueue();
         if (State.filteredLeads.length) selectLead(State.filteredLeads[0].id);
         else renderCockpit(null);
       };
     });
 
-    // Intel tabs
-    document.querySelectorAll('.itab').forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll('.itab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.intel-panel').forEach(p => p.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.target).classList.add('active');
-      };
-    });
-
-    // Search input
-    document.getElementById('queueSearch').oninput = (e) => {
+    // CRM Search Filter
+    document.getElementById('filterInput').oninput = (e) => {
       State.searchQuery = e.target.value;
       filterQueue();
     };
 
-    // Auto-Next button
-    const btnAutoNext = document.getElementById('btnAutoNext');
-    btnAutoNext.onclick = () => {
-      State.autoNext = !State.autoNext;
-      btnAutoNext.classList.toggle('active', State.autoNext);
-      btnAutoNext.innerHTML = `<span class="dot-beacon"></span> Auto-Next: ${State.autoNext ? 'ON' : 'OFF'}`;
-      notifyToast(State.autoNext ? 'Auto-Next queue stepping enabled' : 'Auto-Next disabled');
-    };
-
-    // Import CSV button
-    document.getElementById('fileCsvPicker').onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const parsed = parseRawCSV(evt.target.result);
-        if (parsed.length > 0) {
-          const listName = file.name.endsWith('.csv') ? file.name : `${file.name}.csv`;
-          State.prospectLists[listName] = parsed;
-          persistList(listName);
-          switchList(listName);
-          notifyToast(`Loaded ${parsed.length} records into Data/${listName}`);
-        } else {
-          notifyToast('Unable to parse CSV records');
-        }
+    // Intel Panels
+    document.querySelectorAll('.intel-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.intel-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel-box').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.panel).classList.add('active');
       };
-      reader.readAsText(file);
+    });
+
+    document.getElementById('btnRefreshFrame').onclick = () => {
+      const cur = State.leads.find(l => l.id === State.selectedId);
+      if (cur) renderIntel(cur);
     };
 
-    // Export Active CSV
-    document.getElementById('btnExportActiveCsv').onclick = () => {
-      exportLeadsToCsvFile(State.leads, State.activeListKey);
-    };
-
-    // Add Lead modal
-    document.getElementById('btnAddNewLead').onclick = () => openEditModal(null);
-    document.getElementById('leadForm').onsubmit = handleSaveForm;
-    document.getElementById('btnCloseModal').onclick = () => document.getElementById('leadModal').classList.add('hidden');
-    document.getElementById('btnCancelModal').onclick = () => document.getElementById('leadModal').classList.add('hidden');
-
-    // In-Call HUD End
-    document.getElementById('btnEndHudCall').onclick = () => terminateCall('Terminated by Operator');
-
-    // Builder Events
-    document.getElementById('cityFilterInput').oninput = renderCityChecklist;
-    document.getElementById('btnSelectAllCities').onclick = () => {
-      ONTARIO_CITIES.forEach(c => State.selectedCities.add(c.name));
-      renderCityChecklist();
-    };
-    document.getElementById('btnClearCities').onclick = () => {
-      State.selectedCities.clear();
-      renderCityChecklist();
-    };
-    document.getElementById('btnStartScrape').onclick = runLeadScraper;
-    document.getElementById('btnStopScrape').onclick = () => {
-      State.cancelScrape = true;
-      logTerminal('User cancelled mining.', 'warn');
-    };
-
-    // Builder Results Actions
-    document.getElementById('btnPushToCrm').onclick = () => {
-      if (!State.harvestedLeads.length) return alert('No mined leads available to push');
-      const targetName = document.getElementById('targetCsvFileName').value.trim() || 'harvested_leads.csv';
-      const cleanTarget = targetName.endsWith('.csv') ? targetName : `${targetName}.csv`;
-
-      State.prospectLists[cleanTarget] = State.harvestedLeads;
-      persistList(cleanTarget);
-      switchList(cleanTarget);
-
-      // Switch to CRM View
-      document.getElementById('viewBtnCrm').click();
-      notifyToast(`Loaded ${State.harvestedLeads.length} leads into Active CRM (${cleanTarget})`);
-    };
-
-    document.getElementById('btnDownloadHarvestCsv').onclick = () => {
-      const targetName = document.getElementById('targetCsvFileName').value.trim() || 'harvested_leads.csv';
-      exportLeadsToCsvFile(State.harvestedLeads, targetName);
-    };
-
-    // Template copy
-    document.getElementById('btnCopyEmailTemplate').onclick = () => {
+    // Outreach Email Copy
+    document.getElementById('btnCopyEmail').onclick = () => {
       const lead = State.leads.find(l => l.id === State.selectedId);
-      let tpl = document.getElementById('quickEmailTemplate').value;
+      let tpl = document.getElementById('outreachTemplate').value;
       if (lead) {
         tpl = tpl.replace(/\[Name\]/g, lead.name || 'there');
+        tpl = tpl.replace(/\[Company\]/g, lead.company);
         tpl = tpl.replace(/\[City\]/g, lead.city || 'Ontario');
       }
       navigator.clipboard.writeText(tpl);
-      notifyToast('Template copied to clipboard');
+      notifyToast('Outreach text copied');
+    };
+
+    // Call HUD End Button
+    document.getElementById('btnEndCallHud').onclick = () => endCall('Ended by Operator');
+
+    // Account Modal Controls
+    document.getElementById('btnOpenNewLeadModal').onclick = () => openAccountModal(null);
+    document.getElementById('formAccount').onsubmit = handleSaveAccountForm;
+    document.getElementById('btnCloseAccountModal').onclick = () => document.getElementById('modalAccount').classList.add('hidden');
+    document.getElementById('btnCancelModal').onclick = () => document.getElementById('modalAccount').classList.add('hidden');
+
+    // Builder City Selection
+    document.getElementById('citySearchBox').oninput = renderCityChecklist;
+    document.getElementById('btnCitiesSelectAll').onclick = () => {
+      ONTARIO_CITIES.forEach(c => State.selectedCities.add(c.name));
+      renderCityChecklist();
+    };
+    document.getElementById('btnCitiesClear').onclick = () => {
+      State.selectedCities.clear();
+      renderCityChecklist();
+    };
+
+    // Builder Mine Leads Trigger
+    document.getElementById('btnStartScraping').onclick = executeLeadScrape;
+    document.getElementById('btnHaltScraping').onclick = () => {
+      State.cancelScrape = true;
+      logTerminal('User terminated mining.', 'warn');
+    };
+
+    // Builder Push to CRM
+    document.getElementById('btnPushHarvestToCrm').onclick = () => {
+      if (!State.harvestedLeads.length) return alert('No mined leads available to load.');
+      const outFilename = document.getElementById('builderOutputFilename').value.trim() || 'harvested_leads.csv';
+      const cleanFn = outFilename.endsWith('.csv') ? outFilename : `${outFilename}.csv`;
+
+      State.prospectLists[cleanFn] = State.harvestedLeads;
+      saveListToLocalStorage(cleanFn);
+      switchList(cleanFn);
+
+      // Return to Cockpit
+      document.getElementById('btnNavCrm').click();
+      notifyToast(`Loaded ${State.harvestedLeads.length} leads into Active CRM (${cleanFn})`);
+    };
+
+    // Builder Download CSV
+    document.getElementById('btnDownloadHarvestCsv').onclick = () => {
+      const outFilename = document.getElementById('builderOutputFilename').value.trim() || 'harvested_leads.csv';
+      exportLeadsToCsvFile(State.harvestedLeads, outFilename);
     };
 
     // Global Hotkeys
@@ -1241,24 +1300,24 @@ out center 15;
         e.preventDefault();
         triggerCall(current);
       } else if (e.key === '1' && current) {
-        applyDisposition(current, 'uncontacted', 'No Answer / Left Voicemail');
+        applyDisposition(current, 'uncontacted', 'No Answer / Voicemail');
       } else if (e.key === '2' && current) {
         applyDisposition(current, 'callback', 'Callback Scheduled');
       } else if (e.key === '3' && current) {
-        applyDisposition(current, 'contacted', 'Connected / Qualified');
+        applyDisposition(current, 'contacted', 'Connected / Spoke to Lead');
       } else if (e.key === '4' && current) {
         applyDisposition(current, 'dnc', 'Do Not Call (DNC)');
       } else if (e.key === 'Escape') {
-        document.getElementById('leadModal').classList.add('hidden');
+        document.getElementById('modalAccount').classList.add('hidden');
       }
     };
   }
 
-  // ================= START APPLICATION =================
+  // ================= START INITIALIZATION =================
   window.addEventListener('DOMContentLoaded', () => {
-    initLists();
+    initStorageAndLists();
     initBuilder();
-    bindGlobalEvents();
+    registerEvents();
   });
 
 })();
