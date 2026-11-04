@@ -36,42 +36,12 @@
     { name: "St. Catharines", lat: 43.1594, lon: -79.2469, areaCode: "905" },
     { name: "Niagara Falls", lat: 43.0896, lon: -79.0849, areaCode: "905" },
     { name: "Peterborough", lat: 44.3091, lon: -78.3197, areaCode: "705" },
-    { name: "Brantford", lat: 43.1394, lon: -80.2644, areaCode: "519" },
-    { name: "Sault Ste. Marie", lat: 46.5136, lon: -84.3358, areaCode: "705" },
-    { name: "Sarnia", lat: 42.9745, lon: -82.4066, areaCode: "519" },
-    { name: "Welland", lat: 42.9922, lon: -79.2483, areaCode: "905" },
-    { name: "Belleville", lat: 44.1628, lon: -77.3832, areaCode: "613" },
-    { name: "North Bay", lat: 46.3091, lon: -79.4608, areaCode: "705" },
-    { name: "Cornwall", lat: 45.0213, lon: -74.7303, areaCode: "613" },
-    { name: "Chatham-Kent", lat: 42.4048, lon: -82.1910, areaCode: "519" },
-    { name: "Woodstock", lat: 43.1315, lon: -80.7467, areaCode: "519" },
-    { name: "St. Thomas", lat: 42.7788, lon: -81.1927, areaCode: "519" },
-    { name: "Stratford", lat: 43.3700, lon: -80.9822, areaCode: "519" },
-    { name: "Timmins", lat: 48.4758, lon: -81.3304, areaCode: "705" },
-    { name: "Orillia", lat: 44.6082, lon: -79.4207, areaCode: "705" },
-    { name: "Owen Sound", lat: 44.5678, lon: -80.9430, areaCode: "519" },
-    { name: "Orangeville", lat: 43.9197, lon: -80.0943, areaCode: "519" },
-    { name: "Brockville", lat: 44.5900, lon: -75.6842, areaCode: "613" },
-    { name: "Pembroke", lat: 45.8267, lon: -77.1114, areaCode: "613" },
-    { name: "Collingwood", lat: 44.5000, lon: -80.2167, areaCode: "705" },
-    { name: "Cobourg", lat: 43.9598, lon: -78.1664, areaCode: "905" },
-    { name: "Lindsay", lat: 44.3564, lon: -78.7410, areaCode: "705" },
-    { name: "Huntsville", lat: 45.3269, lon: -79.2167, areaCode: "705" },
-    { name: "Kenora", lat: 49.7670, lon: -94.4894, areaCode: "807" },
-    { name: "Midland", lat: 44.7500, lon: -79.8833, areaCode: "705" },
-    { name: "Port Hope", lat: 43.9500, lon: -78.3000, areaCode: "905" },
-    { name: "Bowmanville", lat: 43.9133, lon: -78.6872, areaCode: "905" },
-    { name: "Innisfil", lat: 44.3000, lon: -79.5833, areaCode: "705" },
-    { name: "Bradford", lat: 44.1167, lon: -79.5667, areaCode: "905" },
-    { name: "Grimsby", lat: 43.1933, lon: -79.5606, areaCode: "905" },
-    { name: "Fort Erie", lat: 42.9000, lon: -78.9333, areaCode: "905" },
-    { name: "Thorold", lat: 43.1233, lon: -79.1983, areaCode: "905" },
-    { name: "Lincoln", lat: 43.1667, lon: -79.4333, areaCode: "905" }
+    { name: "Brantford", lat: 43.1394, lon: -80.2644, areaCode: "519" }
   ];
 
   // ================= APPLICATION STATE =================
   const State = {
-    prospectLists: {}, // { 'data.csv': [leads], 'dispensaries.csv': [leads] }
+    prospectLists: {},
     activeListKey: 'data.csv',
     directoryHandle: null,
 
@@ -85,7 +55,6 @@
     callStartTime: null,
     callTimer: null,
 
-    // Lead Builder Mining State
     selectedCities: new Set(["Toronto", "Mississauga", "Hamilton", "Ottawa"]),
     isScraping: false,
     cancelScrape: false,
@@ -99,7 +68,6 @@
 
   // ================= 1. TRIPLE DATA/ FOLDER DISCOVERY =================
   async function initStorageAndLists() {
-    // A. LocalStorage Cached Lists
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -116,10 +84,6 @@
       console.warn("Storage access warning:", e);
     }
 
-    // B. GitHub API Auto-Discovery for GitHub Pages
-    await discoverGithubDataFolder();
-
-    // C. Fetch Data/data.csv directly
     try {
       const resp = await fetch('Data/data.csv');
       if (resp.ok) {
@@ -131,10 +95,9 @@
         }
       }
     } catch (e) {
-      console.log("Direct Data/data.csv fetch:", e);
+      console.log("Direct Data/data.csv fetch fallback active.");
     }
 
-    // D. Guarantee at least data.csv exists with seed records
     if (!State.prospectLists['data.csv'] || State.prospectLists['data.csv'].length === 0) {
       State.prospectLists['data.csv'] = getSeedLeads();
       saveListToLocalStorage('data.csv');
@@ -142,42 +105,6 @@
 
     refreshListSelector();
     switchList(State.activeListKey);
-  }
-
-  async function discoverGithubDataFolder() {
-    try {
-      const host = window.location.hostname;
-      if (host.includes('github.io')) {
-        const parts = window.location.pathname.split('/').filter(Boolean);
-        const user = host.split('.')[0];
-        const repo = parts[0];
-        if (user && repo) {
-          const apiEndpoint = `https://api.github.com/repos/${user}/${repo}/contents/Data`;
-          const resp = await fetch(apiEndpoint);
-          if (resp.ok) {
-            const files = await resp.json();
-            if (Array.isArray(files)) {
-              for (const f of files) {
-                if (f.name && f.name.toLowerCase().endsWith('.csv')) {
-                  if (!State.prospectLists[f.name]) {
-                    try {
-                      const fileResp = await fetch(f.download_url || `Data/${f.name}`);
-                      if (fileResp.ok) {
-                        const csvText = await fileResp.text();
-                        State.prospectLists[f.name] = parseRawCSV(csvText);
-                        saveListToLocalStorage(f.name);
-                      }
-                    } catch (err) {}
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.log("GitHub API scan completed.");
-    }
   }
 
   function saveListToLocalStorage(filename) {
@@ -224,10 +151,9 @@
     refreshListSelector();
   }
 
-  // Modern HTML5 Web File System Access (Connect directly to real local Data/ folder)
   async function connectLocalDataFolder() {
     if (!('showDirectoryPicker' in window)) {
-      alert("Direct folder access requires Chrome, Edge, or Opera. Use '+ Import CSV(s)' to select files from your Data/ folder.");
+      alert("Direct folder access requires Chrome or Edge. Use '+ Import CSV(s)' instead.");
       return;
     }
     try {
@@ -259,7 +185,7 @@
     }
   }
 
-  // ================= 2. CSV ENGINE (PARSING & EXPORTING) =================
+  // ================= 2. CSV ENGINE =================
   function parseRawCSV(text) {
     if (!text || typeof text !== 'string') return [];
     const lines = [];
@@ -387,7 +313,6 @@
       ...rows.map(r => r.map(c => `"${String(c || '').replace(/"/g, '""')}"`).join(','))
     ].join('\r\n');
 
-    // Direct write to disk if user connected folder via File System API
     if (State.directoryHandle) {
       try {
         const fileHandle = await State.directoryHandle.getFileHandle(cleanFn, { create: true });
@@ -401,7 +326,6 @@
       }
     }
 
-    // Standard Download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -506,7 +430,7 @@
     if (!lead) {
       mount.innerHTML = `
         <div class="cockpit-placeholder">
-          <div class="placeholder-icon">&phone;</div>
+          <div class="placeholder-icon">&#9743;</div>
           <h2>Select a prospect from the pipeline</h2>
           <p>Click any company in the queue or use the Lead Generator to mine accounts into your <code>Data/</code> folder.</p>
         </div>`;
@@ -533,7 +457,7 @@
         <!-- Call Launch Action Strip -->
         <div class="call-strip">
           <button type="button" id="btnTriggerPhoneCall" class="btn-dial-prospect">
-            <span class="dial-icon">&phone;</span>
+            <span class="dial-icon">&#9743;</span>
             <div>
               <span class="dial-lbl">Launch Dial</span>
               <span class="dial-num">${escapeHtml(lead.phone || 'No direct phone')}</span>
@@ -618,7 +542,6 @@
       </div>
     `;
 
-    // Hook listeners safely
     document.getElementById('btnTriggerPhoneCall').onclick = () => triggerCall(lead);
     document.getElementById('btnTriggerEmail').onclick = () => {
       if (!lead.email) return notifyToast('No email address on record');
@@ -638,13 +561,11 @@
       }
     };
 
-    // Dispositions
     document.getElementById('dNoAnswer').onclick = () => applyDisposition(lead, 'uncontacted', 'No Answer / Voicemail');
     document.getElementById('dCallback').onclick = () => applyDisposition(lead, 'callback', 'Callback Scheduled');
     document.getElementById('dContacted').onclick = () => applyDisposition(lead, 'contacted', 'Connected / Spoke to Lead');
     document.getElementById('dDnc').onclick = () => applyDisposition(lead, 'dnc', 'Do Not Call (DNC)');
 
-    // Live Note Auto-Save
     const notesBox = document.getElementById('liveLeadNotes');
     const noteSavedAlert = document.getElementById('saveStatusNote');
     let timer;
@@ -698,7 +619,6 @@
     locLabel.textContent = mapQuery;
     iframeMap.src = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 
-    // Dossiers
     const gBtn = document.getElementById('dossierGoogle');
     if (gBtn) gBtn.href = `https://www.google.com/search?q=${encodeURIComponent(lead.company + ' ' + (lead.city || 'Ontario'))}`;
     const liBtn = document.getElementById('dossierLinkedIn');
@@ -778,7 +698,7 @@
     selectLead(State.filteredLeads[next].id);
   }
 
-  // ================= 5. FAIL-SAFE LEAD GENERATOR ENGINE =================
+  // ================= 5. LEAD GENERATOR ENGINE =================
   function initBuilder() {
     renderCityChecklist();
   }
@@ -826,7 +746,6 @@
     }
   };
 
-  // Lazy & Protected Map Initialization (Runs ONLY when Builder view is visible)
   function ensureMapReady() {
     if (State.mapInstance) {
       try { State.mapInstance.invalidateSize(); } catch (e) {}
@@ -839,7 +758,7 @@
       State.mapInstance = L.map('liveScrapeMap').setView([43.6532, -79.3832], 10);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap, © CARTO'
+        attribution: '&copy; OpenStreetMap, &copy; CARTO'
       }).addTo(State.mapInstance);
 
       State.mapGridLayer = L.layerGroup().addTo(State.mapInstance);
@@ -896,7 +815,6 @@
         try { State.mapInstance.flyTo([city.lat, city.lon], 11, { duration: 0.6 }); } catch (e) {}
       }
 
-      // Draw Grid Visualizer
       const cells = calculateCells(city.lat, city.lon, gridWidth, gridHeight, gridCols, gridRows);
       renderGridBoxes(cells);
 
@@ -935,7 +853,6 @@
           logTerminal(`Notice in ${city.name} query: ${err.message}`, 'warn');
         }
 
-        // Polite pause between cycles
         await new Promise(r => setTimeout(r, 450));
       }
     }
@@ -1006,12 +923,10 @@
     } catch (e) {}
   }
 
-  // Multi-tier Fallback Harvester: Queries Nominatim, and enriches immediately
   async function harvestPlacesWithFallback(keyword, cityObj) {
     const cityName = cityObj.name;
     const results = [];
 
-    // Attempt 1: OSM Search
     try {
       const query = `${keyword} in ${cityName} Ontario Canada`;
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&extratags=1&limit=10`;
@@ -1037,7 +952,6 @@
               const house = addr.house_number || Math.floor(Math.random() * 400 + 10);
               let phone = extra.phone || extra['contact:phone'] || addr.phone || '';
               if (!phone) {
-                // Generate regional Ontario NANP standard telephone
                 phone = `+1 (${cityObj.areaCode}) ${Math.floor(Math.random() * 700 + 200)}-${Math.floor(Math.random() * 8999 + 1000)}`;
               }
 
@@ -1065,11 +979,8 @@
           });
         }
       }
-    } catch (e) {
-      // CORS or network timeout on public mirror
-    }
+    } catch (e) {}
 
-    // Fail-safe Synthesis: Guarantees high-yield, qualified leads for Ontario even if remote API rate-limits
     if (results.length === 0) {
       const prefixes = ["The Royal", "Apex", "Heritage", "Pinnacle", "Downtown", "Craft", "Northern", "Lakeview", "Golden"];
       const streets = ["King St W", "Queen St E", "Dundas St", "Richmond St", "Main St", "Wellington St", "Yonge St"];
@@ -1118,7 +1029,7 @@
     term.scrollTop = term.scrollHeight;
   }
 
-  // ================= 6. MODAL & EDIT PROSPECT =================
+  // ================= 6. MODALS & EDIT =================
   function openAccountModal(lead = null) {
     const heading = document.getElementById('modalHeading');
     if (heading) heading.textContent = lead ? 'Edit Account' : 'Add Prospect';
@@ -1276,10 +1187,8 @@
     ];
   }
 
-  // ================= 8. SAFE & DEFENSIVE EVENT REGISTRATION =================
-  // Runs FIRST before any async call to guarantee buttons never freeze
+  // ================= 8. EVENT REGISTRATION =================
   function registerEvents() {
-    // Masthead View Switching
     document.querySelectorAll('.v-tab').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.v-tab').forEach(b => b.classList.remove('active'));
@@ -1295,7 +1204,6 @@
       };
     });
 
-    // List Selector Dropdown
     const sel = document.getElementById('selectActiveList');
     if (sel) {
       sel.onchange = (e) => {
@@ -1316,11 +1224,9 @@
       };
     }
 
-    // Connect Local Data/ Folder
     const btnConnect = document.getElementById('btnConnectDataFolder');
     if (btnConnect) btnConnect.onclick = connectLocalDataFolder;
 
-    // Import Multiple CSVs from Disk/Data folder
     const inputCsv = document.getElementById('inputCsvFiles');
     if (inputCsv) {
       inputCsv.onchange = (e) => {
@@ -1345,13 +1251,11 @@
       };
     }
 
-    // Export Current Active List
     const btnExp = document.getElementById('btnExportCurrent');
     if (btnExp) {
       btnExp.onclick = () => exportLeadsToCsvFile(State.leads, State.activeListKey);
     }
 
-    // Auto-Next Toggle
     const btnPower = document.getElementById('btnPowerDial');
     if (btnPower) {
       btnPower.onclick = () => {
@@ -1362,7 +1266,6 @@
       };
     }
 
-    // CRM Queue Stage Tabs
     document.querySelectorAll('.stage-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
@@ -1374,7 +1277,6 @@
       };
     });
 
-    // CRM Search Filter
     const fInput = document.getElementById('filterInput');
     if (fInput) {
       fInput.oninput = (e) => {
@@ -1383,7 +1285,6 @@
       };
     }
 
-    // Intel Panels
     document.querySelectorAll('.intel-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.intel-btn').forEach(b => b.classList.remove('active'));
@@ -1402,7 +1303,6 @@
       };
     }
 
-    // Outreach Email Copy
     const btnCopy = document.getElementById('btnCopyEmail');
     if (btnCopy) {
       btnCopy.onclick = () => {
@@ -1419,11 +1319,9 @@
       };
     }
 
-    // Call HUD End Button
     const btnEndHud = document.getElementById('btnEndCallHud');
     if (btnEndHud) btnEndHud.onclick = () => endCall('Ended by Operator');
 
-    // Account Modal Controls
     const btnAddLead = document.getElementById('btnOpenNewLeadModal');
     if (btnAddLead) btnAddLead.onclick = () => openAccountModal(null);
 
@@ -1436,7 +1334,6 @@
     const btnCancelAcc = document.getElementById('btnCancelModal');
     if (btnCancelAcc) btnCancelAcc.onclick = () => document.getElementById('modalAccount').classList.add('hidden');
 
-    // Builder City Selection
     const cSearch = document.getElementById('citySearchBox');
     if (cSearch) cSearch.oninput = renderCityChecklist;
 
@@ -1456,7 +1353,6 @@
       };
     }
 
-    // Builder Mine Leads Trigger
     const btnScrape = document.getElementById('btnStartScraping');
     if (btnScrape) btnScrape.onclick = executeLeadScrape;
 
@@ -1468,7 +1364,6 @@
       };
     }
 
-    // Builder Push to CRM
     const btnPush = document.getElementById('btnPushHarvestToCrm');
     if (btnPush) {
       btnPush.onclick = () => {
@@ -1487,7 +1382,6 @@
       };
     }
 
-    // Builder Download CSV
     const btnDown = document.getElementById('btnDownloadHarvestCsv');
     if (btnDown) {
       btnDown.onclick = () => {
@@ -1497,7 +1391,6 @@
       };
     }
 
-    // Global Hotkeys
     window.onkeydown = (e) => {
       const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
       if (tag === 'input' || tag === 'textarea') return;
@@ -1527,9 +1420,8 @@
     };
   }
 
-  // ================= 9. INITIALIZATION BOOTSTRAP =================
+  // ================= 9. BOOTSTRAP =================
   window.addEventListener('DOMContentLoaded', () => {
-    // Register events first to ensure the interface is immediately clickable
     registerEvents();
     initBuilder();
     initStorageAndLists();
