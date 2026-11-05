@@ -3,244 +3,718 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Executive Dialer & Google Maps Lead Engine</title>
+  <title>AURELIUS — Editorial CRM & Lead Discovery Platform</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Top Masthead -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="badge">EX</span>
-      <strong>DIALER &amp; MAPS LEADGEN</strong>
+  <!-- Top Application Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand">
+        <span class="brand-crest">✦</span>
+        <div class="brand-text">
+          <span class="brand-title">AURELIUS</span>
+          <span class="brand-subtitle">Commercial Intelligence & CRM</span>
+        </div>
+      </div>
+      <div class="header-status-badge" id="system-status-indicator" title="Click to view connection settings">
+        <span class="status-dot"></span>
+        <span class="status-label">Checking System...</span>
+      </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <nav class="nav-tabs">
-      <button id="tabNavCockpit" class="nav-btn active" data-view="viewCockpit">&#9742; Dialer Cockpit</button>
-      <button id="tabNavMaps" class="nav-btn" data-view="viewMaps">&#127758; Google Maps Discovery</button>
-    </nav>
-
-    <!-- Workstation KPI Stats -->
-    <div class="metrics">
-      <span>Total: <b id="statTotal">0</b></span>
-      <span>Fresh: <b id="statFresh">0</b></span>
-      <span>Connected: <b id="statConnected" class="text-green">0</b></span>
-      <span>Callbacks: <b id="statCallbacks" class="text-amber">0</b></span>
+    <div class="header-center">
+      <div class="global-search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="global-search-input" placeholder="Search leads by company, city, contact or phone..." autocomplete="off">
+        <span class="search-shortcut">⌘K</span>
+      </div>
     </div>
 
-    <div class="mast-actions">
-      <button id="btnAutoNext" class="btn btn-sm">Auto-Next: OFF</button>
-      <label class="btn btn-sm btn-outline">
-        Import CSV
-        <input type="file" id="inputCsv" accept=".csv" style="display:none">
-      </label>
-      <button id="btnExportCsv" class="btn btn-sm btn-primary">&darr; Export CSV</button>
+    <div class="header-right">
+      <button class="btn btn-secondary btn-sm" id="btn-open-manual-modal">
+        <span>+ Add Lead</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-quick-lead-finder">
+        <span>✦ New Search</span>
+      </button>
+      <button class="icon-btn" id="btn-open-settings" title="Configuration & API Keys">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
     </div>
   </header>
 
-  <!-- ================= VIEW 1: DIALER COCKPIT ================= -->
-  <main id="viewCockpit" class="view-panel active">
-    <div class="cockpit-layout">
-
-      <!-- LEFT: Pipeline Queue -->
-      <aside class="queue-sidebar">
-        <div class="filter-row">
-          <button class="stage-filter-btn active" data-filter="all">All</button>
-          <button class="stage-filter-btn" data-filter="Fresh">Fresh</button>
-          <button class="stage-filter-btn" data-filter="Callback">Callbacks</button>
-          <button class="stage-filter-btn" data-filter="Connected">Closed</button>
-        </div>
-
-        <input type="text" id="queueSearch" class="search-input" placeholder="Search accounts, cities, numbers...">
-
-        <div id="queueList" class="queue-scroll"></div>
-
-        <div class="queue-footer">
-          <div class="hotkeys-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Browse &bull; <kbd>C</kbd> Dial &bull; <kbd>1-4</kbd> Dispo</div>
-          <button id="btnShowAddModal" class="btn btn-sm btn-outline btn-block">+ Add Single Lead</button>
-        </div>
-      </aside>
-
-      <!-- CENTER: Calling Cockpit -->
-      <section class="cockpit-center">
-        <div id="cockpitPlaceholder" class="placeholder-box">
-          <div class="placeholder-icon">&#9742;</div>
-          <h3>Select a prospect to begin dialing</h3>
-          <p>Pick a business on the left or switch to the Google Maps tab to extract new accounts.</p>
-        </div>
-
-        <div id="cockpitBody" class="cockpit-body hidden">
-          <div class="cockpit-mast">
-            <div>
-              <h2 id="leadCompany">Company Name</h2>
-              <div id="leadSubtitle" class="lead-subhead">Decision Maker &bull; Location</div>
-            </div>
-            <button id="btnDeleteCurrentLead" class="btn btn-sm btn-danger">&times; Remove Lead</button>
-          </div>
-
-          <!-- Dialing Trigger Strip -->
-          <div class="action-strip">
-            <a id="btnCallAction" href="tel:" class="btn-call-trigger">
-              <span class="call-symbol">&#9742;</span>
-              <div>
-                <span class="call-text">LAUNCH PHONE CALL (C)</span>
-                <span id="leadPhone" class="call-digits">+1 (000) 000-0000</span>
-              </div>
-            </a>
-            <a id="btnEmailAction" href="mailto:" class="btn-email-trigger">
-              <span style="font-weight:700;">&commat; Send Email</span>
-              <span id="leadEmailSub" style="font-size:11px; color:#6b7280;">No email recorded</span>
-            </a>
-          </div>
-
-          <!-- 4 Disposition Buttons -->
-          <div class="dispo-grid">
-            <button class="btn-dispo dispo-noanswer" data-stage="No Answer">1. No Answer</button>
-            <button class="btn-dispo dispo-callback" data-stage="Callback">2. Callback</button>
-            <button class="btn-dispo dispo-connected" data-stage="Connected">3. Connected</button>
-            <button class="btn-dispo dispo-dnc" data-stage="DNC">4. Do Not Call</button>
-          </div>
-
-          <!-- Fields -->
-          <div class="fields-grid">
-            <div class="field-item">
-              <label>Decision Maker</label>
-              <input type="text" id="fieldLeadName" class="form-input">
-            </div>
-            <div class="field-item">
-              <label>City</label>
-              <input type="text" id="fieldLeadCity" class="form-input">
-            </div>
-            <div class="field-item span-2">
-              <label>Street Address</label>
-              <input type="text" id="fieldLeadAddress" class="form-input">
-            </div>
-            <div class="field-item span-2">
-              <label>Website</label>
-              <input type="url" id="fieldLeadWebsite" class="form-input">
-            </div>
-            <div class="field-item span-2">
-              <label>Live Call Notes (Auto-saved)</label>
-              <textarea id="fieldLeadNotes" rows="4" class="notes-input" placeholder="Type key takeaways, next steps, gatekeeper notes..."></textarea>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- RIGHT: Embedded Google Maps Viewer for Active Lead -->
-      <aside class="cockpit-maps-side">
-        <div class="side-header">
-          <span><strong>Live Google Maps Card</strong></span>
-          <a id="btnOpenExternalGMap" href="#" target="_blank" class="link-ext">Open in Google Maps &nearr;</a>
-        </div>
-        <div class="side-frame-wrap">
-          <iframe id="leadGMapFrame" loading="lazy" referrerpolicy="no-referrer"></iframe>
-        </div>
-      </aside>
-
+  <!-- Application Main Navigation Bar -->
+  <nav class="app-nav">
+    <div class="nav-links">
+      <button class="nav-tab active" data-target="section-overview">
+        <span class="nav-icon">📊</span> Overview
+      </button>
+      <button class="nav-tab" data-target="section-crm">
+        <span class="nav-icon">📇</span> CRM Workspace
+      </button>
+      <button class="nav-tab" data-target="section-lead-finder">
+        <span class="nav-icon">🧭</span> Lead Finder (3×3 Grid)
+      </button>
+      <button class="nav-tab" data-target="section-lists">
+        <span class="nav-icon">📁</span> Data Lists & CSVs
+      </button>
+      <button class="nav-tab" data-target="section-duplicates">
+        <span class="nav-icon">⚖️</span> Deduplication & Suppression
+      </button>
     </div>
-  </main>
-
-  <!-- ================= VIEW 2: GOOGLE MAPS DISCOVERY ================= -->
-  <main id="viewMaps" class="view-panel">
-    <div class="maps-builder-layout">
-
-      <!-- LEFT: Search Controls & Quick Card Paste -->
-      <aside class="maps-sidebar">
-        <div class="card-box">
-          <h3>1. Search Google Maps Directly</h3>
-          <p class="helper">Enter your keyword &amp; Ontario municipality:</p>
-          <input type="text" id="mapSearchQuery" class="form-input" value="Cocktail Bars">
-          <select id="mapCitySelect" class="form-input">
-            <option value="Toronto">Toronto, ON</option>
-            <option value="Mississauga">Mississauga, ON</option>
-            <option value="Hamilton">Hamilton, ON</option>
-            <option value="Ottawa">Ottawa, ON</option>
-            <option value="London">London, ON</option>
-            <option value="Waterloo">Waterloo / Kitchener, ON</option>
-            <option value="Barrie">Barrie, ON</option>
-          </select>
-
-          <div class="btn-stack">
-            <button id="btnOpenGoogleMapsTab" class="btn btn-outline btn-block">
-              &#128279; Open Real Google Maps Search Tab
-            </button>
-            <button id="btnFetchMapsLeads" class="btn btn-primary btn-block">
-              &darr; Auto-Extract Leads From Maps (No Key)
-            </button>
-          </div>
-        </div>
-
-        <div class="card-box">
-          <h3>2. Paste Google Maps Business Card</h3>
-          <p class="helper">Highlight &amp; copy any business sidebar in Google Maps, then paste below to instantly extract phone, address, and name:</p>
-          <textarea id="rawCardPasteArea" rows="5" class="notes-input" placeholder="Paste business card info here (e.g. &#10;BarChef&#10;4.5 stars &#10;472 Queen St W, Toronto&#10;+1 416-868-4800)"></textarea>
-          <button id="btnParseCardText" class="btn btn-sm btn-outline btn-block" style="margin-top:6px;">
-            Parse &amp; Add Lead to Queue
-          </button>
-        </div>
-
-        <div id="harvestCountBanner" class="harvest-banner hidden">
-          <span id="harvestCountText">0 leads mined</span>
-          <button id="btnTransferToDialer" class="btn btn-xs btn-primary">Switch to Dialer</button>
-        </div>
-      </aside>
-
-      <!-- RIGHT: Interactive Live Google Maps Explorer Frame -->
-      <section class="maps-viewport">
-        <div class="viewport-header">
-          <span id="mapsStatusLabel">Showing Google Maps Search Results</span>
-          <span class="secure-tag">Zero API Keys Required</span>
-        </div>
-        <div class="gmaps-frame-container">
-          <iframe id="discoveryGMapFrame" loading="lazy" referrerpolicy="no-referrer"></iframe>
-        </div>
-      </section>
-
+    <div class="nav-extra">
+      <span class="data-mode-badge" id="data-storage-badge">Data Directory: /Data</span>
     </div>
-  </main>
+  </nav>
 
-  <!-- Add Lead Modal -->
-  <div id="addLeadModal" class="modal-backdrop hidden">
-    <div class="modal-card">
-      <div class="modal-mast">
-        <h3>Add Prospect Manually</h3>
-        <button id="btnCloseModal" class="close-x">&times;</button>
+  <!-- Main Viewports Container -->
+  <main class="app-viewport">
+
+    <!-- 1. OVERVIEW DASHBOARD -->
+    <section id="section-overview" class="view-section active">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="editorial-heading">Executive Commercial Overview</h1>
+          <p class="section-subtext">Verified pipeline performance, market coverage, and proactive follow-ups.</p>
+        </div>
+        <div class="dash-quick-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-export-backup-dash">Export All Data (.ZIP)</button>
+          <button class="btn btn-primary btn-sm" onclick="App.switchSection('section-lead-finder')">Launch Lead Finder</button>
+        </div>
       </div>
-      <form id="addLeadForm" class="modal-form">
-        <div class="field-item span-2">
-          <label>Company Name *</label>
-          <input type="text" id="newLeadCompany" required class="form-input">
+
+      <!-- Metric Cards Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Total Prospects</span>
+          <span class="metric-value" id="stat-total-leads">0</span>
+          <span class="metric-footer" id="stat-total-lists">0 Profession Lists</span>
         </div>
-        <div class="field-item">
-          <label>Contact Name</label>
-          <input type="text" id="newLeadName" class="form-input">
+        <div class="metric-card highlight">
+          <span class="metric-label">Verified Emails</span>
+          <span class="metric-value" id="stat-verified-emails">0</span>
+          <span class="metric-footer">Direct First-Party Matches</span>
         </div>
-        <div class="field-item">
-          <label>Phone Number *</label>
-          <input type="text" id="newLeadPhone" required class="form-input">
+        <div class="metric-card">
+          <span class="metric-label">Identified Decision Makers</span>
+          <span class="metric-value" id="stat-decision-makers">0</span>
+          <span class="metric-footer">Owners, Directors & Founders</span>
         </div>
-        <div class="field-item">
-          <label>Email</label>
-          <input type="email" id="newLeadEmail" class="form-input">
+        <div class="metric-card warning">
+          <span class="metric-label">Follow-ups Requiring Action</span>
+          <span class="metric-value" id="stat-followups-due">0</span>
+          <span class="metric-footer">Due or Overdue Today</span>
         </div>
-        <div class="field-item">
-          <label>City</label>
-          <input type="text" id="newLeadCity" value="Toronto" class="form-input">
+      </div>
+
+      <!-- Pipeline Funnel & Recent Activity -->
+      <div class="overview-split-layout">
+        <div class="card funnel-card">
+          <div class="card-header">
+            <h3>Pipeline Distribution</h3>
+            <span class="pill">Current Active Deals</span>
+          </div>
+          <div class="pipeline-bar-wrapper" id="pipeline-funnel-display">
+            <!-- Rendered Dynamically -->
+          </div>
         </div>
-        <div class="field-item span-2">
-          <label>Street Address</label>
-          <input type="text" id="newLeadAddress" class="form-input">
+
+        <div class="card activity-overview-card">
+          <div class="card-header">
+            <h3>Recent Discoveries & Actions</h3>
+            <span class="pill">Live Event Stream</span>
+          </div>
+          <div class="activity-feed" id="overview-activity-feed">
+            <div class="feed-item empty">No recent activity detected. Run a Lead Finder job to discover prospects.</div>
+          </div>
         </div>
-        <div class="modal-actions span-2">
-          <button type="button" id="btnCancelModal" class="btn btn-sm">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary">Save Lead</button>
+      </div>
+    </section>
+
+    <!-- 2. CRM MULTI-PANEL WORKSPACE -->
+    <section id="section-crm" class="view-section">
+      <div class="crm-layout">
+        
+        <!-- Panel 1: List Navigation -->
+        <aside class="crm-panel-lists" id="crm-panel-lists">
+          <div class="panel-header">
+            <span class="panel-title">Prospect Lists</span>
+            <button class="icon-btn-tiny" id="btn-crm-refresh-lists" title="Refresh CSV lists">↻</button>
+          </div>
+          <div class="list-search-box">
+            <input type="text" id="crm-list-filter" placeholder="Filter lists...">
+          </div>
+          <ul class="lists-menu" id="crm-lists-container">
+            <!-- Rendered Dynamically -->
+          </ul>
+          <div class="panel-footer-actions">
+            <button class="btn btn-secondary btn-xs btn-block" id="btn-open-import-wizard">+ Import CSV File</button>
+          </div>
+        </aside>
+
+        <!-- Panel 2: Leads Data Table -->
+        <div class="crm-panel-table" id="crm-panel-table">
+          <!-- Filter Toolbar -->
+          <div class="table-toolbar">
+            <div class="toolbar-left">
+              <span class="active-list-title" id="crm-current-list-title">All Prospects</span>
+              <span class="badge" id="crm-lead-count-badge">0 items</span>
+            </div>
+            <div class="toolbar-right">
+              <select id="filter-pipeline-stage" class="form-select-sm">
+                <option value="">All Pipeline Stages</option>
+                <option value="New">New</option>
+                <option value="Researched">Researched</option>
+                <option value="Qualified">Qualified</option>
+                <option value="Ready to Contact">Ready to Contact</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Follow-up Required">Follow-up Required</option>
+                <option value="Interested">Interested</option>
+                <option value="Meeting Scheduled">Meeting Scheduled</option>
+                <option value="Proposal">Proposal</option>
+                <option value="Won">Won</option>
+                <option value="Lost">Lost</option>
+                <option value="Do Not Contact">Do Not Contact</option>
+              </select>
+
+              <select id="filter-quick-attributes" class="form-select-sm">
+                <option value="">Quick Filters</option>
+                <option value="verified">Verified Emails</option>
+                <option value="missing_email">Missing Email</option>
+                <option value="missing_phone">Missing Phone</option>
+                <option value="missing_decision_maker">Missing Decision Maker</option>
+                <option value="needs_followup">Upcoming Follow-up</option>
+              </select>
+
+              <button class="btn btn-secondary btn-sm" id="btn-export-current-csv" title="Download currently selected list as CSV">
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Main Prospects Table Container -->
+          <div class="table-scroll-container">
+            <table class="editorial-table" id="prospects-table">
+              <thead>
+                <tr>
+                  <th style="width: 28px;"><input type="checkbox" id="select-all-leads"></th>
+                  <th data-sort="business_name">Business Name</th>
+                  <th data-sort="city">City</th>
+                  <th data-sort="decision_maker_name">Main Contact</th>
+                  <th data-sort="business_email">Email</th>
+                  <th data-sort="business_phone">Phone</th>
+                  <th data-sort="pipeline_stage">Status</th>
+                  <th data-sort="lead_score">Quality</th>
+                  <th data-sort="priority">Priority</th>
+                </tr>
+              </thead>
+              <tbody id="prospects-tbody">
+                <!-- Leads rows injected dynamically -->
+              </tbody>
+            </table>
+            <div id="table-empty-state" class="empty-state hidden">
+              <p>No prospects found matching the current criteria.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Selected Business Detail Inspector -->
+        <aside class="crm-panel-detail" id="crm-panel-detail">
+          <div class="detail-empty-placeholder" id="detail-empty-placeholder">
+            <p>Select a business from the table to view its intelligence file, live website preview, and Google Maps card.</p>
+          </div>
+
+          <div class="detail-content hidden" id="detail-content-wrapper">
+            <!-- Header bar of detail panel -->
+            <div class="detail-header">
+              <div class="detail-header-meta">
+                <span class="detail-profession-tag" id="det-profession">Profession</span>
+                <h2 class="detail-name" id="det-business-name">Business Name</h2>
+                <span class="detail-city" id="det-city-line">City, Country</span>
+              </div>
+              <div class="detail-header-actions">
+                <button class="icon-btn-tiny" id="btn-close-detail" title="Close Panel">✕</button>
+              </div>
+            </div>
+
+            <!-- Detail Tabs -->
+            <div class="detail-tabs-bar">
+              <button class="detail-tab active" data-tab="tab-det-overview">Overview</button>
+              <button class="detail-tab" data-tab="tab-det-website">Live Website</button>
+              <button class="detail-tab" data-tab="tab-det-maps">Google Maps</button>
+              <button class="detail-tab" data-tab="tab-det-activity">Activity & Notes</button>
+            </div>
+
+            <!-- Tab 1: Overview -->
+            <div class="detail-tab-pane active" id="tab-det-overview">
+              <div class="pane-scroll">
+                <!-- Quality Score Meter -->
+                <div class="quality-score-meter">
+                  <div class="meter-text">
+                    <span class="meter-label">Lead Confidence Score</span>
+                    <span class="meter-val" id="det-score-val">85%</span>
+                  </div>
+                  <div class="meter-bar"><div class="meter-fill" id="det-score-fill" style="width: 85%;"></div></div>
+                </div>
+
+                <!-- Fast CRM Management Controls -->
+                <div class="detail-group">
+                  <label class="group-title">CRM Management</label>
+                  <div class="crm-quick-form">
+                    <div class="form-row">
+                      <label>Pipeline Stage</label>
+                      <select id="det-stage-select" class="form-control-sm">
+                        <option value="New">New</option>
+                        <option value="Researched">Researched</option>
+                        <option value="Qualified">Qualified</option>
+                        <option value="Ready to Contact">Ready to Contact</option>
+                        <option value="Contacted">Contacted</option>
+                        <option value="Follow-up Required">Follow-up Required</option>
+                        <option value="Interested">Interested</option>
+                        <option value="Meeting Scheduled">Meeting Scheduled</option>
+                        <option value="Proposal">Proposal</option>
+                        <option value="Won">Won</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Do Not Contact">Do Not Contact</option>
+                      </select>
+                    </div>
+                    <div class="form-row">
+                      <label>Priority</label>
+                      <select id="det-priority-select" class="form-control-sm">
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                    <div class="form-row">
+                      <label>Next Follow-up</label>
+                      <input type="date" id="det-followup-input" class="form-control-sm">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Decision Maker Card -->
+                <div class="detail-group">
+                  <div class="group-header-with-action">
+                    <label class="group-title">Decision Maker</label>
+                    <span class="verification-badge" id="det-dm-verification">Verified</span>
+                  </div>
+                  <div class="field-display-box">
+                    <div class="field-item">
+                      <span class="f-label">Full Name</span>
+                      <input type="text" id="det-dm-name" class="inline-edit" placeholder="Not identified">
+                    </div>
+                    <div class="field-item">
+                      <span class="f-label">Job Title</span>
+                      <input type="text" id="det-dm-title" class="inline-edit" placeholder="e.g. Managing Director">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Business Contact Information -->
+                <div class="detail-group">
+                  <div class="group-header-with-action">
+                    <label class="group-title">Business Contact</label>
+                    <button class="btn btn-secondary btn-xs" id="btn-trigger-re-research">Re-Research Website</button>
+                  </div>
+                  <div class="field-display-box">
+                    <div class="field-item">
+                      <span class="f-label">Business Email</span>
+                      <input type="email" id="det-email" class="inline-edit" placeholder="Email address">
+                    </div>
+                    <div class="field-item">
+                      <span class="f-label">Telephone</span>
+                      <input type="text" id="det-phone" class="inline-edit" placeholder="Phone number">
+                    </div>
+                    <div class="field-item">
+                      <span class="f-label">Website</span>
+                      <input type="text" id="det-website" class="inline-edit" placeholder="https://...">
+                    </div>
+                    <div class="field-item">
+                      <span class="f-label">Physical Address</span>
+                      <textarea id="det-address" class="inline-edit-area" rows="2" placeholder="Address..."></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Save changes button -->
+                <div class="detail-save-bar">
+                  <button class="btn btn-primary btn-sm btn-block" id="btn-save-lead-details">Save Prospect Details</button>
+                  <button class="btn btn-danger btn-xs btn-block" id="btn-delete-lead">Remove Lead</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Live Website Preview -->
+            <div class="detail-tab-pane" id="tab-det-website">
+              <div class="preview-actions-bar">
+                <span class="preview-url-display" id="det-web-preview-url">No website</span>
+                <div class="preview-buttons">
+                  <button class="btn btn-secondary btn-xs" id="btn-refresh-iframe">Reload</button>
+                  <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-xs" id="btn-open-external-site">Open in New Tab ↗</a>
+                </div>
+              </div>
+              <div class="iframe-container">
+                <iframe id="website-preview-iframe" sandbox="allow-scripts allow-same-origin" src="about:blank"></iframe>
+                <div class="iframe-fallback hidden" id="iframe-fallback-notice">
+                  <h4>Live Preview Blocked by Domain</h4>
+                  <p>This business’s security policy (<code>X-Frame-Options</code> or CSP) prevents embedding within other web applications.</p>
+                  <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" id="btn-fallback-open-tab">Launch Website Directly ↗</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Google Maps Embed View -->
+            <div class="detail-tab-pane" id="tab-det-maps">
+              <div class="preview-actions-bar">
+                <span class="preview-url-display">Google Business Listing</span>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-xs" id="btn-open-external-maps">Open on Google Maps ↗</a>
+              </div>
+              <div class="maps-container">
+                <iframe id="maps-embed-iframe" src="about:blank" allowfullscreen></iframe>
+              </div>
+            </div>
+
+            <!-- Tab 4: Activity & Notes -->
+            <div class="detail-tab-pane" id="tab-det-activity">
+              <div class="activity-pane-content">
+                <div class="add-note-box">
+                  <textarea id="det-new-note" placeholder="Log outreach, meeting minutes or prospecting note..." rows="2"></textarea>
+                  <button class="btn btn-secondary btn-xs" id="btn-add-activity-note">Add Note to Timeline</button>
+                </div>
+                <div class="activity-history" id="det-activity-stream">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- 3. LEAD FINDER (3x3 GEOGRAPHICAL GRID) -->
+    <section id="section-lead-finder" class="view-section">
+      <div class="finder-layout">
+        
+        <!-- Search Configuration Card -->
+        <div class="card finder-config-card">
+          <div class="card-header">
+            <div>
+              <h2 class="editorial-heading">Lead Discovery Engine</h2>
+              <p class="section-subtext">Geographical business discovery utilizing official 3×3 location restriction bounds and automated first-party website research.</p>
+            </div>
+            <span class="pill">3×3 Grid Algorithm</span>
+          </div>
+
+          <div class="finder-form-grid">
+            <!-- Professions Chip Input -->
+            <div class="form-group">
+              <label>Business Types / Professions <span class="req">*</span></label>
+              <div class="chips-input-container" id="chips-professions">
+                <input type="text" id="input-profession-chip" placeholder="Type profession & press Enter, or paste list...">
+              </div>
+              <span class="field-hint">e.g. Plumbers, Accountants, Dental Clinics, Commercial Electricians</span>
+            </div>
+
+            <!-- Cities Chip Input -->
+            <div class="form-group">
+              <label>Target Cities & Regions <span class="req">*</span></label>
+              <div class="chips-input-container" id="chips-cities">
+                <input type="text" id="input-city-chip" placeholder="Type city & press Enter, or paste list...">
+              </div>
+              <span class="field-hint">e.g. Cardiff, Bristol, Newport, Birmingham, Manchester</span>
+            </div>
+
+            <!-- Decision Maker Titles Chip Input -->
+            <div class="form-group">
+              <label>Decision Maker Job Titles (Optional guidance for site crawling)</label>
+              <div class="chips-input-container" id="chips-titles">
+                <input type="text" id="input-title-chip" placeholder="Type job title & press Enter...">
+              </div>
+              <span class="field-hint">e.g. Owner, Managing Director, Founder, General Manager</span>
+            </div>
+
+            <!-- Grid Expansion Setting -->
+            <div class="form-group-inline">
+              <div>
+                <label>Grid Viewport Expansion Factor</label>
+                <span class="field-hint">1.20 expands coverage beyond administrative center to capture surrounding commercial zones.</span>
+              </div>
+              <select id="select-grid-expansion" class="form-control-sm" style="width: 140px;">
+                <option value="1.00">1.00× (Strict City)</option>
+                <option value="1.20" selected>1.20× (Recommended)</option>
+                <option value="1.50">1.50× (Wide Suburbs)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="finder-actions-bar">
+            <div class="actions-left">
+              <button class="btn btn-primary" id="btn-start-search">
+                <span>✦ Launch Lead Research (GO)</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-clear-finder-inputs">Clear Inputs</button>
+            </div>
+            <div class="actions-right">
+              <span class="search-summary-text" id="search-inputs-summary">0 professions × 0 cities = 0 total search tasks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Search Progress & Visual 3x3 Matrix Grid -->
+        <div class="card finder-progress-card" id="finder-live-panel">
+          <div class="card-header">
+            <div>
+              <h3>Live 3×3 Geographical Grid & Research Stream</h3>
+              <p class="section-subtext" id="current-job-stage-label">Status: Idle</p>
+            </div>
+            <div class="live-job-controls">
+              <button class="btn btn-secondary btn-xs" id="btn-pause-job" disabled>Pause</button>
+              <button class="btn btn-secondary btn-xs" id="btn-resume-job" disabled>Resume</button>
+              <button class="btn btn-danger btn-xs" id="btn-cancel-job" disabled>Cancel Job</button>
+            </div>
+          </div>
+
+          <div class="progress-split">
+            <!-- 3x3 Visual Matrix Representation -->
+            <div class="grid-matrix-container">
+              <div class="matrix-label-top">North (Suburbs)</div>
+              <div class="matrix-grid-3x3" id="visual-3x3-grid">
+                <div class="grid-cell" id="cell-1"><span class="cell-num">1</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-2"><span class="cell-num">2</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-3"><span class="cell-num">3</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-4"><span class="cell-num">4</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell center-cell" id="cell-5"><span class="cell-num">5 (Center)</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-6"><span class="cell-num">6</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-7"><span class="cell-num">7</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-8"><span class="cell-num">8</span><span class="cell-stat">Ready</span></div>
+                <div class="grid-cell" id="cell-9"><span class="cell-num">9</span><span class="cell-stat">Ready</span></div>
+              </div>
+              <div class="matrix-label-bottom">South (Suburbs)</div>
+            </div>
+
+            <!-- Live Stats & Event Console -->
+            <div class="live-metrics-console">
+              <div class="finder-stats-row">
+                <div class="f-stat"><span class="f-stat-val" id="job-discovered-val">0</span><span class="f-stat-lbl">Discovered</span></div>
+                <div class="f-stat"><span class="f-stat-val" id="job-crawled-val">0</span><span class="f-stat-lbl">Websites Crawled</span></div>
+                <div class="f-stat"><span class="f-stat-val" id="job-emails-val">0</span><span class="f-stat-lbl">Emails Found</span></div>
+                <div class="f-stat"><span class="f-stat-val" id="job-phones-val">0</span><span class="f-stat-lbl">Phones Found</span></div>
+                <div class="f-stat"><span class="f-stat-val" id="job-dm-val">0</span><span class="f-stat-lbl">Decision Makers</span></div>
+              </div>
+
+              <div class="live-events-log" id="job-events-log">
+                <div class="log-line info">[System] Ready to start discovery run. Enter parameters and click Launch.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. LISTS & DATA MANAGEMENT -->
+    <section id="section-lists" class="view-section">
+      <div class="data-mgmt-header">
+        <div>
+          <h2 class="editorial-heading">Profession Lists & CSV Data</h2>
+          <p class="section-subtext">Physical storage managed in <code>/Data</code>. Every profession automatically maintains its own consolidated CSV list.</p>
+        </div>
+        <div class="data-mgmt-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-open-import-wizard-2">+ Import CSV</button>
+          <button class="btn btn-primary btn-sm" id="btn-export-backup-all">Download All CSVs (.ZIP)</button>
+        </div>
+      </div>
+
+      <div class="lists-grid" id="data-lists-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 5. DEDUPLICATION & SUPPRESSION -->
+    <section id="section-duplicates" class="view-section">
+      <div class="dedupe-header">
+        <div>
+          <h2 class="editorial-heading">Prospect Deduplication & Compliance Suppression</h2>
+          <p class="section-subtext">Identify identical businesses across lists, perform side-by-side merges, and maintain Do-Not-Contact compliance records.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btn-refresh-duplicates">Scan for Duplicates</button>
+      </div>
+
+      <div class="dedupe-split">
+        <!-- Potential Duplicates List -->
+        <div class="card dedupe-card">
+          <div class="card-header">
+            <h3>Potential Overlapping Records</h3>
+            <span class="badge" id="dupe-count-badge">0 found</span>
+          </div>
+          <div class="dupe-items-container" id="dupe-items-container">
+            <p class="empty-state">No duplicates detected across your current CSV lists.</p>
+          </div>
+        </div>
+
+        <!-- Suppression Management -->
+        <div class="card suppression-card">
+          <div class="card-header">
+            <h3>Suppressed Contacts (Do Not Contact)</h3>
+            <span class="pill">Compliance Register</span>
+          </div>
+          <p class="suppression-help">Contacts marked as "Do Not Contact" are excluded from active prospecting, preventing inadvertent outreach.</p>
+          <div class="suppression-table-container">
+            <table class="editorial-table" id="suppression-table">
+              <thead>
+                <tr>
+                  <th>Business Name</th>
+                  <th>Email</th>
+                  <th>Reason</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="suppression-tbody">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Modal 1: Manual Lead Creation -->
+  <div class="modal-overlay hidden" id="modal-manual-lead">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Prospect Record</h3>
+        <button class="modal-close-btn" data-close="modal-manual-lead">✕</button>
+      </div>
+      <form id="form-manual-lead" class="modal-body">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Business Name <span class="req">*</span></label>
+            <input type="text" id="m-name" required placeholder="Acme Ltd">
+          </div>
+          <div class="form-group">
+            <label>Profession / Target List <span class="req">*</span></label>
+            <input type="text" id="m-profession" required placeholder="e.g. Plumbers, Accountants">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>City <span class="req">*</span></label>
+            <input type="text" id="m-city" required placeholder="Cardiff">
+          </div>
+          <div class="form-group">
+            <label>Website URL</label>
+            <input type="url" id="m-website" placeholder="https://example.co.uk">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Business Email</label>
+            <input type="email" id="m-email" placeholder="contact@example.co.uk">
+          </div>
+          <div class="form-group">
+            <label>Business Phone</label>
+            <input type="text" id="m-phone" placeholder="+44 20 7946 0991">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Decision Maker Full Name</label>
+            <input type="text" id="m-dm-name" placeholder="Jane Doe">
+          </div>
+          <div class="form-group">
+            <label>Decision Maker Title</label>
+            <input type="text" id="m-dm-title" placeholder="Managing Director">
+          </div>
+        </div>
+        <div class="form-actions-right">
+          <button type="button" class="btn btn-secondary" data-close="modal-manual-lead">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save to CSV List</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Modal 2: CSV Import Wizard -->
+  <div class="modal-overlay hidden" id="modal-import-wizard">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Import Contacts from CSV</h3>
+        <button class="modal-close-btn" data-close="modal-import-wizard">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Target Profession List</label>
+          <input type="text" id="import-target-list" placeholder="e.g. Accountants, Dentists">
+          <span class="field-hint">Leads will be appended to <code>Data/[target_list].csv</code></span>
+        </div>
+        <div class="form-group">
+          <label>Select CSV File</label>
+          <input type="file" id="import-file-input" accept=".csv" class="file-picker">
+        </div>
+        <div id="import-preview-box" class="import-preview-box hidden">
+          <h4>Parsed Preview</h4>
+          <p id="import-preview-stats">0 leads detected.</p>
+        </div>
+        <div class="form-actions-right">
+          <button type="button" class="btn btn-secondary" data-close="modal-import-wizard">Cancel</button>
+          <button type="button" class="btn btn-primary" id="btn-execute-import">Process Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Settings & API Configuration -->
+  <div class="modal-overlay hidden" id="modal-settings">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">Platform Configuration</h3>
+        <button class="modal-close-btn" data-close="modal-settings">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>API Mode & Backend URL</label>
+          <input type="text" id="setting-backend-url" placeholder="http://127.0.0.1:5000">
+          <span class="field-hint">Leave blank or use <code>http://127.0.0.1:5000</code> for local operation. When deployed on GitHub Pages, input your hosted Python API endpoint.</span>
+        </div>
+        <div class="form-group">
+          <label>Google Places & Maps API Key</label>
+          <input type="password" id="setting-google-api-key" placeholder="AIzaSy...">
+          <span class="field-hint">Enables official Places Text Search and Maps Embed. If omitted, the platform seamlessly runs in Demo Simulation Mode.</span>
+        </div>
+        <div class="form-group">
+          <label>Max Crawl Depth per Business Website</label>
+          <input type="number" id="setting-max-crawl" min="1" max="15" value="5">
+          <span class="field-hint">Limits page requests per site to respect server bandwidth and response times.</span>
+        </div>
+        <div class="form-actions-right">
+          <button type="button" class="btn btn-secondary" data-close="modal-settings">Close</button>
+          <button type="button" class="btn btn-primary" id="btn-save-settings">Save Configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="script.js"></script>
 </body>
 </html>
