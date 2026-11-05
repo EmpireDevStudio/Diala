@@ -1,6 +1,5 @@
 /* ==========================================================================
    AURELIUS PROSPECT CRM — EDITORIAL MODERNIST STYLING
-   High-density app frame, refined typography, and responsive panels
    ========================================================================== */
 
 :root {
@@ -316,7 +315,7 @@ html, body {
 .app-view.active { display: block; }
 
 /* ==========================================================================
-   VIEW 1: PRIMARY WORKSPACE (DRAWER + TABLE + DESK)
+   VIEW 1: PRIMARY WORKSPACE
    ========================================================================== */
 .workspace-tri-grid {
   display: grid;
@@ -603,12 +602,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 240px;
+  height: 280px;
   text-align: center;
   color: var(--text-muted);
-  padding: 20px;
+  padding: 24px;
 }
-.empty-icon-glyph { font-size: 24px; margin-bottom: 8px; color: var(--text-light); }
+.empty-icon-glyph { font-size: 26px; margin-bottom: 8px; color: var(--text-light); }
+.empty-results-box h3 { font-size: 16px; font-weight: 600; color: var(--text-main); }
+.empty-results-box p { font-size: 12px; margin-top: 4px; max-width: 360px; line-height: 1.5; }
 
 /* CALLING DESK & INSPECTOR (PANEL 3) */
 .panel-desk {
@@ -873,7 +874,7 @@ html, body {
 .editorial-notes:focus { border-color: var(--border-bold); }
 
 /* ==========================================================================
-   VIEW 2 & 3: EDITORIAL HEADS & PAGES
+   VIEW 2 & 3: PAGES
    ========================================================================== */
 .editorial-container {
   padding: 28px;

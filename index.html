@@ -13,14 +13,14 @@
 
   <div class="app-shell">
     
-    <!-- PRIMARY NAVIGATION DOCK -->
+    <!-- LEFT PRIMARY DOCK -->
     <aside class="app-dock">
       <div class="dock-header">
         <div class="brand-monogram" title="Aurelius CRM">A</div>
       </div>
 
       <nav class="dock-nav">
-        <button class="dock-item active" data-view="view-crm" id="dock-btn-crm" title="Prospecting Desk (Workspace)">
+        <button class="dock-item active" data-view="view-crm" id="dock-btn-crm" title="Prospect Desk">
           <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M9 10h6"/></svg>
           <span class="dock-title">Leads</span>
         </button>
@@ -46,10 +46,10 @@
       </div>
     </aside>
 
-    <!-- MAIN INTERFACE CANVAS -->
+    <!-- MAIN APP CANVAS -->
     <div class="app-canvas">
       
-      <!-- TOP COMMAND CONTROL BAR -->
+      <!-- TOP COMMAND BAR -->
       <header class="app-topbar">
         <div class="topbar-section left-cluster">
           <button class="action-icon-btn" id="btn-toggle-sidebar" title="Toggle Lists Drawer (Ctrl+B)">
@@ -57,29 +57,34 @@
           </button>
           <div class="active-list-crumb">
             <span class="crumb-status-dot"></span>
-            <span class="crumb-list-title" id="topbar-active-list-title">All Prospects</span>
+            <span class="crumb-list-title" id="topbar-active-list-title">Scanning /Data...</span>
           </div>
-          <span class="sync-indicator" id="topbar-sync-status">Saved</span>
+          <span class="sync-indicator" id="topbar-sync-status">Ready</span>
         </div>
 
         <div class="topbar-section center-cluster">
           <div class="omni-search-wrapper">
             <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="global-search-input" placeholder="Search by name, telephone, email, city, notes... (Press '/' to focus)" spellcheck="false" autocomplete="off">
+            <input type="text" id="global-search-input" placeholder="Search leads by company, phone, email, notes... (Press '/' to focus)" spellcheck="false" autocomplete="off">
             <button class="clear-search-btn hidden" id="btn-clear-search">✕</button>
           </div>
         </div>
 
         <div class="topbar-section right-cluster">
-          <button class="btn btn-secondary btn-sm" id="btn-trigger-import" title="Import CSV to Active or New List">
+          <button class="btn btn-secondary btn-sm" id="btn-rescan-data-top" title="Re-scan /Data folder in repository">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>Scan /Data</span>
+          </button>
+
+          <button class="btn btn-secondary btn-sm" id="btn-trigger-import" title="Load CSV from disk">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span>Import</span>
+            <span>Open CSV</span>
           </button>
           <input type="file" id="file-csv-loader" accept=".csv" multiple class="hidden">
           
-          <button class="btn btn-secondary btn-sm" id="btn-trigger-export" title="Export CSV file">
+          <button class="btn btn-secondary btn-sm" id="btn-trigger-export" title="Export this list to CSV">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>Export</span>
+            <span>Export CSV</span>
           </button>
 
           <button class="btn btn-primary btn-sm" id="btn-add-lead-modal">
@@ -88,27 +93,27 @@
         </div>
       </header>
 
-      <!-- VIEW ROUTER CONTAINER -->
+      <!-- VIEW VIEWPORT -->
       <main class="view-mount">
 
         <!-- ========================================================
-             VIEW 1: PRIMARY WORKSPACE (DRAWER + TABLE + CALL DESK)
+             VIEW 1: PRIMARY WORKSPACE (DRAWER + TABLE + DESK)
              ======================================================== -->
         <section id="view-crm" class="app-view active">
           <div class="workspace-tri-grid" id="workspace-grid">
             
-            <!-- LEFT DRAWER: FOLDERS & DISPOSITIONS -->
+            <!-- DRAWER: LISTS & DISPOSITIONS -->
             <aside class="panel-drawer" id="panel-drawer">
               <div class="drawer-block">
                 <div class="drawer-header-row">
-                  <span class="drawer-label">Lists</span>
+                  <span class="drawer-label">Prospect Lists</span>
                   <div class="drawer-tool-actions">
-                    <button class="btn-tool" id="btn-create-list" title="New Blank List">+</button>
-                    <button class="btn-tool" id="btn-scan-repo" title="Rescan /Data folder">↻</button>
+                    <button class="btn-tool" id="btn-create-list" title="Create New Empty List">+</button>
+                    <button class="btn-tool" id="btn-scan-repo" title="Rescan /Data Folder">↻</button>
                   </div>
                 </div>
                 <div class="lists-nav-stack" id="lists-container">
-                  <!-- Injected via JS -->
+                  <!-- Populated by JS -->
                 </div>
               </div>
 
@@ -117,12 +122,12 @@
                   <span class="drawer-label">Dispositions</span>
                 </div>
                 <div class="disp-nav-stack" id="disp-filters-container">
-                  <!-- Injected via JS -->
+                  <!-- Populated by JS -->
                 </div>
               </div>
             </aside>
 
-            <!-- CENTER WORKSPACE: LEADS DATA TABLE -->
+            <!-- CENTER TABLE -->
             <section class="panel-table">
               <div class="table-utility-bar">
                 <div class="utility-left">
@@ -158,17 +163,23 @@
                     <!-- Populated dynamically -->
                   </tbody>
                 </table>
+
+                <!-- ZERO / EMPTY STATE -->
                 <div class="empty-results-box hidden" id="table-empty-notice">
                   <div class="empty-icon-glyph">✦</div>
-                  <h3>No Leads Matched</h3>
-                  <p>Try clearing filters or search queries, or import a CSV from your computer.</p>
+                  <h3 id="empty-notice-title">No leads found</h3>
+                  <p id="empty-notice-desc">Place your CSV files inside the <code>/Data</code> folder of this repo, or open them directly.</p>
+                  <div class="empty-cta-row" style="margin-top: 14px; display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="CRM.scanDataFolder()">↻ Rescan /Data Folder</button>
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-csv-loader').click()">📂 Select CSV from Computer</button>
+                  </div>
                 </div>
               </div>
             </section>
 
             <div class="workspace-resizer" id="workspace-resizer" role="separator" aria-orientation="vertical" aria-label="Resize leads table and customer information" aria-valuemin="20" aria-valuemax="65" aria-valuenow="33" tabindex="0"></div>
 
-            <!-- RIGHT WORKSPACE: CALLING DESK & INSPECTOR -->
+            <!-- RIGHT CALLING DESK & INSPECTOR -->
             <aside class="panel-desk" id="panel-calling-desk">
               
               <div class="empty-desk-state" id="empty-desk-state">
@@ -278,7 +289,7 @@
                     </div>
                   </div>
 
-                  <!-- Scratchpad & Call Activity Notes -->
+                  <!-- Notes & Activity Log -->
                   <div class="notes-block">
                     <div class="notes-header">
                       <label>Call Log & History</label>
@@ -338,7 +349,7 @@
                 </div>
               </div>
 
-              <!-- Real-time Merged Preview -->
+              <!-- Preview Pane -->
               <div class="preview-pane card-panel">
                 <h3 class="panel-heading">Live Prospect Preview</h3>
                 <div class="paper-preview-envelope">
@@ -404,9 +415,7 @@
     </div>
   </div>
 
-  <!-- ========================================================
-       MODAL: SYSTEM SETTINGS (COMPREHENSIVE)
-       ======================================================== -->
+  <!-- MODAL: SETTINGS -->
   <div class="modal-overlay hidden" id="modal-settings">
     <div class="modal-box modal-wide">
       <div class="modal-header">
@@ -438,7 +447,7 @@
           </div>
         </div>
 
-        <!-- Telephony & Automation -->
+        <!-- Calling & Telephony -->
         <div class="config-section">
           <h4 class="config-title">Calling & Telephony Automation</h4>
           <div class="field-item">
@@ -466,7 +475,7 @@
           </div>
         </div>
 
-        <!-- Export Preferences -->
+        <!-- Export CSV Preferences -->
         <div class="config-section">
           <h4 class="config-title">CSV Import & Export Engine</h4>
           <div class="form-cols-2">
@@ -508,8 +517,8 @@
         <!-- Danger Zone -->
         <div class="config-section danger-zone">
           <h4 class="config-title text-danger">Reset Data</h4>
-          <p class="field-hint">Clear local browser storage and restore default starter lists.</p>
-          <button class="btn btn-outline-danger btn-sm" onclick="CRM.resetLocalDatabase()">Reset Database to Defaults</button>
+          <p class="field-hint">Clear local browser storage and re-scan the /Data folder.</p>
+          <button class="btn btn-outline-danger btn-sm" onclick="CRM.resetLocalDatabase()">Reset Database & Re-scan /Data</button>
         </div>
       </div>
 
@@ -519,9 +528,7 @@
     </div>
   </div>
 
-  <!-- ========================================================
-       MODAL: CREATE NEW PROSPECT
-       ======================================================== -->
+  <!-- MODAL: ADD PROSPECT -->
   <div class="modal-overlay hidden" id="modal-add-lead">
     <div class="modal-box">
       <div class="modal-header">
@@ -537,7 +544,7 @@
 
         <div class="field-item" style="margin-top: 10px;">
           <label>Company / Contact Name *</label>
-          <input type="text" id="new-lead-name" class="styled-input" required placeholder="Acme Ltd">
+          <input type="text" id="new-lead-name" class="styled-input" required placeholder="Company Name">
         </div>
 
         <div class="form-cols-2" style="margin-top: 10px;">
@@ -558,7 +565,7 @@
 
         <div class="field-item" style="margin-top: 10px;">
           <label>Full Address / Location</label>
-          <input type="text" id="new-lead-address" class="styled-input" placeholder="14 Cathedral Road, Cardiff">
+          <input type="text" id="new-lead-address" class="styled-input" placeholder="Address, City, Postcode">
         </div>
 
         <div class="field-item" style="margin-top: 10px;">
@@ -584,9 +591,7 @@
     </div>
   </div>
 
-  <!-- ========================================================
-       MODAL: KEYBOARD SHORTCUTS
-       ======================================================== -->
+  <!-- MODAL: HOTKEYS -->
   <div class="modal-overlay hidden" id="modal-hotkeys">
     <div class="modal-box">
       <div class="modal-header">
@@ -613,7 +618,7 @@
     </div>
   </div>
 
-  <!-- SYSTEM TOAST -->
+  <!-- TOAST -->
   <div id="app-toast" class="app-toast hidden"></div>
 
   <script src="app.js"></script>

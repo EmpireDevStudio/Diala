@@ -1,13 +1,14 @@
 /**
  * AURELIUS PROSPECT CRM
  * Editorial Single-Page Application Controller
+ * Automatically loads CSV data files located in the /Data repository folder
  */
 
 const CRM = (() => {
-  const STORAGE_KEY = "aurelius_crm_db_v3";
-  const PREFS_KEY = "aurelius_crm_prefs_v3";
+  const STORAGE_KEY = "aurelius_crm_db_v4";
+  const PREFS_KEY = "aurelius_crm_prefs_v4";
 
-  // Application State
+  // Application State — Initialized completely empty (zero mock leads)
   let lists = {};
   let currentListName = "";
   let currentLeadId = null;
@@ -28,59 +29,22 @@ const CRM = (() => {
     exportScope: "all",
     excelBom: true,
     emailSubject: "Quick inquiry regarding {business_name}",
-    emailBody: "Hi,\n\nI was reviewing {business_name} and wanted to reach out regarding your current operations.\n\nBest regards,\n{sender_name}",
+    emailBody: "Hi,\n\nI was reviewing {business_name} and wanted to reach out regarding your operations.\n\nBest regards,\n{sender_name}",
     emailAction: "mailto",
     senderName: ""
   };
 
-  const defaultSampleData = {
-    "Plumbers & Heating": [
-      {
-        id: "lead_plumb_1",
-        name: "Cardiff Premier Plumbing & Heating",
-        phone: "029 2012 3456",
-        email: "dave@cardiffpremier.co.uk",
-        website: "cardiffpremier.co.uk",
-        address: "14 Cathedral Road, Cardiff, CF11 9LJ",
-        notes: "Family-owned since 2004. Managing owner is Dave Evans.",
-        disposition: "New",
-        callback_date: ""
-      },
-      {
-        id: "lead_plumb_2",
-        name: "Bristol 24/7 Drains & Boilers",
-        phone: "0117 923 4567",
-        email: "help@bristolboilers.co.uk",
-        website: "bristolboilers.co.uk",
-        address: "88 Whiteladies Road, Clifton, Bristol, BS8 2QN",
-        notes: "Spoke to office manager Sarah. Call back next Tuesday morning.",
-        disposition: "Gatekeeper",
-        callback_date: ""
-      }
-    ],
-    "Commercial Electricians": [
-      {
-        id: "lead_elec_1",
-        name: "VoltPro Electrical Contractors Ltd",
-        phone: "029 2088 9900",
-        email: "contracts@voltpro.co.uk",
-        website: "voltpro.co.uk",
-        address: "Unit 3, Trade Park, Penarth Road, Cardiff",
-        notes: "Handles large scale commercial testing and fitouts.",
-        disposition: "New",
-        callback_date: ""
-      }
-    ]
-  };
-
   const el = {};
 
-  function init() {
+  async function init() {
     cacheDom();
     bindEvents();
     loadPreferences();
     loadDatabase();
-    tryFetchRepoDataFolder();
+
+    // Check /Data folder automatically upon launch
+    await scanDataFolder();
+
     renderAll();
   }
 
@@ -231,7 +195,10 @@ const CRM = (() => {
     el.fileCsvLoader.addEventListener("change", handleCsvUpload);
     document.getElementById("btn-trigger-export").addEventListener("click", exportCsvFile);
     document.getElementById("file-backup-restore").addEventListener("change", handleRestoreBackup);
-    document.getElementById("btn-scan-repo").addEventListener("click", tryFetchRepoDataFolder);
+
+    // Re-scan buttons
+    document.getElementById("btn-scan-repo").addEventListener("click", scanDataFolder);
+    document.getElementById("btn-rescan-data-top").addEventListener("click", scanDataFolder);
 
     // List Creation
     document.getElementById("btn-create-list").addEventListener("click", promptNewList);
@@ -262,7 +229,6 @@ const CRM = (() => {
       if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); stepLead(1); }
       if (e.key === "ArrowUp" || e.key === "k") { e.preventDefault(); stepLead(-1); }
 
-      // 1-8 Numeric Hotkeys for Dispositions
       const keyMap = {
         "1": "No Answer",
         "2": "Left Voicemail",
@@ -381,7 +347,6 @@ const CRM = (() => {
 
     applyThemeAndDensity();
 
-    // Populate Settings UI
     document.getElementById("setting-theme").value = prefs.theme;
     document.getElementById("setting-density").value = prefs.density;
     document.getElementById("setting-auto-advance").checked = prefs.autoAdvance;
@@ -417,7 +382,7 @@ const CRM = (() => {
     applyThemeAndDensity();
     closeModal("modal-settings");
     renderTable();
-    showToast("Preferences updated.");
+    showToast("Preferences saved.");
   }
 
   function loadDatabase() {
@@ -426,11 +391,10 @@ const CRM = (() => {
       if (raw) {
         lists = JSON.parse(raw);
       } else {
-        lists = JSON.parse(JSON.stringify(defaultSampleData));
-        persistDatabase();
+        lists = {}; // Absolutely no mock data
       }
     } catch (e) {
-      lists = JSON.parse(JSON.stringify(defaultSampleData));
+      lists = {};
     }
     currentListName = Object.keys(lists)[0] || "";
   }
@@ -442,39 +406,81 @@ const CRM = (() => {
     } catch (e) {}
   }
 
-  // Auto-scan /Data folder
-  async function tryFetchRepoDataFolder() {
-    const defaultDataFiles = [
-      "Data/Plumbers.csv", "Data/plumbers.csv",
-      "Data/Electricians.csv", "Data/electricians.csv",
-      "Data/Accountants.csv", "Data/Dentists.csv",
-      "Data/Leads.csv", "Data/Prospects.csv"
+  /**
+   * Proactively queries the repository's /Data folder for CSV files
+   */
+  async function scanDataFolder() {
+    el.topbarSyncStatus.textContent = "Checking /Data...";
+
+    // Broad matrix of possible files and casings in /Data/
+    const candidateFiles = [
+      "Plumbers.csv", "plumbers.csv",
+      "Electricians.csv", "electricians.csv",
+      "Commercial Electricians.csv", "commercial electricians.csv",
+      "Commercial_Electricians.csv", "commercial_electricians.csv",
+      "Accountants.csv", "accountants.csv",
+      "Dentists.csv", "dentists.csv",
+      "Leads.csv", "leads.csv",
+      "Prospects.csv", "prospects.csv",
+      "Data.csv", "data.csv",
+      "Clients.csv", "clients.csv",
+      "Contacts.csv", "contacts.csv"
     ];
 
-    let foundAny = false;
-    for (const url of defaultDataFiles) {
-      try {
-        const resp = await fetch(url);
-        if (resp.ok) {
-          const csvText = await resp.text();
-          const listName = url.split("/").pop().replace(/\.csv$/i, "");
-          const parsed = parseCsvToLeads(csvText);
-          if (parsed.length > 0 && !lists[listName]) {
-            lists[listName] = parsed;
-            foundAny = true;
+    let foundCount = 0;
+
+    for (const fileName of candidateFiles) {
+      // Probing relative variants
+      const candidatePaths = [
+        `Data/${fileName}`,
+        `/Data/${fileName}`,
+        `./Data/${fileName}`
+      ];
+
+      for (const path of candidatePaths) {
+        try {
+          const resp = await fetch(path, { cache: "no-store" });
+          if (resp.ok) {
+            const csvText = await resp.text();
+            // Derive clean list name (e.g., "Plumbers")
+            const cleanTitle = fileName
+              .replace(/\.csv$/i, "")
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, l => l.toUpperCase());
+
+            const parsedLeads = parseCsvToLeads(csvText);
+            if (parsedLeads.length > 0) {
+              // If list doesn't exist, or has no leads yet, load it in
+              if (!lists[cleanTitle] || lists[cleanTitle].length === 0) {
+                lists[cleanTitle] = parsedLeads;
+                foundCount++;
+              }
+            }
+            break; // Stop testing other path variants for this file once resolved
           }
+        } catch (err) {
+          // fetch error on file:// or 404 handled silently
         }
-      } catch (err) {}
+      }
     }
 
-    if (foundAny) {
+    if (foundCount > 0) {
+      if (!currentListName || !lists[currentListName]) {
+        currentListName = Object.keys(lists)[0];
+      }
       persistDatabase();
       renderAll();
-      showToast("Imported lists discovered in /Data folder.");
+      showToast(`Successfully imported ${foundCount} lists from /Data folder.`);
+    } else {
+      if (Object.keys(lists).length === 0) {
+        el.topbarSyncStatus.textContent = "No /Data files found";
+      } else {
+        el.topbarSyncStatus.textContent = "Up to date";
+      }
     }
   }
 
-  // --- Smart CSV Parser & Exporter ---
+  // --- Smart Robust CSV Parser & Exporter ---
 
   function parseCsvToLeads(csvText) {
     const rows = parseCsvRows(csvText);
@@ -555,9 +561,9 @@ const CRM = (() => {
           currentListName = listName;
           persistDatabase();
           renderAll();
-          showToast(`Loaded ${leads.length} leads into "${listName}".`);
+          showToast(`Imported ${leads.length} records into "${listName}".`);
         } else {
-          showToast(`No leads detected in "${file.name}".`);
+          showToast(`No lead records identified in "${file.name}".`);
         }
       };
       reader.readAsText(file);
@@ -623,19 +629,23 @@ const CRM = (() => {
     const listNames = Object.keys(lists);
     if (!currentListName || !lists[currentListName]) currentListName = listNames[0] || "";
 
-    el.topbarActiveListTitle.textContent = currentListName || "No Lists";
+    el.topbarActiveListTitle.textContent = currentListName || "No Active List";
 
     // Folders
     let listHtml = "";
-    listNames.forEach(name => {
-      const activeCls = name === currentListName ? "active" : "";
-      listHtml += `
-        <button class="nav-list-item ${activeCls}" data-name="${escapeHtml(name)}">
-          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📁 ${escapeHtml(name)}</span>
-          <span class="count-tag">${lists[name].length}</span>
-        </button>
-      `;
-    });
+    if (listNames.length === 0) {
+      listHtml = `<div style="padding: 10px 8px; font-size: 11px; color: var(--text-light); text-align: center;">No lists loaded.<br>Click "Scan /Data" or import a CSV.</div>`;
+    } else {
+      listNames.forEach(name => {
+        const activeCls = name === currentListName ? "active" : "";
+        listHtml += `
+          <button class="nav-list-item ${activeCls}" data-name="${escapeHtml(name)}">
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📁 ${escapeHtml(name)}</span>
+            <span class="count-tag">${lists[name].length}</span>
+          </button>
+        `;
+      });
+    }
     el.listsContainer.innerHTML = listHtml;
 
     el.listsContainer.querySelectorAll(".nav-list-item").forEach(btn => {
@@ -1035,7 +1045,7 @@ const CRM = (() => {
   function downloadFullBackup() {
     const backupObj = {
       format: "AURELIUS_CRM_BACKUP",
-      version: 3,
+      version: 4,
       timestamp: new Date().toISOString(),
       lists,
       prefs
@@ -1078,15 +1088,16 @@ const CRM = (() => {
   }
 
   function resetLocalDatabase() {
-    if (confirm("Reset everything to fresh starter state? Unexported changes will be wiped.")) {
+    if (confirm("Reset local storage and re-scan the /Data folder?")) {
       localStorage.removeItem(STORAGE_KEY);
-      lists = JSON.parse(JSON.stringify(defaultSampleData));
-      currentListName = Object.keys(lists)[0];
+      lists = {};
+      currentListName = "";
       currentLeadId = null;
-      persistDatabase();
-      renderAll();
-      closeModal("modal-settings");
-      showToast("Reset to factory defaults.");
+      scanDataFolder().then(() => {
+        renderAll();
+        closeModal("modal-settings");
+        showToast("Database reset. Checked /Data folder.");
+      });
     }
   }
 
@@ -1095,6 +1106,13 @@ const CRM = (() => {
   function openAddLeadModal() {
     const select = document.getElementById("new-lead-target-list");
     select.innerHTML = "";
+
+    const names = Object.keys(lists);
+    if (names.length === 0) {
+      lists["Prospects"] = [];
+      currentListName = "Prospects";
+    }
+
     Object.keys(lists).forEach(name => {
       const opt = document.createElement("option");
       opt.value = name;
@@ -1160,6 +1178,7 @@ const CRM = (() => {
 
   return {
     init,
+    scanDataFolder,
     openModal,
     closeModal,
     stepLead,
