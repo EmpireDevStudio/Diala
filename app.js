@@ -41,20 +41,24 @@
 
     init() {
       if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
       }
       if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume();
+        this.ctx.resume().catch(() => {});
       }
     }
 
     play(effect = 'nib') {
-      const mode = state.settings.sensoryMode || 'all';
+      const mode = (state.settings && state.settings.sensoryMode) ? state.settings.sensoryMode : 'all';
       if (navigator.vibrate && (mode === 'all' || mode === 'vibrate')) {
-        if (effect === 'nib') navigator.vibrate(8);
-        else if (effect === 'turn') navigator.vibrate([10, 16, 12]);
-        else if (effect === 'seal') navigator.vibrate([16, 35, 18]);
-        else if (effect === 'alert') navigator.vibrate([30, 30, 30]);
+        try {
+          if (effect === 'nib') navigator.vibrate(8);
+          else if (effect === 'turn') navigator.vibrate([10, 16, 12]);
+          else if (effect === 'seal') navigator.vibrate([16, 35, 18]);
+          else if (effect === 'alert') navigator.vibrate([30, 30, 30]);
+        } catch (e) {}
       }
 
       if (mode === 'all' || mode === 'sound') {
@@ -106,6 +110,7 @@
   }
 
   const paperSound = new LivingPaperAudioEngine();
+  document.addEventListener('pointerdown', () => paperSound.init(), { once: true });
 
   // --- 3. HARDWARE-ACCELERATED INDEXEDDB ---
   const DB_NAME = 'LivingPaperDB_v2';
@@ -157,12 +162,15 @@
     callConsoleActive: false,
     callConsoleTimerInterval: null,
     callWaveformAnimId: null,
+    isConsoleMuted: false,
     ledgerFilterAction: 'all',
     ledgerSearchQuery: '',
     undoAction: null,
     powerDialTimer: null,
     powerDialCount: 3,
+    powerDialTargetLead: null,
     islandExpanded: false,
+    wakeLockSentinel: null,
     settings: {
       dailyTarget: 10,
       interfaceDensity: 'density-normal',
@@ -174,6 +182,26 @@
       lastStreakDate: null
     }
   };
+
+  // --- WAKE LOCK MANAGER ---
+  async function syncWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    if (state.settings.wakeLockEnabled && document.visibilityState === 'visible') {
+      try {
+        if (!state.wakeLockSentinel) {
+          state.wakeLockSentinel = await navigator.wakeLock.request('screen');
+          state.wakeLockSentinel.addEventListener('release', () => {
+            state.wakeLockSentinel = null;
+          });
+        }
+      } catch (err) {}
+    } else {
+      if (state.wakeLockSentinel) {
+        try { await state.wakeLockSentinel.release(); } catch (e) {}
+        state.wakeLockSentinel = null;
+      }
+    }
+  }
 
   // --- 5. TIMEZONE RADAR & TOKEN PARSER ---
   function getContactTimezone(phoneStr) {
@@ -248,9 +276,13 @@
 
   function formatDate(iso) {
     if (!iso) return '';
-    return new Date(iso).toLocaleDateString(undefined, {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    try {
+      return new Date(iso).toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    } catch (e) {
+      return iso;
+    }
   }
 
   // --- 6. PERSISTENCE & AUDIT LEDGER ---
@@ -323,6 +355,7 @@
           }
         }
         applyInterfaceDensity(state.settings.interfaceDensity);
+        syncWakeLock();
         res(true);
       };
     });
@@ -382,7 +415,7 @@
     if (callTimerInterval) clearInterval(callTimerInterval);
     document.getElementById('islandActiveCallBadge').classList.add('hidden');
 
-    if (elapsedSec >= 2) {
+    if (elapsedSec >= 1) {
       await logLedger(session.contactId, 'call', 'Voice Call Completed', `Duration: ${elapsedSec}s`, elapsedSec);
       refreshTelemetry();
       showPostCallTray(session.contactId);
@@ -450,7 +483,6 @@
 
     beginCallTracking(contact);
 
-    // Live wave simulator
     const canvas = document.getElementById('consoleWaveformCanvas');
     const ctx = canvas.getContext('2d');
     const timerEl = document.getElementById('consoleLiveTimer');
@@ -469,11 +501,12 @@
       if (!state.callConsoleActive) return;
       step += 0.08;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#D4B062';
+      ctx.strokeStyle = state.isConsoleMuted ? '#8F887D' : '#D4B062';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       for (let x = 0; x < canvas.width; x += 4) {
-        const y = (canvas.height / 2) + Math.sin(x * 0.05 + step) * 12 * Math.cos(step * 0.5);
+        const amplitude = state.isConsoleMuted ? 2 : 12;
+        const y = (canvas.height / 2) + Math.sin(x * 0.05 + step) * amplitude * Math.cos(step * 0.5);
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
@@ -519,10 +552,11 @@
   function executeUndo() {
     if (state.undoAction) {
       paperSound.play('seal');
-      state.undoAction();
+      const fn = state.undoAction;
       state.undoAction = null;
       if (undoTimer) clearTimeout(undoTimer);
       document.getElementById('paperUndoToast').classList.add('hidden');
+      fn();
     }
   }
 
@@ -530,11 +564,12 @@
   function startPowerDialCycle() {
     if (!state.settings.powerDialerEnabled || state.filteredContacts.length === 0) return;
 
-    let nextIdx = state.currentContactIndex + 1;
-    if (nextIdx >= state.filteredContacts.length) nextIdx = 0;
+    let nextIdx = state.currentContactIndex;
+    if (nextIdx < 0 || nextIdx >= state.filteredContacts.length) nextIdx = 0;
     const lead = state.filteredContacts[nextIdx];
     if (!lead) return;
 
+    state.powerDialTargetLead = lead;
     state.powerDialCount = 3;
     const overlay = document.getElementById('powerAdvanceOverlay');
     const numEl = document.getElementById('powerCountdownNumber');
@@ -550,9 +585,12 @@
         numEl.textContent = state.powerDialCount;
         paperSound.play('nib');
       } else {
+        const target = state.powerDialTargetLead;
         abortPowerDial();
-        openCockpit(lead.id);
-        dispatchLeadCall(lead);
+        if (target) {
+          openCockpit(target.id);
+          dispatchLeadCall(target);
+        }
       }
     }, 1000);
   }
@@ -562,12 +600,13 @@
       clearInterval(state.powerDialTimer);
       state.powerDialTimer = null;
     }
+    state.powerDialTargetLead = null;
     document.getElementById('powerAdvanceOverlay').classList.add('hidden');
   }
 
   function dispatchLeadCall(contact) {
+    if (!contact) return;
     const cl = cleanPhone(contact.phone);
-    // On wide desktop screens without native tel handler, open the simulator overlay
     if (window.innerWidth >= 1024) {
       openDesktopCallConsole(contact);
     } else {
@@ -597,7 +636,6 @@
       return c.stage === stage;
     });
 
-    // Sorting Engine
     state.filteredContacts.sort((a, b) => {
       if (state.sortBy === 'name') {
         return (a.company || a.name || '').localeCompare(b.company || b.name || '');
@@ -614,10 +652,15 @@
     renderCardStack();
     refreshTelemetry();
 
-    // Auto-select on desktop if nothing selected
-    if (window.innerWidth >= 1024 && state.filteredContacts.length > 0) {
-      if (state.currentContactIndex === -1 || !state.filteredContacts[state.currentContactIndex]) {
-        openCockpit(state.filteredContacts[0].id, false);
+    if (window.innerWidth >= 1024) {
+      if (state.filteredContacts.length > 0) {
+        if (state.currentContactIndex < 0 || state.currentContactIndex >= state.filteredContacts.length) {
+          state.currentContactIndex = 0;
+        }
+        openCockpit(state.filteredContacts[state.currentContactIndex].id, false);
+      } else {
+        document.getElementById('cockpitMountPoint').innerHTML = '';
+        document.getElementById('cockpitEmptyState').classList.remove('hidden');
       }
     }
   }
@@ -728,7 +771,7 @@
     });
   }
 
-  // --- 13. LEAD COCKPIT CONSOLE (DESKTOP MASTER-DETAIL) ---
+  // --- 13. LEAD COCKPIT CONSOLE ---
   function openCockpit(contactId, shouldSwitchScreenOnMobile = true) {
     const idx = state.filteredContacts.findIndex(c => c.id === contactId);
     if (idx === -1) return;
@@ -736,7 +779,6 @@
     state.currentContactIndex = idx;
     renderCockpit(state.filteredContacts[idx]);
 
-    // Update active highlight in pipeline list
     document.querySelectorAll('.paper-card').forEach((el, i) => {
       el.classList.toggle('active-selected', i === idx);
     });
@@ -754,7 +796,6 @@
     const tzInfo = getContactTimezone(c.phone);
 
     container.innerHTML = `
-      <!-- Cockpit Hero -->
       <div class="cockpit-hero">
         <div class="hero-left-cluster">
           <div class="hero-large-avatar">${getInitials(c.company, c.name)}</div>
@@ -774,7 +815,6 @@
         </div>
       </div>
 
-      <!-- Triad Trigger Actions with Keyboard Indicators -->
       <div class="cockpit-triad-row">
         <button id="btnTriadCall" class="paper-triad-tile tile-voice">
           <span class="triad-hotkey-hint">C</span>
@@ -793,7 +833,6 @@
         </button>
       </div>
 
-      <!-- Quick Outcome Vellum Chips -->
       <div class="cockpit-chips-tray">
         <span class="chips-heading">Instant Outcome Micro-Chips</span>
         <div class="chips-wrapper">
@@ -805,7 +844,6 @@
         </div>
       </div>
 
-      <!-- 4-Way Macro Outcomes -->
       <div class="macro-disposition-deck">
         <button id="btnMacroNA" class="macro-btn m-btn-na">
           <span class="triad-hotkey-hint">N</span>
@@ -828,9 +866,7 @@
         </button>
       </div>
 
-      <!-- Desktop Bento: Script Prompter & Call Notes -->
       <div class="cockpit-dual-grid">
-        <!-- Live Pitch Hook Bento -->
         <div class="paper-box">
           <div class="row-between">
             <span class="paper-box-title">RAPID PITCH PROMPTER</span>
@@ -842,24 +878,21 @@
           </div>
         </div>
 
-        <!-- Call Notes Bento -->
         <div class="paper-box">
           <div class="row-between">
             <span class="paper-box-title">SCRATCHPAD & CALL NOTES</span>
             <button id="btnEditNotesQuick" class="btn-dictate">✏️ Edit / Dictate</button>
           </div>
-          <div class="cockpit-notes-canvas" id="cockpitNotesDisplay">${c.notes || '<span style="color:var(--ink-muted);font-style:italic;">No notes recorded yet. Click Edit to enter scratch notes.</span>'}</div>
+          <div class="cockpit-notes-canvas" id="cockpitNotesDisplay">${c.notes ? c.notes.replace(/\n/g, '<br>') : '<span style="color:var(--ink-muted);font-style:italic;">No notes recorded yet. Click Edit to enter scratch notes.</span>'}</div>
         </div>
       </div>
 
-      <!-- History Ledger Bento -->
       <div class="paper-box">
         <span class="paper-box-title">AUDIT ACTIVITY LOG FOR THIS LEAD</span>
         <div id="cockpitLedgerList" class="ledger-feed"></div>
       </div>
     `;
 
-    // Event listeners
     container.querySelector('#btnTriadCall').onclick = () => {
       paperSound.play('seal');
       dispatchLeadCall(c);
@@ -980,7 +1013,6 @@
   // --- 15. KEYBOARD COMMAND ACCELERATOR ---
   function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-      // Do not trigger hotkeys if user is currently typing in an input
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
         if (e.key === 'Escape') {
           document.activeElement.blur();
@@ -1017,7 +1049,6 @@
         return;
       }
 
-      // Lead Cycling
       if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowDown' || e.key === ']') {
         e.preventDefault();
         if (state.filteredContacts.length > 0) {
@@ -1036,7 +1067,6 @@
         return;
       }
 
-      // Actions on currently active lead
       if (!c) return;
 
       if (e.key === 'c' || e.key === 'C') {
@@ -1146,11 +1176,18 @@
       window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${s}&body=${b}`, '_blank');
     };
 
-    document.getElementById('btnCopyDispatchClipboard').onclick = () => {
+    document.getElementById('btnCopyDispatchClipboard').onclick = async () => {
       paperSound.play('seal');
       const text = document.getElementById('textareaDispatchBody').value;
-      navigator.clipboard.writeText(text);
-      alert('Draft copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Draft copied to clipboard!');
+      } catch (e) {
+        const ta = document.getElementById('textareaDispatchBody');
+        ta.select();
+        document.execCommand('copy');
+        alert('Draft copied to clipboard!');
+      }
     };
 
     document.getElementById('btnMarkDispatchLogged').onclick = async () => {
@@ -1218,8 +1255,8 @@
     const id = document.getElementById('editLeadId').value;
     let c = state.contacts.find(x => x.id === id);
 
-    if (!c) {
-      // New Contact creation
+    const isNew = !c;
+    if (isNew) {
       c = {
         id: 'c_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
         stage: 'uncontacted',
@@ -1229,6 +1266,10 @@
         created_at: new Date().toISOString()
       };
       state.contacts.unshift(c);
+      state.activeQueue = 'uncontacted';
+      document.querySelectorAll('.segment-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.queue === 'uncontacted');
+      });
     }
 
     c.company = document.getElementById('fieldEditCompany').value.trim();
@@ -1248,6 +1289,10 @@
   function switchScreen(targetId) {
     paperSound.play('turn');
     state.activeScreenId = targetId;
+
+    document.getElementById('paneCockpit').classList.remove('mobile-active');
+    document.getElementById('dockDefaultBar').classList.remove('hidden');
+    document.getElementById('dockCockpitBar').classList.add('hidden');
 
     if (targetId === 'screenPipeline') {
       document.getElementById('panePipeline').classList.remove('hidden');
@@ -1277,7 +1322,6 @@
     const feed = document.getElementById('ledgerItemsFeed');
     let logs = await getAllLedgerLogs();
 
-    // KPIs
     const callLogs = logs.filter(l => l.action === 'call');
     document.getElementById('ledgerKpiCalls').textContent = callLogs.length;
     const spoken = logs.filter(l => l.action === 'disposition' && l.outcome.toLowerCase().includes('spoken')).length;
@@ -1366,12 +1410,14 @@
         const headers = rows[0].map(h => h.toLowerCase().replace(/[\s\-_]+/g, '_'));
         const findCol = (aliases) => headers.findIndex(h => aliases.includes(h));
 
-        const cIdx = findCol(['company', 'business', 'business_name', 'account', 'organization']);
+        const cIdx = findCol(['company', 'business', 'business_name', 'account', 'organization', 'organization_name']);
         const nIdx = findCol(['name', 'full_name', 'contact', 'client', 'contact_name']);
-        const pIdx = findCol(['phone', 'tel', 'mobile', 'telephone', 'direct_phone']);
+        const fnIdx = findCol(['first_name', 'firstname', 'first']);
+        const lnIdx = findCol(['last_name', 'lastname', 'last', 'surname']);
+        const pIdx = findCol(['phone', 'tel', 'mobile', 'telephone', 'direct_phone', 'phone_number']);
         const eIdx = findCol(['email', 'mail', 'email_address']);
         const rIdx = findCol(['title', 'role', 'job_title', 'position']);
-        const ntIdx = findCol(['notes', 'comments', 'memo', 'note']);
+        const ntIdx = findCol(['notes', 'comments', 'memo', 'note', 'description']);
 
         const dupPolicy = state.settings.dupRule || 'skip';
         let imported = 0;
@@ -1382,14 +1428,19 @@
 
         for (let r = 1; r < rows.length; r++) {
           const row = rows[r];
-          const company = (row[cIdx] || '').trim();
-          const name = (row[nIdx] || '').trim();
-          const phone = (row[pIdx] || '').trim();
-          const email = (row[eIdx] || '').trim();
+          const company = (cIdx !== -1 ? row[cIdx] : '') || '';
+          let name = (nIdx !== -1 ? row[nIdx] : '') || '';
+          if (!name && (fnIdx !== -1 || lnIdx !== -1)) {
+            const fn = fnIdx !== -1 ? (row[fnIdx] || '') : '';
+            const ln = lnIdx !== -1 ? (row[lnIdx] || '') : '';
+            name = `${fn} ${ln}`.trim();
+          }
+          const phone = (pIdx !== -1 ? row[pIdx] : '') || '';
+          const email = (eIdx !== -1 ? row[eIdx] : '') || '';
 
           if (!company && !name && !phone && !email) continue;
 
-          const exists = state.contacts.find(x => (phone && x.phone === phone) || (email && x.email.toLowerCase() === email.toLowerCase()));
+          const exists = state.contacts.find(x => (phone && x.phone === phone) || (email && x.email && x.email.toLowerCase() === email.toLowerCase()));
           if (exists) {
             if (dupPolicy === 'skip') {
               skipped++;
@@ -1397,8 +1448,8 @@
             } else if (dupPolicy === 'update') {
               exists.company = company || exists.company;
               exists.name = name || exists.name;
-              exists.job_title = (row[rIdx] || '').trim() || exists.job_title;
-              exists.notes = (row[ntIdx] || '').trim() || exists.notes;
+              exists.job_title = (rIdx !== -1 ? row[rIdx] : '') || exists.job_title;
+              exists.notes = (ntIdx !== -1 ? row[ntIdx] : '') || exists.notes;
               store.put(exists);
               imported++;
               continue;
@@ -1411,8 +1462,8 @@
             name,
             phone,
             email,
-            job_title: (row[rIdx] || '').trim(),
-            notes: (row[ntIdx] || '').trim(),
+            job_title: (rIdx !== -1 ? row[rIdx] : '') || '',
+            notes: (ntIdx !== -1 ? row[ntIdx] : '') || '',
             stage: 'uncontacted',
             attempts: 0,
             last_contacted_at: null,
@@ -1426,9 +1477,11 @@
           paperSound.play('seal');
           await loadAllContacts();
           applyPipelineFilter();
+          document.getElementById('fileCsvPicker').value = '';
           alert(`CSV Ingestion Finished: ${imported} imported, ${skipped} duplicates skipped.`);
         };
       } catch (err) {
+        document.getElementById('fileCsvPicker').value = '';
         alert('CSV Parse Error: ' + err.message);
       }
     };
@@ -1505,7 +1558,7 @@
     reader.onload = async (e) => {
       try {
         const snap = JSON.parse(e.target.result);
-        if (!snap.contacts) { alert('Invalid snapshot file.'); return; }
+        if (!snap.contacts || !Array.isArray(snap.contacts)) { alert('Invalid snapshot file.'); return; }
         if (confirm(`Restore ${snap.contacts.length} leads? Current data will be replaced.`)) {
           const tx = db.transaction(['contacts', 'interactions'], 'readwrite');
           tx.objectStore('contacts').clear();
@@ -1521,10 +1574,12 @@
             await loadAllContacts();
             applyPipelineFilter();
             paperSound.play('seal');
+            document.getElementById('fileJsonRestorePicker').value = '';
             alert('Database verified and restored!');
           };
         }
       } catch (err) {
+        document.getElementById('fileJsonRestorePicker').value = '';
         alert('Restore error: ' + err.message);
       }
     };
@@ -1540,18 +1595,16 @@
     setupSpeechEngine();
     setupKeyboardShortcuts();
 
-    // Clock
     setInterval(updateIslandClock, 1000);
     updateIslandClock();
 
-    // Visibility listener for auto-timing call wrap-up
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         checkCallCompletion();
+        syncWakeLock();
       }
     });
 
-    // Dynamic Island Expansion
     const island = document.getElementById('livingIsland');
     const tray = document.getElementById('islandExpandedTray');
     island.onclick = (e) => {
@@ -1561,7 +1614,6 @@
       tray.classList.toggle('hidden', !state.islandExpanded);
     };
 
-    // Power Dialer Toggle
     const powerToggle = document.getElementById('togglePowerDial');
     powerToggle.checked = !!state.settings.powerDialerEnabled;
     powerToggle.onchange = async (e) => {
@@ -1570,14 +1622,30 @@
       paperSound.play('seal');
     };
 
-    // Call Console Close
     document.getElementById('btnCloseCallConsole').onclick = closeDesktopCallConsole;
     document.getElementById('btnEndVoiceCall').onclick = closeDesktopCallConsole;
     document.getElementById('btnConsoleOpenScript').onclick = () => {
       document.getElementById('sheetPitchPrompter').classList.remove('hidden');
     };
 
-    // Post Call Tray Outcomes
+    const muteBtn = document.getElementById('btnConsoleMute');
+    if (muteBtn) {
+      muteBtn.onclick = () => {
+        state.isConsoleMuted = !state.isConsoleMuted;
+        muteBtn.textContent = state.isConsoleMuted ? '🔇 Unmute' : '🎙️ Mute';
+        muteBtn.style.color = state.isConsoleMuted ? 'var(--ink-crimson)' : '';
+        paperSound.play('nib');
+      };
+    }
+
+    const keypadBtn = document.getElementById('btnConsoleKeypad');
+    if (keypadBtn) {
+      keypadBtn.onclick = () => {
+        paperSound.play('nib');
+        alert('DTMF Keypad: Touchtones active.');
+      };
+    }
+
     document.getElementById('btnDismissPostCallTray').onclick = () => {
       document.getElementById('postCallTray').classList.add('hidden');
     };
@@ -1593,7 +1661,6 @@
       };
     });
 
-    // Segment Strip Tabs
     document.querySelectorAll('.segment-tab').forEach(b => {
       b.onclick = () => {
         paperSound.play('nib');
@@ -1604,13 +1671,11 @@
       };
     });
 
-    // Sorting
     document.getElementById('selectPipelineSort').onchange = (e) => {
       state.sortBy = e.target.value;
       applyPipelineFilter();
     };
 
-    // Search Controls
     const searchInput = document.getElementById('inputSearchLeads');
     const clearBtn = document.getElementById('btnClearSearch');
     searchInput.oninput = (e) => {
@@ -1625,7 +1690,23 @@
       applyPipelineFilter();
     };
 
-    // Masthead Buttons
+    const searchLedger = document.getElementById('inputSearchLedger');
+    if (searchLedger) {
+      searchLedger.oninput = (e) => {
+        state.ledgerSearchQuery = e.target.value;
+        renderLedgerView();
+      };
+    }
+
+    document.querySelectorAll('#ledgerFilterPills .filter-chip').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('#ledgerFilterPills .filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        state.ledgerFilterAction = btn.dataset.action;
+        renderLedgerView();
+      };
+    });
+
     document.getElementById('btnOpenShortcutsHud').onclick = () => {
       document.getElementById('modalKeyboardShortcuts').classList.remove('hidden');
     };
@@ -1636,12 +1717,10 @@
       persistSettings();
     };
 
-    // Bottom Navigation (Mobile & Desktop)
     document.querySelectorAll('.dock-tab').forEach(btn => {
       btn.onclick = () => switchScreen(btn.dataset.screen);
     });
 
-    // Mobile Cockpit Back Button
     document.getElementById('btnCockpitBack').onclick = () => {
       document.getElementById('paneCockpit').classList.remove('mobile-active');
       document.getElementById('dockDefaultBar').classList.remove('hidden');
@@ -1652,10 +1731,11 @@
       document.getElementById('sheetPitchPrompter').classList.remove('hidden');
     };
     document.getElementById('btnCockpitEditLead').onclick = () => {
-      if (state.currentContactIndex !== -1) openLeadProfileEditor(state.filteredContacts[state.currentContactIndex]);
+      if (state.currentContactIndex !== -1 && state.filteredContacts[state.currentContactIndex]) {
+        openLeadProfileEditor(state.filteredContacts[state.currentContactIndex]);
+      }
     };
 
-    // Callback Sheet Pill Options
     document.querySelectorAll('.sheet-pill').forEach(b => {
       b.onclick = () => scheduleCallback(parseInt(b.dataset.hours, 10));
     });
@@ -1665,7 +1745,6 @@
       scheduleCallback(0, val);
     };
 
-    // Close Sheet Handlers
     document.querySelectorAll('[data-close-sheet]').forEach(b => {
       b.onclick = () => {
         document.querySelectorAll('.paper-sheet-scrim').forEach(m => m.classList.add('hidden'));
@@ -1673,14 +1752,16 @@
       };
     });
 
-    // Forms & CSV Actions
     document.getElementById('formEditLeadProfile').onsubmit = handleLeadFormSubmit;
     document.getElementById('btnToastUndoAction').onclick = executeUndo;
     document.getElementById('btnCancelPowerAdvance').onclick = abortPowerDial;
     document.getElementById('btnSkipToNowPowerAdvance').onclick = () => {
-      const lead = state.filteredContacts[state.currentContactIndex];
+      const lead = state.powerDialTargetLead || state.filteredContacts[state.currentContactIndex];
       abortPowerDial();
-      if (lead) dispatchLeadCall(lead);
+      if (lead) {
+        openCockpit(lead.id);
+        dispatchLeadCall(lead);
+      }
     };
 
     document.getElementById('btnPickCsvSheet').onclick = () => document.getElementById('fileCsvPicker').click();
@@ -1699,10 +1780,11 @@
       if (state.filteredContacts.length > 0) openCockpit(state.filteredContacts[0].id);
     };
 
-    // Settings Inputs
     document.getElementById('selectInterfaceDensity').value = state.settings.interfaceDensity || 'density-normal';
     document.getElementById('selectSensoryAudio').value = state.settings.sensoryMode || 'all';
     document.getElementById('checkWakeLockEnabled').checked = !!state.settings.wakeLockEnabled;
+    document.getElementById('selectDupRule').value = state.settings.dupRule || 'skip';
+    document.getElementById('inputDailyTarget').value = state.settings.dailyTarget || 10;
 
     document.getElementById('selectInterfaceDensity').onchange = async (e) => {
       state.settings.interfaceDensity = e.target.value;
@@ -1711,10 +1793,25 @@
     };
     document.getElementById('selectSensoryAudio').onchange = async (e) => {
       state.settings.sensoryMode = e.target.value;
+      document.getElementById('soundEffectIcon').textContent = (state.settings.sensoryMode === 'mute' ? '🔇' : '🔊');
       await persistSettings();
     };
+    document.getElementById('checkWakeLockEnabled').onchange = async (e) => {
+      state.settings.wakeLockEnabled = e.target.checked;
+      await persistSettings();
+      syncWakeLock();
+    };
+    document.getElementById('selectDupRule').onchange = async (e) => {
+      state.settings.dupRule = e.target.value;
+      await persistSettings();
+    };
+    document.getElementById('inputDailyTarget').onchange = async (e) => {
+      const val = parseInt(e.target.value, 10);
+      state.settings.dailyTarget = isNaN(val) || val < 1 ? 10 : val;
+      await persistSettings();
+      refreshTelemetry();
+    };
 
-    // Template Selector
     const tmplSelect = document.getElementById('templateChooser');
     tmplSelect.replaceChildren();
     Object.values(state.emailTemplates).forEach(t => {
