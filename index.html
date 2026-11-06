@@ -3,24 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#F7F6F0">
+  <meta name="theme-color" content="#F4F1EA">
   <title>FlipDialler — Living Paper</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app-shell">
     
-    <!-- MASTHEAD -->
+    <!-- EXECUTIVE MASTHEAD -->
     <header class="app-header">
       <div class="brand">
-        <span class="brand-crest">FD</span>
-        <span class="brand-title">FlipDialler <em>Lite</em></span>
+        <div class="brand-crest">FD</div>
+        <div class="brand-text">
+          <span class="brand-title">FlipDialler</span>
+          <span class="brand-tag">Living Paper Edition</span>
+        </div>
       </div>
       <div class="header-actions">
-        <label for="csvFileInput" class="btn btn-subtle" title="Import CSV">📥 Import</label>
+        <label for="csvFileInput" class="btn btn-vellum" title="Import CSV">📥 Import</label>
         <input type="file" id="csvFileInput" accept=".csv,text/csv" hidden>
-        <button id="btnExportCsv" class="btn btn-subtle" title="Export CSV">📤 Export</button>
-        <button id="btnNewLead" class="btn btn-gold">+ Lead</button>
+        <button id="btnExportCsv" class="btn btn-vellum" title="Export CSV">📤 Export</button>
+        <button id="btnNewLead" class="btn btn-primary">+ New Lead</button>
       </div>
     </header>
 
@@ -30,13 +33,14 @@
       <!-- PANE 1: LIST & SEARCH -->
       <section class="pane pane-list" id="paneList">
         <div class="filter-strip">
-          <button class="filter-btn active" data-stage="fresh">Fresh (<span id="countFresh">0</span>)</button>
-          <button class="filter-btn" data-stage="callback">Due (<span id="countCallback">0</span>)</button>
-          <button class="filter-btn" data-stage="contacted">Spoken (<span id="countContacted">0</span>)</button>
+          <button class="filter-btn active" data-stage="fresh">Fresh <span class="badge" id="countFresh">0</span></button>
+          <button class="filter-btn" data-stage="callback">Due <span class="badge" id="countCallback">0</span></button>
+          <button class="filter-btn" data-stage="contacted">Spoken <span class="badge" id="countContacted">0</span></button>
           <button class="filter-btn" data-stage="all">All</button>
         </div>
 
-        <div class="search-box">
+        <div class="search-wrap">
+          <span class="search-glyph">🔍</span>
           <input type="search" id="inputSearch" placeholder="Search company, name, phone... (Press '/')">
         </div>
 
@@ -47,67 +51,77 @@
       <section class="pane pane-cockpit" id="paneCockpit">
         
         <div id="cockpitEmpty" class="cockpit-empty">
-          <p>Select a contact or import a CSV to begin dialing.</p>
+          <div class="empty-monogram">📜</div>
+          <h3>No Lead Selected</h3>
+          <p>Choose an entry from the pipeline or import a CSV file to begin dialing.</p>
         </div>
 
         <div id="cockpitContent" class="cockpit-content hidden">
           <div class="cockpit-nav-mobile">
-            <button id="btnBackToList" class="btn btn-subtle">‹ Back to Pipeline</button>
+            <button id="btnBackToList" class="btn btn-vellum">‹ Back to Pipeline</button>
           </div>
 
-          <!-- Contact Header -->
-          <div class="lead-card">
+          <!-- Contact Primary Card -->
+          <div class="paper-card lead-card">
             <div class="lead-header">
               <div class="lead-titles">
                 <h2 id="leadCompany">Company Name</h2>
                 <div class="lead-subtitle" id="leadSubtitle">Contact Name • Job Title</div>
               </div>
-              <button id="btnEditLead" class="btn-text">Edit</button>
+              <button id="btnEditLead" class="btn-edit" title="Edit Contact">✏️ Edit</button>
             </div>
 
-            <!-- Big Call Button -->
+            <!-- Tactile Call Button -->
             <a id="btnCallLead" href="#" class="btn-call-trigger">
               <span class="call-icon">📞</span>
               <div class="call-meta">
-                <span class="call-action-text">CALL DIRECT LINE</span>
+                <span class="call-action-label">CONNECT VOICE CALL</span>
                 <span class="call-phone-number" id="leadPhone">—</span>
               </div>
             </a>
           </div>
 
-          <!-- Instant Macro Dispositions -->
-          <div class="disposition-bar">
+          <!-- 4-Way Disposition Bar -->
+          <div class="disposition-grid">
             <button class="disp-btn btn-na" id="btnDispNA">
-              <strong>No Answer</strong>
-              <small>Log attempt (N)</small>
+              <span class="disp-label">🔕 No Answer</span>
+              <span class="disp-hint">Attempt (N)</span>
             </button>
             <button class="disp-btn btn-cb" id="btnDispCB">
-              <strong>Call Back</strong>
-              <small>Schedule reminder</small>
+              <span class="disp-label">📅 Call Back</span>
+              <span class="disp-hint">Schedule</span>
             </button>
             <button class="disp-btn btn-sp" id="btnDispSpoken">
-              <strong>Spoken</strong>
-              <small>Mark contacted (D)</small>
+              <span class="disp-label">⭐ Spoken</span>
+              <span class="disp-hint">Contacted (D)</span>
             </button>
             <button class="disp-btn btn-dnc" id="btnDispDNC">
-              <strong>Delete</strong>
-              <small>Remove lead</small>
+              <span class="disp-label">🗑️ Delete</span>
+              <span class="disp-hint">Remove Lead</span>
             </button>
           </div>
 
-          <!-- Scratchpad & Notes -->
-          <div class="card notes-card">
+          <!-- Scratchpad & Notes Canvas -->
+          <div class="paper-card notes-card">
             <div class="notes-header">
-              <label for="leadNotes">CALL SCRATCHPAD & NOTES</label>
+              <span class="notes-title">CALL SCRATCHPAD & FIELD NOTES</span>
               <span id="notesSaveIndicator" class="save-indicator">Saved</span>
             </div>
-            <textarea id="leadNotes" rows="6" placeholder="Type call notes here (auto-saves)..."></textarea>
+            <textarea id="leadNotes" rows="6" placeholder="Record immediate notes, objections, and next steps..."></textarea>
           </div>
 
-          <!-- Email Trigger -->
-          <div class="email-row" id="leadEmailRow">
-            <span>Email: <strong id="leadEmail">None</strong></span>
-            <a id="btnEmailLead" href="#" class="btn btn-subtle">Send Email</a>
+          <!-- Email Dispatch Row (Opens in New Tab) -->
+          <div class="paper-card email-card" id="leadEmailRow">
+            <div class="email-info">
+              <span class="email-label">DIRECT EMAIL</span>
+              <strong id="leadEmail" class="email-address">—</strong>
+            </div>
+            <div class="email-actions">
+              <!-- Opens in New Tab -->
+              <a id="btnEmailLead" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                ✉️ Compose Email ↗
+              </a>
+            </div>
           </div>
         </div>
 
@@ -118,8 +132,10 @@
 
   <!-- MODAL: ADD / EDIT CONTACT -->
   <dialog id="dialogLeadForm" class="modal-dialog">
-    <form id="leadForm" method="dialog">
-      <h3 id="formTitle">Add New Lead</h3>
+    <form id="leadForm" method="dialog" class="dialog-inner">
+      <div class="dialog-header">
+        <h3 id="formTitle">Add New Lead</h3>
+      </div>
       <input type="hidden" id="formId">
 
       <div class="form-group">
@@ -149,30 +165,36 @@
         </div>
       </div>
 
-      <div class="form-actions">
-        <button type="button" id="btnCancelForm" class="btn btn-subtle">Cancel</button>
-        <button type="submit" class="btn btn-gold">Save Contact</button>
+      <div class="dialog-actions">
+        <button type="button" id="btnCancelForm" class="btn btn-vellum">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
       </div>
     </form>
   </dialog>
 
   <!-- MODAL: QUICK CALLBACK PICKER -->
   <dialog id="dialogCallback" class="modal-dialog">
-    <div class="callback-content">
-      <h3>Schedule Call Back</h3>
-      <div class="callback-pills">
-        <button class="btn btn-subtle" data-cb-hours="2">+2 Hours</button>
-        <button class="btn btn-subtle" data-cb-hours="4">+4 Hours</button>
-        <button class="btn btn-subtle" data-cb-hours="24">Tomorrow</button>
-        <button class="btn btn-subtle" data-cb-hours="48">In 2 Days</button>
+    <div class="dialog-inner">
+      <div class="dialog-header">
+        <h3>Schedule Call Back</h3>
       </div>
-      <div class="form-group" style="margin-top: 14px;">
-        <label for="inputCustomCallback">Custom Date / Time:</label>
+      <p class="dialog-desc">Select when this contact should reappear in the queue:</p>
+      
+      <div class="callback-pills">
+        <button class="btn btn-vellum" data-cb-hours="2">⏱ In 2 Hours</button>
+        <button class="btn btn-vellum" data-cb-hours="4">⏱ In 4 Hours</button>
+        <button class="btn btn-vellum" data-cb-hours="24">📅 Tomorrow</button>
+        <button class="btn btn-vellum" data-cb-hours="48">🗓 In 2 Days</button>
+      </div>
+      
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="inputCustomCallback">Or pick exact date & time:</label>
         <input type="datetime-local" id="inputCustomCallback">
       </div>
-      <div class="form-actions" style="margin-top: 14px;">
-        <button id="btnCancelCallback" class="btn btn-subtle">Close</button>
-        <button id="btnConfirmCustomCallback" class="btn btn-gold">Set Time</button>
+      
+      <div class="dialog-actions" style="margin-top: 16px;">
+        <button id="btnCancelCallback" class="btn btn-vellum">Cancel</button>
+        <button id="btnConfirmCustomCallback" class="btn btn-primary">Confirm Time</button>
       </div>
     </div>
   </dialog>

@@ -1,6 +1,6 @@
 /**
- * FLIPDIALLER LITE — ESSENTIALS ONLY
- * Core calling loop, stage tracking, auto-notes & CSV engine.
+ * FLIPDIALLER LITE — LIVING PAPER 2.0
+ * Minimal, essential dialing engine with new-tab web compose.
  */
 
 (() => {
@@ -44,14 +44,14 @@
     notesTimer: null
   };
 
-  // --- 3. DOM NODES ---
+  // --- 3. DOM ELEMENTS ---
   const el = {
     list: document.getElementById('contactList'),
     cockpitEmpty: document.getElementById('cockpitEmpty'),
     cockpitContent: document.getElementById('cockpitContent'),
     paneCockpit: document.getElementById('paneCockpit'),
     btnBackToList: document.getElementById('btnBackToList'),
-    // Lead Elements
+    // Lead Detail Nodes
     leadCompany: document.getElementById('leadCompany'),
     leadSubtitle: document.getElementById('leadSubtitle'),
     leadPhone: document.getElementById('leadPhone'),
@@ -59,6 +59,7 @@
     leadNotes: document.getElementById('leadNotes'),
     notesSaveIndicator: document.getElementById('notesSaveIndicator'),
     leadEmail: document.getElementById('leadEmail'),
+    leadEmailRow: document.getElementById('leadEmailRow'),
     btnEmailLead: document.getElementById('btnEmailLead'),
     // Counts
     countFresh: document.getElementById('countFresh'),
@@ -92,11 +93,10 @@
     renderList();
     updateCounts();
 
-    // Preserve or reset selected lead
     if (state.activeId && !state.contacts.some(c => c.id === state.activeId)) {
       state.activeId = null;
     }
-    if (!state.activeId && state.filtered.length > 0 && window.innerWidth >= 800) {
+    if (!state.activeId && state.filtered.length > 0 && window.innerWidth >= 840) {
       selectLead(state.filtered[0].id);
     } else {
       renderActiveCockpit();
@@ -105,7 +105,7 @@
 
   function renderList() {
     if (state.filtered.length === 0) {
-      el.list.innerHTML = `<div style="padding:24px; text-align:center; color:var(--ink-muted); font-size:0.85rem;">No contacts found.</div>`;
+      el.list.innerHTML = `<div style="padding:32px 16px; text-align:center; color:var(--ink-muted); font-size:0.85rem;">No leads in this queue.</div>`;
       return;
     }
 
@@ -133,7 +133,7 @@
     renderActiveCockpit();
     renderList();
 
-    if (window.innerWidth < 800) {
+    if (window.innerWidth < 840) {
       el.paneCockpit.classList.add('mobile-visible');
     }
   }
@@ -160,15 +160,19 @@
     el.leadNotes.value = c.notes || '';
     el.leadEmail.textContent = c.email || 'None';
 
+    // OPEN EMAIL IN NEW TAB (Webmail Compose with mailto fallback)
     if (c.email) {
-      el.btnEmailLead.href = `mailto:${c.email}`;
-      el.btnEmailLead.style.display = 'inline-block';
+      el.leadEmailRow.classList.remove('hidden');
+      const subject = encodeURIComponent(`Regarding ${c.company || 'our conversation'}`);
+      // Launches Google Webmail in a clean new tab
+      el.btnEmailLead.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.email)}&su=${subject}`;
+      el.btnEmailLead.target = '_blank';
     } else {
-      el.btnEmailLead.style.display = 'none';
+      el.leadEmailRow.classList.add('hidden');
     }
   }
 
-  // --- 5. DISPOSITIONS & ACTIONS ---
+  // --- 5. DISPOSITIONS ---
   async function markOutcome(type) {
     const c = state.contacts.find(x => x.id === state.activeId);
     if (!c) return;
@@ -181,7 +185,7 @@
       c.stage = 'contacted';
       await dbAPI.put(c);
     } else if (type === 'delete') {
-      if (!confirm(`Delete ${c.company || c.name}?`)) return;
+      if (!confirm(`Permanently remove ${c.company || c.name}?`)) return;
       await dbAPI.delete(c.id);
       state.contacts = state.contacts.filter(x => x.id !== c.id);
       state.activeId = null;
@@ -200,7 +204,7 @@
     }
   }
 
-  // --- 6. AUTO-SAVING SCRATCHPAD ---
+  // --- 6. AUTO-SAVING NOTES BUFFER ---
   el.leadNotes.addEventListener('input', () => {
     clearTimeout(state.notesTimer);
     state.notesTimer = setTimeout(async () => {
@@ -214,24 +218,24 @@
     }, 400);
   });
 
-  // --- 7. CSV IMPORT / EXPORT (RFC 4180 COMPATIBLE) ---
+  // --- 7. CSV INGESTION / EXPORT ---
   function parseCSV(text) {
     const rows = [];
     let curRow = [''];
     let inQuotes = false;
     for (let i = 0; i < text.length; i++) {
-      const c = text[i], n = text[i + 1];
-      if (c === '"') {
-        if (inQuotes && n === '"') { curRow[curRow.length - 1] += '"'; i++; }
+      const ch = text[i], next = text[i + 1];
+      if (ch === '"') {
+        if (inQuotes && next === '"') { curRow[curRow.length - 1] += '"'; i++; }
         else { inQuotes = !inQuotes; }
-      } else if (c === ',' && !inQuotes) {
+      } else if (ch === ',' && !inQuotes) {
         curRow.push('');
-      } else if ((c === '\r' || c === '\n') && !inQuotes) {
-        if (c === '\r' && n === '\n') i++;
+      } else if ((ch === '\r' || ch === '\n') && !inQuotes) {
+        if (ch === '\r' && next === '\n') i++;
         if (curRow.length > 1 || curRow[0] !== '') rows.push(curRow);
         curRow = [''];
       } else {
-        curRow[curRow.length - 1] += c;
+        curRow[curRow.length - 1] += ch;
       }
     }
     if (curRow.length > 1 || curRow[0] !== '') rows.push(curRow);
@@ -244,19 +248,19 @@
 
     const text = await file.text();
     const rows = parseCSV(text);
-    if (rows.length < 2) return alert('Invalid or empty CSV.');
+    if (rows.length < 2) return alert('CSV file is empty or missing headers.');
 
     const headers = rows[0].map(h => h.trim().toLowerCase());
     const findCol = (keys) => headers.findIndex(h => keys.includes(h));
 
-    const cIdx = findCol(['company', 'business', 'business name', 'organization']);
-    const nIdx = findCol(['name', 'contact', 'contact name', 'full name']);
-    const pIdx = findCol(['phone', 'mobile', 'tel', 'phone number']);
+    const cIdx = findCol(['company', 'business', 'organization']);
+    const nIdx = findCol(['name', 'contact', 'full name']);
+    const pIdx = findCol(['phone', 'mobile', 'tel']);
     const eIdx = findCol(['email', 'mail']);
     const tIdx = findCol(['title', 'role', 'job title']);
     const ntIdx = findCol(['notes', 'comments', 'memo']);
 
-    let added = 0;
+    let count = 0;
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
       const company = (cIdx !== -1 ? r[cIdx] : '') || '';
@@ -280,12 +284,12 @@
 
       await dbAPI.put(contact);
       state.contacts.push(contact);
-      added++;
+      count++;
     }
 
     e.target.value = '';
     applyFilters();
-    alert(`Imported ${added} contacts.`);
+    alert(`Imported ${count} leads successfully.`);
   });
 
   document.getElementById('btnExportCsv').onclick = () => {
@@ -304,7 +308,7 @@
     a.click();
   };
 
-  // --- 8. LEAD ADD / EDIT MODAL ---
+  // --- 8. LEAD ADD / EDIT DIALOG ---
   function openLeadModal(contact = null) {
     document.getElementById('formTitle').textContent = contact ? 'Edit Contact' : 'Add New Contact';
     document.getElementById('formId').value = contact ? contact.id : '';
@@ -345,7 +349,7 @@
   };
   document.getElementById('btnCancelForm').onclick = () => el.dialogForm.close();
 
-  // --- 9. CALLBACK PICKER ---
+  // --- 9. CALLBACK SCHEDULER ---
   document.getElementById('btnDispCB').onclick = () => {
     document.getElementById('inputCustomCallback').value = '';
     el.dialogCallback.showModal();
@@ -375,7 +379,7 @@
     scheduleCallback(0, val);
   };
 
-  // --- 10. EVENT HANDLERS & SHORTCUTS ---
+  // --- 10. EVENT LISTENERS & SHORTCUTS ---
   el.list.addEventListener('click', (e) => {
     const card = e.target.closest('.contact-card');
     if (card) selectLead(card.dataset.id);
@@ -401,7 +405,7 @@
   document.getElementById('btnDispSpoken').onclick = () => markOutcome('contacted');
   document.getElementById('btnDispDNC').onclick = () => markOutcome('delete');
 
-  // Keybindings (J/K next/prev, C call, N no answer, D spoken)
+  // Keybindings: J / K (navigate), C (call), N (no answer), D (spoken), / (search)
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
