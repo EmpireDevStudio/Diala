@@ -2,625 +2,609 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aurelius Prospect CRM</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F7F6F0">
+  <title>FlipDialler Pro — Executive Living Paper Cockpit</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-light density-default">
+<body class="density-normal">
+  <div id="paperApp" class="paper-viewport">
 
-  <div class="app-shell">
-    
-    <!-- LEFT PRIMARY DOCK -->
-    <aside class="app-dock">
-      <div class="dock-header">
-        <div class="brand-monogram" title="Aurelius CRM">A</div>
+    <!-- DESKTOP TOP BAR (HEADER & DYNAMIC ISLAND) -->
+    <header class="app-masthead">
+      <div class="masthead-brand">
+        <div class="brand-crest">FP</div>
+        <div class="brand-titles">
+          <span class="brand-name">FlipDialler <em>Pro</em></span>
+          <span class="brand-sub">Living Paper Engine</span>
+        </div>
       </div>
 
-      <nav class="dock-nav">
-        <button class="dock-item active" data-view="view-crm" id="dock-btn-crm" title="Prospect Desk">
-          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14h6"/><path d="M9 18h6"/><path d="M9 10h6"/></svg>
-          <span class="dock-title">Leads</span>
-        </button>
+      <!-- LIVING EXECUTIVE DYNAMIC ISLAND -->
+      <div class="island-anchor">
+        <div id="livingIsland" class="living-island" role="button" tabindex="0" aria-label="Executive Status Capsule">
+          <div class="island-default">
+            <div class="island-cluster-left">
+              <span class="ink-dot"></span>
+              <span id="islandStageLabel" class="island-pill-title">FRESH QUEUE</span>
+            </div>
+            
+            <div id="islandActiveCallBadge" class="island-call-timer hidden">
+              <span class="timer-dot"></span>
+              <span id="islandCallTimerDigits">00:00</span>
+            </div>
 
-        <button class="dock-item" data-view="view-email" id="dock-btn-email" title="Outreach Templates">
-          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          <span class="dock-title">Templates</span>
-        </button>
+            <div class="island-cluster-right">
+              <span class="island-time-clock" id="islandCurrentTime">--:--</span>
+              <span class="island-pace-icon">🔥</span>
+              <span id="islandPaceDisplay" class="island-pace-digits">0/10</span>
+              <span id="islandCallbackAlert" class="island-badge-due hidden">0 Due</span>
+            </div>
+          </div>
 
-        <button class="dock-item" data-view="view-analytics" id="dock-btn-stats" title="Conversion Funnel & Analytics">
-          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-          <span class="dock-title">Metrics</span>
-        </button>
-      </nav>
+          <!-- Expanded Island Dropdown -->
+          <div id="islandExpandedTray" class="island-tray hidden">
+            <div class="tray-grid">
+              <div class="tray-metric">
+                <span class="t-value" id="expTodayCalls">0</span>
+                <span class="t-label">Calls Today</span>
+              </div>
+              <div class="tray-metric">
+                <span class="t-value" id="expStreakCounter">0d</span>
+                <span class="t-label">Active Streak</span>
+              </div>
+              <div class="tray-metric">
+                <span class="t-value" id="expContactRate">0%</span>
+                <span class="t-label">Spoken Rate</span>
+              </div>
+              <div class="tray-metric">
+                <span class="t-value" id="expPendingCbCount">0</span>
+                <span class="t-label">Callbacks Due</span>
+              </div>
+            </div>
 
-      <div class="dock-footer">
-        <button class="dock-item" id="btn-open-hotkeys" title="Keyboard Shortcuts (?)">
-          <span class="key-badge">?</span>
+            <div class="tray-switch-row">
+              <div class="tray-switch-label">
+                <strong>Continuous Power Dialing</strong>
+                <span>Auto-advances to next target</span>
+              </div>
+              <label class="paper-switch">
+                <input type="checkbox" id="togglePowerDial">
+                <span class="switch-knob"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESKTOP TOP CONTROLS -->
+      <div class="masthead-actions">
+        <button id="btnOpenShortcutsHud" class="masthead-btn" title="Keyboard Shortcuts (?)">
+          <span class="btn-icon">⌨️</span>
+          <span class="btn-text">Hotkeys</span>
         </button>
-        <button class="dock-item" id="btn-open-settings" title="System Settings">
-          <svg class="dock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <button id="btnQuickAddLead" class="masthead-btn" title="Quick Add Contact">
+          <span class="btn-icon">➕</span>
+          <span class="btn-text">Add Contact</span>
         </button>
+        <button id="btnToggleSoundEffects" class="masthead-btn" title="Toggle Haptics & Sounds">
+          <span id="soundEffectIcon" class="btn-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- EPHEMERAL UNDO TOAST -->
+    <aside id="paperUndoToast" class="paper-toast hidden" role="alert">
+      <div class="toast-body">
+        <span id="toastMessage">Lead updated</span>
+        <div class="toast-bar"><div id="toastBarProgress"></div></div>
+      </div>
+      <button id="btnToastUndoAction" class="toast-undo-btn">Revert (Z)</button>
+    </aside>
+
+    <!-- POWER ADVANCE OVERLAY -->
+    <aside id="powerAdvanceOverlay" class="power-sheet-overlay hidden">
+      <div class="power-card">
+        <div class="power-badge">POWER DIAL AUTOMATION</div>
+        <div class="power-caption">ADVANCING TO NEXT TARGET IN</div>
+        <div id="powerCountdownNumber" class="power-timer-display">3</div>
+        <div id="powerNextTargetTitle" class="power-lead-name">Next Contact Name</div>
+        <div class="power-actions-row">
+          <button id="btnSkipToNowPowerAdvance" class="paper-button paper-btn-gold">Dial Now</button>
+          <button id="btnCancelPowerAdvance" class="paper-button paper-btn-subtle">Pause Flow (Esc)</button>
+        </div>
       </div>
     </aside>
 
-    <!-- MAIN APP CANVAS -->
-    <div class="app-canvas">
-      
-      <!-- TOP COMMAND BAR -->
-      <header class="app-topbar">
-        <div class="topbar-section left-cluster">
-          <button class="action-icon-btn" id="btn-toggle-sidebar" title="Toggle Lists Drawer (Ctrl+B)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-          </button>
-          <div class="active-list-crumb">
-            <span class="crumb-status-dot"></span>
-            <span class="crumb-list-title" id="topbar-active-list-title">Scanning /Data...</span>
-          </div>
-          <span class="sync-indicator" id="topbar-sync-status">Ready</span>
+    <!-- DESKTOP CALL SIMULATOR & WEBRTC CONSOLE OVERLAY -->
+    <div id="callConsoleOverlay" class="call-console-modal hidden">
+      <div class="call-console-card">
+        <div class="console-header">
+          <div class="console-pill">LIVE VOICE CALL IN PROGRESS</div>
+          <button id="btnCloseCallConsole" class="console-close-btn">&times;</button>
+        </div>
+        
+        <div class="console-lead-info">
+          <div class="console-avatar" id="consoleAvatar">TW</div>
+          <h2 id="consoleTargetName">Acme Corporation</h2>
+          <p id="consoleTargetPerson">Jane Doe • Direct Line</p>
+          <div class="console-phone-badge" id="consoleTargetPhone">📞 +1 (555) 234-5678</div>
+          <div class="console-tz-pill" id="consoleTargetTz">EST (10:14 AM) • Normal Hours</div>
         </div>
 
-        <div class="topbar-section center-cluster">
-          <div class="omni-search-wrapper">
-            <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="global-search-input" placeholder="Search leads by company, phone, email, notes... (Press '/' to focus)" spellcheck="false" autocomplete="off">
-            <button class="clear-search-btn hidden" id="btn-clear-search">✕</button>
+        <div class="console-waveform-wrap">
+          <canvas id="consoleWaveformCanvas" width="360" height="48"></canvas>
+          <div id="consoleLiveTimer" class="console-timer">00:00</div>
+        </div>
+
+        <div class="console-keypad-row">
+          <button id="btnConsoleMute" class="console-tool-btn">🎙️ Mute</button>
+          <button id="btnConsoleKeypad" class="console-tool-btn">🔢 Keypad</button>
+          <button id="btnConsoleOpenScript" class="console-tool-btn">💡 Pitch</button>
+        </div>
+
+        <div class="console-bottom-actions">
+          <button id="btnEndVoiceCall" class="paper-button paper-btn-danger full-w">
+            🔴 End Call & Log Disposition
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN DUAL-PANE WORKSPACE WRAPPER -->
+    <div class="workspace-container">
+
+      <!-- LEFT SIDEBAR / PANE 1: PIPELINE WORKBENCH -->
+      <aside class="workspace-pane pane-pipeline" id="panePipeline">
+        <!-- Segmented Filter Strip -->
+        <nav class="paper-segments" role="tablist">
+          <button class="segment-tab active" data-queue="uncontacted" role="tab" title="Fresh leads with 0 contacts">
+            <span>Fresh</span> <span id="countPillFresh" class="seg-badge">0</span>
+          </button>
+          <button class="segment-tab" data-queue="callback" role="tab" title="Scheduled callbacks due">
+            <span>Due</span> <span id="countPillDue" class="seg-badge">0</span>
+          </button>
+          <button class="segment-tab" data-queue="contacted" role="tab" title="Contacts already spoken to">
+            <span>Spoken</span> <span id="countPillSpoken" class="seg-badge">0</span>
+          </button>
+          <button class="segment-tab" data-queue="all" role="tab" title="View complete database">
+            <span>All</span>
+          </button>
+        </nav>
+
+        <!-- Search Bar with Quick Filter & Clear -->
+        <div class="paper-search-capsule">
+          <span class="search-icon">🔍</span>
+          <input type="search" id="inputSearchLeads" placeholder="Search company, phone, name... (Press '/')" autocomplete="off">
+          <button id="btnClearSearch" class="btn-clear-search hidden">&times;</button>
+        </div>
+
+        <!-- Desktop Quick Controls Bar -->
+        <div class="pipeline-utility-bar">
+          <div class="sort-selector">
+            <span>Sort:</span>
+            <select id="selectPipelineSort" class="paper-select-compact">
+              <option value="name">Company Name (A-Z)</option>
+              <option value="date_desc">Newest Added</option>
+              <option value="callback_due">Callback Due</option>
+              <option value="attempts">Attempts</option>
+            </select>
+          </div>
+          <button id="btnBulkCsvImportTrigger" class="utility-icon-btn" title="Import CSV leads">📥 Import</button>
+          <button id="btnExportPipelineQuick" class="utility-icon-btn" title="Export this view">📤 Export</button>
+        </div>
+
+        <div class="gesture-cue-bar desktop-hide">
+          <span>Swipe Right to <strong>Call</strong> • Swipe Left for <strong>Callback</strong></span>
+        </div>
+
+        <!-- Living Card Stack -->
+        <div id="paperCardStack" class="paper-card-stack" role="list"></div>
+      </aside>
+
+      <!-- RIGHT MAIN CONTENT / PANE 2: ACTIVE LEAD COCKPIT & SCRIPTER -->
+      <main class="workspace-pane pane-cockpit" id="paneCockpit">
+        
+        <!-- Empty State Placeholder when no contact is selected on Desktop -->
+        <div id="cockpitEmptyState" class="cockpit-empty hidden">
+          <div class="empty-crest">📜</div>
+          <h3>Select a Lead from the Pipeline</h3>
+          <p>Choose any contact on the left to activate the single-action cockpit, pitch prompter, notes, and activity log.</p>
+          <div class="empty-actions">
+            <button id="btnSelectFirstLead" class="paper-button paper-btn-gold">Open First Contact</button>
+            <button id="btnEmptyStateCsv" class="paper-button paper-btn-subtle">Import Leads (.CSV)</button>
           </div>
         </div>
 
-        <div class="topbar-section right-cluster">
-          <button class="btn btn-secondary btn-sm" id="btn-rescan-data-top" title="Re-scan /Data folder in repository">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            <span>Scan /Data</span>
-          </button>
-
-          <button class="btn btn-secondary btn-sm" id="btn-trigger-import" title="Load CSV from disk">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span>Open CSV</span>
-          </button>
-          <input type="file" id="file-csv-loader" accept=".csv" multiple class="hidden">
-          
-          <button class="btn btn-secondary btn-sm" id="btn-trigger-export" title="Export this list to CSV">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>Export CSV</span>
-          </button>
-
-          <button class="btn btn-primary btn-sm" id="btn-add-lead-modal">
-            <span>+ Lead</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- VIEW VIEWPORT -->
-      <main class="view-mount">
-
-        <!-- ========================================================
-             VIEW 1: PRIMARY WORKSPACE (DRAWER + TABLE + DESK)
-             ======================================================== -->
-        <section id="view-crm" class="app-view active">
-          <div class="workspace-tri-grid" id="workspace-grid">
-            
-            <!-- DRAWER: LISTS & DISPOSITIONS -->
-            <aside class="panel-drawer" id="panel-drawer">
-              <div class="drawer-block">
-                <div class="drawer-header-row">
-                  <span class="drawer-label">Prospect Lists</span>
-                  <div class="drawer-tool-actions">
-                    <button class="btn-tool" id="btn-create-list" title="Create New Empty List">+</button>
-                    <button class="btn-tool" id="btn-scan-repo" title="Rescan /Data Folder">↻</button>
-                  </div>
-                </div>
-                <div class="lists-nav-stack" id="lists-container">
-                  <!-- Populated by JS -->
-                </div>
-              </div>
-
-              <div class="drawer-block" style="margin-top: 18px;">
-                <div class="drawer-header-row">
-                  <span class="drawer-label">Dispositions</span>
-                </div>
-                <div class="disp-nav-stack" id="disp-filters-container">
-                  <!-- Populated by JS -->
-                </div>
-              </div>
-            </aside>
-
-            <!-- CENTER TABLE -->
-            <section class="panel-table">
-              <div class="table-utility-bar">
-                <div class="utility-left">
-                  <h2 class="table-title" id="table-headline-title">Leads</h2>
-                  <span class="count-pill" id="table-lead-count-badge">0</span>
-                </div>
-                <div class="utility-right">
-                  <label class="sort-selector">
-                    <span class="sort-label">Sort:</span>
-                    <select id="select-table-sort" class="styled-select">
-                      <option value="default">Default Order</option>
-                      <option value="name_asc">Company (A–Z)</option>
-                      <option value="name_desc">Company (Z–A)</option>
-                      <option value="disposition">Disposition</option>
-                      <option value="callback">Callback Date</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              <div class="table-scroller">
-                <table class="leads-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 38px;">#</th>
-                      <th style="width: 32%;">Prospect / Company</th>
-                      <th style="width: 22%;">Telephone</th>
-                      <th style="width: 18%;">Status</th>
-                      <th style="width: 28%;">Location</th>
-                    </tr>
-                  </thead>
-                  <tbody id="leads-master-tbody">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
-
-                <!-- ZERO / EMPTY STATE -->
-                <div class="empty-results-box hidden" id="table-empty-notice">
-                  <div class="empty-icon-glyph">✦</div>
-                  <h3 id="empty-notice-title">No leads found</h3>
-                  <p id="empty-notice-desc">Place your CSV files inside the <code>/Data</code> folder of this repo, or open them directly.</p>
-                  <div class="empty-cta-row" style="margin-top: 14px; display: flex; gap: 8px;">
-                    <button class="btn btn-secondary btn-sm" onclick="CRM.scanDataFolder()">↻ Rescan /Data Folder</button>
-                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-csv-loader').click()">📂 Select CSV from Computer</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <div class="workspace-resizer" id="workspace-resizer" role="separator" aria-orientation="vertical" aria-label="Resize leads table and customer information" aria-valuemin="20" aria-valuemax="65" aria-valuenow="33" tabindex="0"></div>
-
-            <!-- RIGHT CALLING DESK & INSPECTOR -->
-            <aside class="panel-desk" id="panel-calling-desk">
-              
-              <div class="empty-desk-state" id="empty-desk-state">
-                <span class="empty-desk-glyph">◎</span>
-                <h3>Select a Prospect</h3>
-                <p>Click any row in the leads table to place calls, log call outcomes, and compose messages.</p>
-              </div>
-
-              <div class="desk-body hidden" id="desk-content">
-                
-                <!-- Desk Navigation Header -->
-                <div class="desk-toolbar">
-                  <div class="lead-navigator">
-                    <button class="nav-step-btn" id="btn-step-prev" title="Previous (Key: K or ↑)">▲ Prev</button>
-                    <span class="step-counter" id="lead-pos-counter">1 of 1</span>
-                    <button class="nav-step-btn" id="btn-step-next" title="Next (Key: J or ↓)">▼ Next</button>
-                  </div>
-                  <div class="desk-toolbar-tools">
-                    <button class="subtle-tool-btn danger" id="btn-delete-lead" title="Delete Prospect">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- 1-Click Dispositions Engine -->
-                <div class="disposition-command-deck">
-                  <div class="deck-topline">
-                    <span class="deck-legend">CALL DISPOSITION</span>
-                    <span class="desk-disp-tag" id="disp-active-tag">New</span>
-                  </div>
-
-                  <div class="disposition-action-grid">
-                    <button class="disp-chip" data-disp="No Answer"><span class="chip-num">1</span> No Answer</button>
-                    <button class="disp-chip" data-disp="Left Voicemail"><span class="chip-num">2</span> Voicemail</button>
-                    <button class="disp-chip" data-disp="Gatekeeper"><span class="chip-num">3</span> Gatekeeper</button>
-                    <button class="disp-chip" data-disp="Not Interested"><span class="chip-num">4</span> Not Interested</button>
-                    <button class="disp-chip disp-chip-cal" data-disp="Callback Scheduled"><span class="chip-num">5</span> Callback</button>
-                    <button class="disp-chip disp-chip-star" data-disp="Interested"><span class="chip-num">6</span> Interested</button>
-                    <button class="disp-chip disp-chip-meet" data-disp="Meeting Booked"><span class="chip-num">7</span> Meeting Booked</button>
-                    <button class="disp-chip disp-chip-dead" data-disp="Bad / Closed"><span class="chip-num">8</span> Bad / Dead</button>
-                  </div>
-
-                  <!-- Callback Date Tray -->
-                  <div class="callback-input-tray hidden" id="callback-tray">
-                    <label class="tray-label">Date & Time:</label>
-                    <input type="datetime-local" id="input-callback-dt" class="tray-dt-input">
-                    <button class="btn btn-primary btn-xs" id="btn-save-callback">Schedule</button>
-                  </div>
-                </div>
-
-                <!-- Lead Form / Inspector Fields -->
-                <div class="desk-scrollable-form">
-                  
-                  <div class="lead-name-box">
-                    <input type="text" id="desk-input-name" class="lead-title-input" placeholder="Company Name" spellcheck="false">
-                  </div>
-
-                  <!-- Quick Telephony & Email Tiles -->
-                  <div class="telephony-deck">
-                    <a href="#" id="action-dial-btn" class="comm-tile dial-tile" title="Click to open system phone dialer">
-                      <div class="comm-glyph">📞</div>
-                      <div class="comm-text">
-                        <span class="comm-label">Launch Call</span>
-                        <span class="comm-val" id="action-sub-phone">—</span>
-                      </div>
-                    </a>
-
-                    <button type="button" id="action-email-btn" class="comm-tile email-tile" title="Send template email">
-                      <div class="comm-glyph">✉️</div>
-                      <div class="comm-text">
-                        <span class="comm-label">Send Email</span>
-                        <span class="comm-val" id="action-sub-email">Compose</span>
-                      </div>
-                    </button>
-                  </div>
-
-                  <div class="form-fields-grid">
-                    <div class="field-item">
-                      <label>Telephone</label>
-                      <input type="text" id="desk-input-phone" placeholder="Telephone number">
-                    </div>
-
-                    <div class="field-item">
-                      <label>Email Address</label>
-                      <input type="email" id="desk-input-email" placeholder="direct@example.com">
-                    </div>
-
-                    <div class="field-item">
-                      <label>Website</label>
-                      <div class="input-affixed">
-                        <input type="text" id="desk-input-website" placeholder="www.domain.com">
-                        <a href="#" target="_blank" id="btn-desk-visit-site" class="affix-btn" title="Open Website">↗</a>
-                      </div>
-                    </div>
-
-                    <div class="field-item">
-                      <label>Address / City</label>
-                      <div class="input-affixed">
-                        <input type="text" id="desk-input-address" placeholder="Physical Address, Postcode">
-                        <a href="#" target="_blank" id="btn-desk-view-map" class="affix-btn" title="Open Map">📍</a>
-                      </div>
-                    </div>
-
-                    <div class="field-item" id="callback-display-row">
-                      <label>Scheduled Callback</label>
-                      <input type="text" id="desk-input-callback-view" readonly class="readonly-field" placeholder="No callback scheduled">
-                    </div>
-                  </div>
-
-                  <!-- Notes & Activity Log -->
-                  <div class="notes-block">
-                    <div class="notes-header">
-                      <label>Call Log & History</label>
-                      <button type="button" class="btn-stamp" id="btn-desk-timestamp">+ Add Timestamp</button>
-                    </div>
-                    <textarea id="desk-input-notes" class="editorial-notes" rows="8" placeholder="Log conversation insights, owner name, objections, or contract dates..."></textarea>
-                  </div>
-
-                </div>
-
-              </div>
-            </aside>
-
-          </div>
-        </section>
-
-        <!-- ========================================================
-             VIEW 2: OUTREACH EMAIL TEMPLATES
-             ======================================================== -->
-        <section id="view-email" class="app-view">
-          <div class="editorial-container">
-            <div class="editorial-head">
-              <div>
-                <h1 class="page-title">Outgoing Outreach System</h1>
-                <p class="page-subtitle">Configure personalized dynamic outreach templates triggered with one click from the caller desk.</p>
-              </div>
-              <button class="btn btn-primary" id="btn-save-email-settings">Save Template</button>
-            </div>
-
-            <div class="split-editor-stage">
-              <div class="editor-pane card-panel">
-                <h3 class="panel-heading">Template Configuration</h3>
-
-                <div class="field-item">
-                  <label>Subject Line</label>
-                  <input type="text" id="tpl-subject" class="styled-input" placeholder="Quick question regarding {business_name}">
-                  <span class="field-hint">Available merge tags: <code>{business_name}</code>, <code>{phone}</code>, <code>{email}</code>, <code>{address}</code>, <code>{sender_name}</code></span>
-                </div>
-
-                <div class="field-item" style="margin-top: 14px;">
-                  <label>Email Body</label>
-                  <textarea id="tpl-body" class="styled-textarea" rows="12"></textarea>
-                </div>
-
-                <div class="form-cols-2" style="margin-top: 14px;">
-                  <div class="field-item">
-                    <label>Action Protocol</label>
-                    <select id="tpl-action-type" class="styled-select full-w">
-                      <option value="mailto">Open System Mail Client (mailto:)</option>
-                      <option value="clipboard">Copy Body to System Clipboard</option>
-                    </select>
-                  </div>
-                  <div class="field-item">
-                    <label>Sender Sign-off Name</label>
-                    <input type="text" id="tpl-sender" class="styled-input" placeholder="Your Name">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Preview Pane -->
-              <div class="preview-pane card-panel">
-                <h3 class="panel-heading">Live Prospect Preview</h3>
-                <div class="paper-preview-envelope">
-                  <div class="envelope-meta-row">
-                    <span class="meta-tag">Recipient:</span>
-                    <span class="meta-data" id="prev-email-to">—</span>
-                  </div>
-                  <div class="envelope-meta-row">
-                    <span class="meta-tag">Subject:</span>
-                    <span class="meta-data" id="prev-email-subject">—</span>
-                  </div>
-                  <div class="envelope-body" id="prev-email-body"></div>
-                </div>
-                <button class="btn btn-secondary full-w" style="margin-top: 14px;" onclick="CRM.triggerOutgoingEmail()">
-                  Test Trigger With Active Prospect ↗
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ========================================================
-             VIEW 3: METRICS & CONVERSION
-             ======================================================== -->
-        <section id="view-analytics" class="app-view">
-          <div class="editorial-container">
-            <div class="editorial-head">
-              <div>
-                <h1 class="page-title">Prospect Pipeline Analytics</h1>
-                <p class="page-subtitle">Real-time breakdown of all records across imported local files and database lists.</p>
-              </div>
-            </div>
-
-            <div class="kpi-metrics-row">
-              <div class="kpi-card">
-                <span class="kpi-label">Total Leads</span>
-                <span class="kpi-value" id="stat-all-leads">0</span>
-              </div>
-              <div class="kpi-card kpi-success">
-                <span class="kpi-label">Meetings Booked</span>
-                <span class="kpi-value" id="stat-meetings">0</span>
-              </div>
-              <div class="kpi-card">
-                <span class="kpi-label">Callbacks Scheduled</span>
-                <span class="kpi-value" id="stat-callbacks">0</span>
-              </div>
-              <div class="kpi-card">
-                <span class="kpi-label">Interested Prospects</span>
-                <span class="kpi-value" id="stat-interested">0</span>
-              </div>
-            </div>
-
-            <div class="card-panel" style="margin-top: 24px;">
-              <h3 class="panel-heading">Pipeline Stage Funnel</h3>
-              <div class="funnel-display-stack" id="analytics-funnel-bars">
-                <!-- Injected via app.js -->
-              </div>
-            </div>
-          </div>
-        </section>
-
+        <!-- Lead Cockpit Content Canvas -->
+        <div id="cockpitMountPoint" class="cockpit-canvas"></div>
       </main>
-    </div>
-  </div>
 
-  <!-- MODAL: SETTINGS -->
-  <div class="modal-overlay hidden" id="modal-settings">
-    <div class="modal-box modal-wide">
-      <div class="modal-header">
-        <h3 class="modal-title">Application Preferences</h3>
-        <button class="modal-close-btn" onclick="CRM.closeModal('modal-settings')">✕</button>
-      </div>
+      <!-- SCREEN: AUDIT LEDGER (DESKTOP MODAL / PANE OVERLAY) -->
+      <section id="screenLedger" class="screen-surface hidden" aria-label="Audit Activity Ledger">
+        <div class="ledger-header-panel">
+          <div class="ledger-headline">
+            <h2>Activity & Audit Ledger</h2>
+            <p>Chronological record of every voice call, dispatch, note, and outcome.</p>
+          </div>
+          <div class="ledger-kpis">
+            <div class="kpi-box">
+              <span class="kpi-val" id="ledgerKpiCalls">0</span>
+              <span class="kpi-lbl">Total Dials</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-val" id="ledgerKpiSpoken">0</span>
+              <span class="kpi-lbl">Spoken Out</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-val" id="ledgerKpiAvgDuration">0s</span>
+              <span class="kpi-lbl">Avg Duration</span>
+            </div>
+          </div>
+        </div>
 
-      <div class="modal-scroller">
-        <!-- Theme & Appearance -->
-        <div class="config-section">
-          <h4 class="config-title">Appearance & Display</h4>
-          <div class="form-cols-2">
-            <div class="field-item">
-              <label>Interface Theme</label>
-              <select id="setting-theme" class="styled-select full-w">
-                <option value="theme-light">Crisp Light (Editorial Minimal)</option>
-                <option value="theme-dark">Midnight Slate (Dark)</option>
-                <option value="theme-sepia">Warm Editorial Paper</option>
+        <div class="ledger-controls-row">
+          <div class="paper-search-capsule flex-1">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="inputSearchLedger" placeholder="Filter ledger records...">
+          </div>
+          <div class="ledger-filter-row" id="ledgerFilterPills">
+            <button class="filter-chip active" data-action="all">All</button>
+            <button class="filter-chip" data-action="call">Calls</button>
+            <button class="filter-chip" data-action="email">Emails</button>
+            <button class="filter-chip" data-action="sms">SMS</button>
+            <button class="filter-chip" data-action="disposition">Status</button>
+          </div>
+          <button id="btnExportLedgerCsvDirect" class="paper-button paper-btn-subtle">Export Activity Log (.CSV)</button>
+        </div>
+
+        <div id="ledgerItemsFeed" class="ledger-feed"></div>
+      </section>
+
+      <!-- SCREEN: STUDIO PREFERENCES (DESKTOP MODAL / PANE OVERLAY) -->
+      <section id="screenStudio" class="screen-surface hidden" aria-label="Studio Preferences">
+        <div class="studio-grid">
+          
+          <!-- Box 1 -->
+          <div class="paper-box">
+            <h3 class="paper-box-title">Display & Ergonomics</h3>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Text & Information Density</strong>
+                <span>Controls card padding and typography sizing</span>
+              </div>
+              <select id="selectInterfaceDensity" class="paper-select">
+                <option value="density-compact">Compact (High Information)</option>
+                <option value="density-normal" selected>Standard Balanced</option>
+                <option value="density-large">Comfort / Large Text</option>
               </select>
             </div>
-            <div class="field-item">
-              <label>Table Row Density</label>
-              <select id="setting-density" class="styled-select full-w">
-                <option value="density-compact">Compact (High Information Density)</option>
-                <option value="density-default">Default (Balanced)</option>
-                <option value="density-spacious">Spacious (Relaxed Touch)</option>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Tactile & Fountain Pen Audio</strong>
+                <span>Synthesized mechanical and nib sounds</span>
+              </div>
+              <select id="selectSensoryAudio" class="paper-select">
+                <option value="all">Full Audio + Haptics</option>
+                <option value="sound">Parchment Sounds Only</option>
+                <option value="vibrate">Haptics Only</option>
+                <option value="mute">Muted</option>
               </select>
             </div>
-          </div>
-        </div>
-
-        <!-- Calling & Telephony -->
-        <div class="config-section">
-          <h4 class="config-title">Calling & Telephony Automation</h4>
-          <div class="field-item">
-            <label class="switch-row">
-              <input type="checkbox" id="setting-auto-advance">
-              <span class="switch-text">Auto-advance to next lead immediately after disposition click</span>
-            </label>
-          </div>
-          <div class="field-item" style="margin-top: 8px;">
-            <label class="switch-row">
-              <input type="checkbox" id="setting-auto-timestamp">
-              <span class="switch-text">Automatically append timestamped disposition entry to prospect notes</span>
-            </label>
-          </div>
-          <div class="form-cols-2" style="margin-top: 12px;">
-            <div class="field-item">
-              <label>Dialing Prefix (Optional)</label>
-              <input type="text" id="setting-dial-prefix" class="styled-input" placeholder="+44 or +1">
-              <span class="field-hint">Prepended to phone numbers without country code.</span>
-            </div>
-            <div class="field-item">
-              <label>Auto-Advance Delay (ms)</label>
-              <input type="number" id="setting-advance-delay" class="styled-input" min="50" max="2000" step="50" value="200">
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Keep Screen Awake (WakeLock API)</strong>
+                <span>Prevents computer or mobile screen from sleeping</span>
+              </div>
+              <label class="paper-switch">
+                <input type="checkbox" id="checkWakeLockEnabled" checked>
+                <span class="switch-knob"></span>
+              </label>
             </div>
           </div>
-        </div>
 
-        <!-- Export CSV Preferences -->
-        <div class="config-section">
-          <h4 class="config-title">CSV Import & Export Engine</h4>
-          <div class="form-cols-2">
-            <div class="field-item">
-              <label>Export CSV Delimiter</label>
-              <select id="setting-csv-delimiter" class="styled-select full-w">
-                <option value=",">Comma (,)</option>
-                <option value=";">Semicolon (;)</option>
-                <option value="&#9;">Tab (\t)</option>
+          <!-- Box 2 -->
+          <div class="paper-box">
+            <h3 class="paper-box-title">Daily Goals & Duplicate Control</h3>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Daily Dial Goal Target</strong>
+                <span>Calculates your daily pace metrics</span>
+              </div>
+              <input type="number" id="inputDailyTarget" min="1" max="1000" class="paper-num-input" value="10">
+            </div>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Duplicate Ingestion Rule</strong>
+                <span>Behavior when phone or email already exists</span>
+              </div>
+              <select id="selectDupRule" class="paper-select">
+                <option value="skip" selected>Skip (Keep Existing)</option>
+                <option value="update">Overwrite / Merge Existing</option>
+                <option value="allow">Allow All (Duplicates OK)</option>
               </select>
             </div>
-            <div class="field-item">
-              <label>Export Scope</label>
-              <select id="setting-export-scope" class="styled-select full-w">
-                <option value="all">Entire Current List</option>
-                <option value="filtered">Filtered / Searched Subset Only</option>
-              </select>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>CSV Leads Bulk Upload</strong>
+                <span>Upload any standard sales sheet</span>
+              </div>
+              <button id="btnPickCsvSheet" class="paper-button paper-btn-gold">
+                <span>📥 Choose .CSV File</span>
+              </button>
+              <input type="file" id="fileCsvPicker" accept=".csv,text/csv,text/plain" class="hidden-file-input">
             </div>
           </div>
-          <div class="field-item" style="margin-top: 8px;">
-            <label class="switch-row">
-              <input type="checkbox" id="setting-excel-bom" checked>
-              <span class="switch-text">Include UTF-8 BOM for Microsoft Excel compatibility</span>
-            </label>
-          </div>
-        </div>
 
-        <!-- Full Database Backup & Restore -->
-        <div class="config-section">
-          <h4 class="config-title">Data Backup & Continuity</h4>
-          <p class="field-hint">Export all lists, notes, and preferences as a unified portable JSON backup.</p>
-          <div class="backup-actions-row">
-            <button class="btn btn-secondary btn-sm" onclick="CRM.downloadFullBackup()">💾 Download JSON Backup</button>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('file-backup-restore').click()">📂 Restore Backup</button>
-            <input type="file" id="file-backup-restore" accept=".json" class="hidden">
+          <!-- Box 3 -->
+          <div class="paper-box full-span">
+            <h3 class="paper-box-title">Message Templates & Dynamic Tokens</h3>
+            <div class="box-row">
+              <div class="box-text">
+                <strong>Select Template to Customize</strong>
+                <span>Tokens: {first_name}, {company}, {phone}, {email}, {job_title}, {greeting}</span>
+              </div>
+              <select id="templateChooser" class="paper-select"></select>
+            </div>
+            <div class="field-col mt-2">
+              <label for="templateSubjectLine">Email Subject Line</label>
+              <input type="text" id="templateSubjectLine" class="paper-input">
+            </div>
+            <div class="field-col mt-2">
+              <label for="templateBodyText">Message Body Template</label>
+              <textarea id="templateBodyText" class="paper-textarea" rows="5"></textarea>
+            </div>
+            <div class="mt-2 text-right">
+              <button id="btnSaveActiveTemplate" class="paper-button paper-btn-charcoal">Save Template Changes</button>
+            </div>
           </div>
-        </div>
 
-        <!-- Danger Zone -->
-        <div class="config-section danger-zone">
-          <h4 class="config-title text-danger">Reset Data</h4>
-          <p class="field-hint">Clear local browser storage and re-scan the /Data folder.</p>
-          <button class="btn btn-outline-danger btn-sm" onclick="CRM.resetLocalDatabase()">Reset Database & Re-scan /Data</button>
+          <!-- Box 4 -->
+          <div class="paper-box full-span">
+            <h3 class="paper-box-title">Preservation & Encrypted Snapshot Storage</h3>
+            <div class="box-stack-row">
+              <button id="btnExportLeadsCsv" class="paper-button paper-btn-subtle">Export Contacts (.CSV)</button>
+              <button id="btnExportLedgerCsv" class="paper-button paper-btn-subtle">Export Ledger (.CSV)</button>
+              <button id="btnExportFullJson" class="paper-button paper-btn-gold">Download Full Encrypted DB Snapshot (.JSON)</button>
+              <label for="fileJsonRestorePicker" class="paper-button paper-btn-subtle">Restore Snapshot (.JSON)</label>
+              <input type="file" id="fileJsonRestorePicker" accept=".json,application/json" class="hidden-file-input">
+            </div>
+          </div>
+
+          <!-- Box 5: Danger Zone -->
+          <div class="paper-box danger-box full-span">
+            <div class="box-row">
+              <div>
+                <strong style="color:var(--ink-crimson);">Nuclear Purge</strong>
+                <p style="font-size:0.8rem; color:var(--ink-muted);">Permanently delete all contacts, interactions, and local history from this machine.</p>
+              </div>
+              <button id="btnPurgeEntireDatabase" class="paper-button paper-btn-danger">Purge Entire Database</button>
+            </div>
+          </div>
+
         </div>
+      </section>
+
+    </div>
+
+    <!-- LIVING PAPER DOCK / WORKBENCH NAVIGATION (RESPONSIVE) -->
+    <nav class="paper-dock" role="navigation">
+      <div id="dockDefaultBar" class="dock-row">
+        <button class="dock-tab active" data-screen="screenPipeline">
+          <span class="dock-icon">📋</span>
+          <span class="dock-label">Workbench</span>
+        </button>
+        <button class="dock-tab" data-screen="screenLedger">
+          <span class="dock-icon">⏱️</span>
+          <span class="dock-label">Ledger</span>
+        </button>
+        <button class="dock-tab" data-screen="screenStudio">
+          <span class="dock-icon">⚙️</span>
+          <span class="dock-label">Settings</span>
+        </button>
       </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="CRM.savePreferencesFromModal()">Save & Apply</button>
+      <!-- Mobile Cockpit Back Row -->
+      <div id="dockCockpitBar" class="dock-row hidden">
+        <button id="btnCockpitBack" class="dock-action-pill dock-btn-back">
+          <span class="dock-arrow">‹</span> Pipeline
+        </button>
+        <button id="btnCockpitObjections" class="dock-action-pill dock-btn-script">
+          💡 Pitch Script
+        </button>
+        <button id="btnCockpitEditLead" class="dock-action-pill dock-btn-edit">
+          ✏️ Edit Profile
+        </button>
+      </div>
+    </nav>
+
+    <!-- KEYBOARD SHORTCUTS HUD MODAL -->
+    <div id="modalKeyboardShortcuts" class="paper-sheet-scrim hidden" role="dialog" aria-modal="true">
+      <div class="paper-sheet modal-size-md">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3>Keyboard Command Center</h3>
+          <button class="sheet-dismiss" data-close-sheet>&times;</button>
+        </div>
+        <div class="sheet-content">
+          <div class="shortcuts-grid">
+            <div class="shortcut-item"><kbd>J</kbd> or <kbd>↓</kbd><span>Next Lead</span></div>
+            <div class="shortcut-item"><kbd>K</kbd> or <kbd>↑</kbd><span>Previous Lead</span></div>
+            <div class="shortcut-item"><kbd>C</kbd><span>Trigger Call (Voice)</span></div>
+            <div class="shortcut-item"><kbd>E</kbd><span>Trigger Email Dispatch</span></div>
+            <div class="shortcut-item"><kbd>S</kbd><span>Trigger SMS Dispatch</span></div>
+            <div class="shortcut-item"><kbd>N</kbd><span>Mark No Answer</span></div>
+            <div class="shortcut-item"><kbd>B</kbd><span>Schedule Callback</span></div>
+            <div class="shortcut-item"><kbd>D</kbd><span>Mark Spoken / Contacted</span></div>
+            <div class="shortcut-item"><kbd>/</kbd><span>Focus Search Bar</span></div>
+            <div class="shortcut-item"><kbd>Z</kbd><span>Undo Last Action</span></div>
+            <div class="shortcut-item"><kbd>?</kbd><span>Toggle this Guide</span></div>
+            <div class="shortcut-item"><kbd>Esc</kbd><span>Close Modals / Sheets</span></div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- MODAL: ADD PROSPECT -->
-  <div class="modal-overlay hidden" id="modal-add-lead">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title">New Prospect Record</h3>
-        <button class="modal-close-btn" onclick="CRM.closeModal('modal-add-lead')">✕</button>
-      </div>
-
-      <form id="form-create-lead" class="modal-scroller">
-        <div class="field-item">
-          <label>Target List</label>
-          <select id="new-lead-target-list" class="styled-select full-w"></select>
+    <!-- MODAL: QUICK CALLBACK SCHEDULER -->
+    <div id="sheetCallbackSchedule" class="paper-sheet-scrim hidden" role="dialog" aria-modal="true">
+      <div class="paper-sheet modal-size-sm">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3>Schedule Call Back Time</h3>
+          <button class="sheet-dismiss" data-close-sheet>&times;</button>
         </div>
-
-        <div class="field-item" style="margin-top: 10px;">
-          <label>Company / Contact Name *</label>
-          <input type="text" id="new-lead-name" class="styled-input" required placeholder="Company Name">
-        </div>
-
-        <div class="form-cols-2" style="margin-top: 10px;">
-          <div class="field-item">
-            <label>Phone Number</label>
-            <input type="text" id="new-lead-phone" class="styled-input" placeholder="07123 456789">
+        <div class="sheet-content">
+          <p class="sheet-sub">Select when this lead should return to the high-priority queue:</p>
+          <div class="quick-pill-grid">
+            <button class="sheet-pill" data-hours="2">⏱ In 2 Hours</button>
+            <button class="sheet-pill" data-hours="4">⏱ In 4 Hours</button>
+            <button class="sheet-pill" data-hours="24">📅 Tomorrow (24h)</button>
+            <button class="sheet-pill" data-hours="48">📅 In 2 Days</button>
+            <button class="sheet-pill" data-hours="168">🗓 Next Week</button>
           </div>
-          <div class="field-item">
-            <label>Email Address</label>
-            <input type="email" id="new-lead-email" class="styled-input" placeholder="contact@example.com">
+          <div class="field-col mt-3">
+            <label for="customCallbackPicker">Or Select Exact Date & Time:</label>
+            <input type="datetime-local" id="customCallbackPicker" class="paper-input">
+          </div>
+          <div class="btn-grid-2 mt-3">
+            <button class="paper-button paper-btn-subtle" data-close-sheet>Cancel</button>
+            <button id="btnConfirmCallbackSchedule" class="paper-button paper-btn-gold">Confirm Schedule</button>
           </div>
         </div>
-
-        <div class="field-item" style="margin-top: 10px;">
-          <label>Website URL</label>
-          <input type="text" id="new-lead-website" class="styled-input" placeholder="https://example.com">
-        </div>
-
-        <div class="field-item" style="margin-top: 10px;">
-          <label>Full Address / Location</label>
-          <input type="text" id="new-lead-address" class="styled-input" placeholder="Address, City, Postcode">
-        </div>
-
-        <div class="field-item" style="margin-top: 10px;">
-          <label>Initial Disposition</label>
-          <select id="new-lead-disposition" class="styled-select full-w">
-            <option value="New">New</option>
-            <option value="Callback Scheduled">Callback Scheduled</option>
-            <option value="Interested">Interested</option>
-            <option value="Meeting Booked">Meeting Booked</option>
-          </select>
-        </div>
-
-        <div class="field-item" style="margin-top: 10px;">
-          <label>Initial Notes</label>
-          <textarea id="new-lead-notes" rows="3" class="styled-textarea" placeholder="Key contact person, background info..."></textarea>
-        </div>
-
-        <div class="modal-footer" style="padding: 14px 0 0 0; margin-top: 10px;">
-          <button type="button" class="btn btn-secondary" onclick="CRM.closeModal('modal-add-lead')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Save Prospect</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: HOTKEYS -->
-  <div class="modal-overlay hidden" id="modal-hotkeys">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 class="modal-title">Keyboard Shortcuts</h3>
-        <button class="modal-close-btn" onclick="CRM.closeModal('modal-hotkeys')">✕</button>
-      </div>
-      <div class="modal-scroller">
-        <div class="shortcut-row"><kbd>J</kbd> or <kbd>↓</kbd> <span>Next Lead</span></div>
-        <div class="shortcut-row"><kbd>K</kbd> or <kbd>↑</kbd> <span>Previous Lead</span></div>
-        <div class="shortcut-row"><kbd>/</kbd> <span>Focus Global Search</span></div>
-        <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>B</kbd> <span>Toggle Lists Drawer</span></div>
-        <div class="shortcut-row"><kbd>1</kbd> <span>Set: No Answer</span></div>
-        <div class="shortcut-row"><kbd>2</kbd> <span>Set: Left Voicemail</span></div>
-        <div class="shortcut-row"><kbd>3</kbd> <span>Set: Gatekeeper</span></div>
-        <div class="shortcut-row"><kbd>4</kbd> <span>Set: Not Interested</span></div>
-        <div class="shortcut-row"><kbd>5</kbd> <span>Set: Callback Scheduled</span></div>
-        <div class="shortcut-row"><kbd>6</kbd> <span>Set: Interested</span></div>
-        <div class="shortcut-row"><kbd>7</kbd> <span>Set: Meeting Booked</span></div>
-        <div class="shortcut-row"><kbd>8</kbd> <span>Set: Bad / Dead Number</span></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" onclick="CRM.closeModal('modal-hotkeys')">Got it</button>
       </div>
     </div>
+
+    <!-- MODAL: DISPATCH EMAIL / SMS -->
+    <div id="sheetDispatcher" class="paper-sheet-scrim hidden" role="dialog" aria-modal="true">
+      <div class="paper-sheet modal-size-md">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3 id="dispatcherSheetTitle">Dispatch Message</h3>
+          <button class="sheet-dismiss" data-close-sheet>&times;</button>
+        </div>
+        <div class="sheet-content">
+          <div class="field-col">
+            <label for="selectDispatchTemplate">Select Message Template</label>
+            <select id="selectDispatchTemplate" class="paper-select"></select>
+          </div>
+          <div class="field-col" id="wrapDispatchSubject">
+            <label for="inputDispatchSubject">Subject</label>
+            <input type="text" id="inputDispatchSubject" class="paper-input">
+          </div>
+          <div class="field-col">
+            <label for="textareaDispatchBody">Live Draft</label>
+            <textarea id="textareaDispatchBody" class="paper-textarea" rows="6"></textarea>
+          </div>
+          <div class="btn-grid-3 mt-2">
+            <button id="btnLaunchNativeMail" class="paper-button paper-btn-gold">🚀 Open Email / SMS App</button>
+            <button id="btnLaunchGmailWeb" class="paper-button paper-btn-subtle">🌐 Web Gmail Tab</button>
+            <button id="btnCopyDispatchClipboard" class="paper-button paper-btn-subtle">📋 Copy to Clipboard</button>
+          </div>
+          <div class="mt-2">
+            <button id="btnMarkDispatchLogged" class="paper-button paper-btn-charcoal full-w">✓ Record as Sent in Ledger</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PROFILE & NOTES FULL EDITOR -->
+    <div id="sheetLeadEditor" class="paper-sheet-scrim hidden" role="dialog" aria-modal="true">
+      <div class="paper-sheet modal-size-md">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3 id="editorSheetHeading">Edit Contact Details</h3>
+          <button class="sheet-dismiss" data-close-sheet>&times;</button>
+        </div>
+        <form id="formEditLeadProfile" class="sheet-content">
+          <input type="hidden" id="editLeadId">
+          <div class="form-grid-2">
+            <div class="field-col">
+              <label for="fieldEditCompany">Company / Business Name *</label>
+              <input type="text" id="fieldEditCompany" class="paper-input" required>
+            </div>
+            <div class="field-col">
+              <label for="fieldEditPersonName">Primary Contact Person</label>
+              <input type="text" id="fieldEditPersonName" class="paper-input">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="field-col">
+              <label for="fieldEditPhone">Direct Phone (E.164 or Local)</label>
+              <input type="tel" id="fieldEditPhone" class="paper-input">
+            </div>
+            <div class="field-col">
+              <label for="fieldEditEmail">Direct Email Address</label>
+              <input type="email" id="fieldEditEmail" class="paper-input">
+            </div>
+          </div>
+          <div class="field-col">
+            <label for="fieldEditJobTitle">Job Title / Role</label>
+            <input type="text" id="fieldEditJobTitle" class="paper-input">
+          </div>
+          <div class="field-col">
+            <div class="row-between">
+              <label for="fieldEditNotes">Call Notes & Historical Scrub</label>
+              <button type="button" id="btnDictateNotes" class="btn-dictate">🎙️ Dictate Voice</button>
+            </div>
+            <textarea id="fieldEditNotes" class="paper-textarea" rows="4"></textarea>
+          </div>
+          <div class="btn-grid-2 mt-3">
+            <button type="button" class="paper-button paper-btn-subtle" data-close-sheet>Cancel</button>
+            <button type="submit" class="paper-button paper-btn-gold">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: INTERACTIVE PITCH SCRIPT & OBJECTIONS -->
+    <div id="sheetPitchPrompter" class="paper-sheet-scrim hidden" role="dialog" aria-modal="true">
+      <div class="paper-sheet modal-size-md">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-head">
+          <h3>Interactive Pitch Prompter & Rebuttals</h3>
+          <button class="sheet-dismiss" data-close-sheet>&times;</button>
+        </div>
+        <div class="sheet-content prompter-body">
+          <div class="prompter-card">
+            <span class="card-caption">VALUE HOOK (FIRST 15 SECONDS)</span>
+            <p id="prompterValueHook">"Hi Christian here from Tileworks Studio. We developed a free puzzle-based web tool that trains hospitality staff on product knowledge, menus, and service without boring manuals. Who handles team onboarding over there?"</p>
+          </div>
+          <div class="objection-card">
+            <span class="objection-lead">"Not interested / Too busy right now."</span>
+            <p><strong>Rebuttal:</strong> "Completely understand, service hours are intense. It’s 100% free with no login required. Would it be alright if I send a quick 20-second demo link you can tap on your phone later?"</p>
+          </div>
+          <div class="objection-card">
+            <span class="objection-lead">"Just email me something."</span>
+            <p><strong>Rebuttal:</strong> "Happy to do so! What is the best direct email address so it reaches you rather than getting buried in general inquiries?"</p>
+          </div>
+          <div class="objection-card">
+            <span class="objection-lead">"Is there an upfront cost or catch?"</span>
+            <p><strong>Rebuttal:</strong> "None at all. Zero logins, zero credit cards, funded by community donations. You can test a puzzle right away on our site."</p>
+          </div>
+          <button class="paper-button paper-btn-gold mt-2" data-close-sheet>Return to Call (Esc)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST-CALL AUTO RETURN DISPOSITION TRAY -->
+    <div id="postCallTray" class="post-call-sheet hidden">
+      <div class="tray-inner">
+        <div class="tray-header">
+          <span>Call Completed. Select Outcome:</span>
+          <button id="btnDismissPostCallTray" class="tray-dismiss">&times;</button>
+        </div>
+        <div class="tray-actions-grid">
+          <button class="tray-btn btn-na" data-outcome="no_answer">No Answer (N)</button>
+          <button class="tray-btn btn-cb" data-outcome="callback">Call Back (B)</button>
+          <button class="tray-btn btn-spoken" data-outcome="contacted">Spoken (D)</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- TOAST -->
-  <div id="app-toast" class="app-toast hidden"></div>
-
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
