@@ -2,199 +2,544 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#F4F1EA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FlipDialler">
   <title>FlipDialler — Living Paper</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app-shell">
-    
+
     <!-- EXECUTIVE MASTHEAD -->
     <header class="app-header">
       <div class="brand">
-        <div class="brand-crest">FD</div>
+        <div class="brand-crest" aria-hidden="true">FD</div>
         <div class="brand-text">
           <span class="brand-title">FlipDialler</span>
-          <span class="brand-tag">Living Paper Edition</span>
+          <span class="brand-tag">Outreach Desk</span>
         </div>
       </div>
+
       <div class="header-actions">
-        <label for="csvFileInput" class="btn btn-vellum" title="Import CSV">📥 Import</label>
+        <label for="csvFileInput" class="btn btn-vellum btn-compact" title="Import CSV">
+          <span class="btn-ico">📥</span><span class="btn-lbl">Import</span>
+        </label>
         <input type="file" id="csvFileInput" accept=".csv,text/csv" hidden>
-        <button id="btnExportCsv" class="btn btn-vellum" title="Export CSV">📤 Export</button>
-        <button id="btnNewLead" class="btn btn-primary">+ New Lead</button>
+        <button id="btnExportCsv" class="btn btn-vellum btn-compact" type="button" title="Export CSV">
+          <span class="btn-ico">📤</span><span class="btn-lbl">Export</span>
+        </button>
+        <button id="btnNewLead" class="btn btn-vellum btn-compact" type="button" title="Add New Lead">
+          <span class="btn-ico">＋</span><span class="btn-lbl">Lead</span>
+        </button>
+        <button id="btnOpenSettings" class="btn btn-primary btn-compact" type="button" title="Settings (,)">
+          <span class="btn-ico">⚙️</span><span class="btn-lbl">Settings</span>
+        </button>
       </div>
     </header>
 
     <!-- WORKBENCH WRAPPER -->
     <main class="workbench">
-      
-      <!-- PANE 1: LIST & SEARCH -->
-      <section class="pane pane-list" id="paneList">
-        <div class="filter-strip">
-          <button class="filter-btn active" data-stage="fresh">Fresh <span class="badge" id="countFresh">0</span></button>
-          <button class="filter-btn" data-stage="callback">Due <span class="badge" id="countCallback">0</span></button>
-          <button class="filter-btn" data-stage="contacted">Spoken <span class="badge" id="countContacted">0</span></button>
-          <button class="filter-btn" data-stage="all">All</button>
-        </div>
 
-        <div class="search-wrap">
-          <span class="search-glyph">🔍</span>
-          <input type="search" id="inputSearch" placeholder="Search company, name, phone... (Press '/')">
+      <!-- PANE 1: PIPELINE LIST & SEARCH -->
+      <aside class="pane pane-list" id="paneList">
+        <div class="list-sticky-top">
+          <div class="segmented-control" role="tablist" aria-label="Pipeline Stages">
+            <button class="filter-btn active" data-stage="leads" role="tab" type="button">
+              <span>Leads</span>
+              <span class="badge" id="countLeads">0</span>
+            </button>
+            <button class="filter-btn" data-stage="partial" role="tab" type="button">
+              <span>Partial</span>
+              <span class="badge badge-gold" id="countPartial">0</span>
+            </button>
+            <button class="filter-btn" data-stage="completed" role="tab" type="button">
+              <span>Done</span>
+              <span class="badge badge-green" id="countCompleted">0</span>
+            </button>
+            <button class="filter-btn" data-stage="all" role="tab" type="button">
+              <span>All</span>
+              <span class="badge" id="countAll">0</span>
+            </button>
+          </div>
+
+          <div class="search-wrap">
+            <span class="search-glyph" aria-hidden="true">⌕</span>
+            <input type="search" id="inputSearch" placeholder="Search venue, name, city, phone..." autocomplete="off">
+          </div>
         </div>
 
         <div class="contact-list" id="contactList" role="list"></div>
-      </section>
+      </aside>
 
       <!-- PANE 2: ACTIVE LEAD COCKPIT -->
-      <section class="pane pane-cockpit" id="paneCockpit">
-        
+      <section class="pane pane-cockpit" id="paneCockpit" aria-label="Active Prospect">
+
+        <!-- MOBILE NAVIGATION BAR (PUSH VIEW HEADER) -->
+        <div class="mobile-cockpit-nav">
+          <button id="btnBackToList" class="nav-back-btn" type="button">
+            <span class="nav-chevron">‹</span>
+            <span>Pipeline</span>
+          </button>
+
+          <div class="nav-center-meta">
+            <span id="mobileNavTitle" class="nav-title">Prospect</span>
+            <span id="mobileQueueCounter" class="nav-counter">0 / 0</span>
+          </div>
+
+          <div class="nav-stepper">
+            <button id="btnPrevLead" class="stepper-btn" type="button" aria-label="Previous Lead">‹</button>
+            <button id="btnNextLead" class="stepper-btn" type="button" aria-label="Next Lead">›</button>
+          </div>
+        </div>
+
         <div id="cockpitEmpty" class="cockpit-empty">
           <div class="empty-monogram">📜</div>
-          <h3>No Lead Selected</h3>
-          <p>Choose an entry from the pipeline or import a CSV file to begin dialing.</p>
+          <h3>Pipeline Ready</h3>
+          <p>Select a prospect from your queue or import a CSV file to begin dialing and sending Pixar pitches.</p>
+          <div class="empty-actions">
+            <label for="csvFileInput" class="btn btn-primary">📥 Import CSV</label>
+            <button id="btnEmptyNewLead" class="btn btn-vellum" type="button">+ Add Lead</button>
+          </div>
         </div>
 
-        <div id="cockpitContent" class="cockpit-content hidden">
-          <div class="cockpit-nav-mobile">
-            <button id="btnBackToList" class="btn btn-vellum">‹ Back to Pipeline</button>
-          </div>
+        <!-- SCROLLABLE COCKPIT BODY -->
+        <div id="cockpitContent" class="cockpit-scroll hidden">
+          <div class="cockpit-inner">
 
-          <!-- Contact Primary Card -->
-          <div class="paper-card lead-card">
-            <div class="lead-header">
-              <div class="lead-titles">
-                <h2 id="leadCompany">Company Name</h2>
+            <!-- HERO CONTACT & DIRECT DIAL CARD -->
+            <div class="paper-card lead-hero-card">
+              <div class="lead-identity">
+                <div class="lead-badges">
+                  <span id="leadStageBadge" class="stage-pill">Lead</span>
+                  <span id="leadAttemptsBadge" class="meta-pill hidden">0 attempts</span>
+                  <span id="leadCallbackBadge" class="meta-pill meta-pill-cb hidden"></span>
+                </div>
+                <h1 id="leadCompany">Company Name</h1>
                 <div class="lead-subtitle" id="leadSubtitle">Contact Name • Job Title</div>
+                <div class="lead-address" id="leadAddress"></div>
               </div>
-              <button id="btnEditLead" class="btn-edit" title="Edit Contact">✏️ Edit</button>
-            </div>
 
-            <!-- Tactile Call Button -->
-            <a id="btnCallLead" href="#" class="btn-call-trigger">
-              <span class="call-icon">📞</span>
-              <div class="call-meta">
-                <span class="call-action-label">CONNECT VOICE CALL</span>
-                <span class="call-phone-number" id="leadPhone">—</span>
+              <div class="lead-call-zone">
+                <a id="btnCallLead" href="#" class="btn-call-trigger" title="Dial Phone Number (C)">
+                  <span class="call-icon" aria-hidden="true">📞</span>
+                  <div class="call-meta">
+                    <span class="call-action-label">TAP TO DIAL</span>
+                    <span class="call-phone-number" id="leadPhone">—</span>
+                  </div>
+                </a>
+                <div class="hero-mini-actions">
+                  <button id="btnCopyPhone" class="btn-chip" type="button">Copy #</button>
+                  <button id="btnEditLead" class="btn-chip" type="button">✏️ Edit Lead</button>
+                </div>
               </div>
-            </a>
-          </div>
-
-          <!-- 4-Way Disposition Bar -->
-          <div class="disposition-grid">
-            <button class="disp-btn btn-na" id="btnDispNA">
-              <span class="disp-label">🔕 No Answer</span>
-              <span class="disp-hint">Attempt (N)</span>
-            </button>
-            <button class="disp-btn btn-cb" id="btnDispCB">
-              <span class="disp-label">📅 Call Back</span>
-              <span class="disp-hint">Schedule</span>
-            </button>
-            <button class="disp-btn btn-sp" id="btnDispSpoken">
-              <span class="disp-label">⭐ Spoken</span>
-              <span class="disp-hint">Contacted (D)</span>
-            </button>
-            <button class="disp-btn btn-dnc" id="btnDispDNC">
-              <span class="disp-label">🗑️ Delete</span>
-              <span class="disp-hint">Remove Lead</span>
-            </button>
-          </div>
-
-          <!-- Scratchpad & Notes Canvas -->
-          <div class="paper-card notes-card">
-            <div class="notes-header">
-              <span class="notes-title">CALL SCRATCHPAD & FIELD NOTES</span>
-              <span id="notesSaveIndicator" class="save-indicator">Saved</span>
             </div>
-            <textarea id="leadNotes" rows="6" placeholder="Record immediate notes, objections, and next steps..."></textarea>
-          </div>
 
-          <!-- Email Dispatch Row (Opens in New Tab) -->
-          <div class="paper-card email-card" id="leadEmailRow">
-            <div class="email-info">
-              <span class="email-label">DIRECT EMAIL</span>
-              <strong id="leadEmail" class="email-address">—</strong>
+            <!-- DUAL OUTREACH DECK: PIXAR PITCH & PROSPECTING EMAIL -->
+            <div class="outreach-grid">
+              <!-- 1. WEBSITE PIXAR PITCH -->
+              <div class="paper-card outreach-card">
+                <div class="outreach-head">
+                  <div>
+                    <span class="eyebrow">STEP 1 • WEBSITE FORM</span>
+                    <h3>Pixar Pitch</h3>
+                  </div>
+                  <span id="pixarStatusTag" class="status-tag">Ready</span>
+                </div>
+
+                <div class="outreach-target" id="leadFormUrlDisplay">—</div>
+
+                <button id="btnSendPixar" class="btn btn-gold btn-block btn-hero-action" type="button">
+                  🚀 Copy Pitch &amp; Open Form ↗
+                </button>
+
+                <div class="quick-copy-strip" aria-label="Quick Copy Form Details">
+                  <span class="quick-copy-label">Copy:</span>
+                  <button class="btn-copy-pill" data-copy="pitch" type="button">Full Pitch</button>
+                  <button class="btn-copy-pill" data-copy="senderName" type="button">My Name</button>
+                  <button class="btn-copy-pill" data-copy="senderEmail" type="button">My Email</button>
+                  <button class="btn-copy-pill" data-copy="senderPhone" type="button">My Phone</button>
+                  <button class="btn-copy-pill" data-copy="formSubject" type="button">Subject</button>
+                </div>
+
+                <details class="pitch-preview-details">
+                  <summary>Preview rendered Pixar Pitch</summary>
+                  <pre id="pixarPreviewBox" class="pitch-preview-text"></pre>
+                </details>
+              </div>
+
+              <!-- 2. PROSPECTING EMAIL -->
+              <div class="paper-card outreach-card">
+                <div class="outreach-head">
+                  <div>
+                    <span class="eyebrow">STEP 2 • DIRECT EMAIL</span>
+                    <h3>Prospecting Pitch</h3>
+                  </div>
+                  <span id="emailStatusTag" class="status-tag">Ready</span>
+                </div>
+
+                <div class="outreach-target" id="leadEmailDisplay">—</div>
+
+                <a id="btnSendEmail" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block btn-hero-action">
+                  ✉️ Open Prospecting Email ↗
+                </a>
+
+                <div class="quick-copy-strip">
+                  <span class="quick-copy-label">Copy:</span>
+                  <button class="btn-copy-pill" data-copy="leadEmail" type="button">Recipient</button>
+                  <button class="btn-copy-pill" data-copy="emailSubject" type="button">Subject</button>
+                  <button class="btn-copy-pill" data-copy="emailBody" type="button">Body</button>
+                </div>
+
+                <details class="pitch-preview-details">
+                  <summary>Preview rendered Email</summary>
+                  <div class="email-preview-subject"><strong>Subj:</strong> <span id="emailSubjectPreview"></span></div>
+                  <pre id="emailPreviewBox" class="pitch-preview-text"></pre>
+                </details>
+              </div>
             </div>
-            <div class="email-actions">
-              <!-- Opens in New Tab -->
-              <a id="btnEmailLead" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                ✉️ Compose Email ↗
-              </a>
+
+            <!-- SCRATCHPAD & FIELD NOTES -->
+            <div class="paper-card notes-card">
+              <div class="notes-header">
+                <span class="notes-title">CALL SCRATCHPAD &amp; FIELD NOTES</span>
+                <span id="notesSaveIndicator" class="save-indicator">Saved</span>
+              </div>
+              <textarea id="leadNotes" rows="3" placeholder="Record gatekeepers, objections, and next steps..."></textarea>
             </div>
+
+            <!-- DISPOSITION DECK (DESKTOP INLINE / MOBILE PINNED DOCK) -->
+            <div class="disposition-dock" id="dispositionDock">
+              <div class="disposition-grid">
+                <button class="disp-btn btn-pixar" id="btnDispPartial" type="button">
+                  <span class="disp-ico">🧩</span>
+                  <span class="disp-label">Pixar Sent</span>
+                  <span class="disp-hint">Partial (P)</span>
+                </button>
+                <button class="disp-btn btn-complete" id="btnDispComplete" type="button">
+                  <span class="disp-ico">✅</span>
+                  <span class="disp-label">Emailed</span>
+                  <span class="disp-hint">Done (E)</span>
+                </button>
+                <button class="disp-btn btn-na" id="btnDispNA" type="button">
+                  <span class="disp-ico">🔕</span>
+                  <span class="disp-label">No Ans</span>
+                  <span class="disp-hint">Leads (N)</span>
+                </button>
+                <button class="disp-btn btn-cb" id="btnDispCB" type="button">
+                  <span class="disp-ico">📅</span>
+                  <span class="disp-label">Call Back</span>
+                  <span class="disp-hint">Leads</span>
+                </button>
+                <button class="disp-btn btn-del" id="btnDispDelete" type="button">
+                  <span class="disp-ico">🗑️</span>
+                  <span class="disp-label">Remove</span>
+                  <span class="disp-hint">Delete</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
-
       </section>
-
     </main>
   </div>
 
-  <!-- MODAL: ADD / EDIT CONTACT -->
+  <!-- TOAST BANNER -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- MODAL: ADD / EDIT PROSPECT -->
   <dialog id="dialogLeadForm" class="modal-dialog">
-    <form id="leadForm" method="dialog" class="dialog-inner">
-      <div class="dialog-header">
+    <form id="leadForm" method="dialog" class="dialog-inner sheet-shell">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="dialog-header sheet-header">
         <h3 id="formTitle">Add New Lead</h3>
+        <button type="button" id="btnCloseLeadX" class="btn-icon-close" aria-label="Close">✕</button>
       </div>
       <input type="hidden" id="formId">
 
-      <div class="form-group">
-        <label for="formCompany">Company / Business Name *</label>
-        <input type="text" id="formCompany" required>
+      <div class="sheet-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formCompany">Company / Venue Name *</label>
+            <input type="text" id="formCompany" required>
+          </div>
+          <div class="form-group">
+            <label for="formName">Contact Name</label>
+            <input type="text" id="formName">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formTitleField">Job Title</label>
+            <input type="text" id="formTitleField">
+          </div>
+          <div class="form-group">
+            <label for="formPhone">Phone Number</label>
+            <input type="tel" id="formPhone">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formEmail">Email Address</label>
+            <input type="email" id="formEmail">
+          </div>
+          <div class="form-group">
+            <label for="formContactUrl">Website Contact Form URL</label>
+            <input type="url" id="formContactUrl" placeholder="https://example.com/contact">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formAddress">Street Address</label>
+            <input type="text" id="formAddress">
+          </div>
+          <div class="form-group">
+            <label for="formCity">City</label>
+            <input type="text" id="formCity">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="formLeadNotes">Notes</label>
+          <textarea id="formLeadNotes" rows="2"></textarea>
+        </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="formName">Contact Name</label>
-          <input type="text" id="formName">
-        </div>
-        <div class="form-group">
-          <label for="formTitleField">Job Title</label>
-          <input type="text" id="formTitleField">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="formPhone">Phone Number</label>
-          <input type="tel" id="formPhone">
-        </div>
-        <div class="form-group">
-          <label for="formEmail">Email Address</label>
-          <input type="email" id="formEmail">
-        </div>
-      </div>
-
-      <div class="dialog-actions">
+      <div class="dialog-actions sheet-footer">
         <button type="button" id="btnCancelForm" class="btn btn-vellum">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="submit" class="btn btn-primary">Save Lead</button>
       </div>
     </form>
   </dialog>
 
-  <!-- MODAL: QUICK CALLBACK PICKER -->
-  <dialog id="dialogCallback" class="modal-dialog">
-    <div class="dialog-inner">
-      <div class="dialog-header">
+  <!-- MODAL: CALLBACK SCHEDULER -->
+  <dialog id="dialogCallback" class="modal-dialog modal-sm">
+    <div class="dialog-inner sheet-shell">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="dialog-header sheet-header">
         <h3>Schedule Call Back</h3>
       </div>
-      <p class="dialog-desc">Select when this contact should reappear in the queue:</p>
-      
-      <div class="callback-pills">
-        <button class="btn btn-vellum" data-cb-hours="2">⏱ In 2 Hours</button>
-        <button class="btn btn-vellum" data-cb-hours="4">⏱ In 4 Hours</button>
-        <button class="btn btn-vellum" data-cb-hours="24">📅 Tomorrow</button>
-        <button class="btn btn-vellum" data-cb-hours="48">🗓 In 2 Days</button>
+      <div class="sheet-body">
+        <p class="dialog-desc">Lead stays in the <strong>Leads</strong> queue with a scheduled reminder badge.</p>
+
+        <div class="callback-pills">
+          <button class="btn btn-vellum" data-cb-hours="2" type="button">⏱ In 2 Hours</button>
+          <button class="btn btn-vellum" data-cb-hours="4" type="button">⏱ In 4 Hours</button>
+          <button class="btn btn-vellum" data-cb-hours="24" type="button">📅 Tomorrow</button>
+          <button class="btn btn-vellum" data-cb-hours="48" type="button">🗓 In 2 Days</button>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label for="inputCustomCallback">Or pick exact date &amp; time:</label>
+          <input type="datetime-local" id="inputCustomCallback">
+        </div>
       </div>
-      
-      <div class="form-group" style="margin-top: 16px;">
-        <label for="inputCustomCallback">Or pick exact date & time:</label>
-        <input type="datetime-local" id="inputCustomCallback">
+
+      <div class="dialog-actions sheet-footer">
+        <button id="btnCancelCallback" class="btn btn-vellum" type="button">Cancel</button>
+        <button id="btnConfirmCustomCallback" class="btn btn-primary" type="button">Save Reminder</button>
       </div>
-      
-      <div class="dialog-actions" style="margin-top: 16px;">
-        <button id="btnCancelCallback" class="btn btn-vellum">Cancel</button>
-        <button id="btnConfirmCustomCallback" class="btn btn-primary">Confirm Time</button>
+    </div>
+  </dialog>
+
+  <!-- MODAL: EXTENSIVE SETTINGS -->
+  <dialog id="dialogSettings" class="modal-dialog modal-lg">
+    <div class="dialog-inner settings-shell sheet-shell">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="dialog-header settings-header">
+        <div>
+          <h3>Outreach &amp; Auto-Fill Settings</h3>
+          <p class="dialog-sub">Customize your Pixar Pitch spine, email templates, subjects &amp; auto-fill profile.</p>
+        </div>
+        <button type="button" id="btnCloseSettingsX" class="btn-icon-close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="settings-tabs" role="tablist">
+        <button class="settings-tab active" data-stab="sender" type="button">👤 Auto-Fill</button>
+        <button class="settings-tab" data-stab="pixar" type="button">🎬 Pixar Pitch</button>
+        <button class="settings-tab" data-stab="email" type="button">✉️ Email Pitch</button>
+        <button class="settings-tab" data-stab="workflow" type="button">⚙️ Workflow</button>
+      </div>
+
+      <div class="settings-body">
+        <!-- TAB 1: AUTO-FILL & SENDER -->
+        <div class="settings-panel active" id="stab-sender">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setSenderName">Your Full Name (Auto-Fill)</label>
+              <input type="text" id="setSenderName" placeholder="e.g. Alex Mercer">
+            </div>
+            <div class="form-group">
+              <label for="setSenderCompany">Your Company / Agency</label>
+              <input type="text" id="setSenderCompany" placeholder="e.g. Northstar Hospitality">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setSenderEmail">Your Email Address</label>
+              <input type="email" id="setSenderEmail" placeholder="alex@northstar.co">
+            </div>
+            <div class="form-group">
+              <label for="setSenderPhone">Your Phone Number</label>
+              <input type="tel" id="setSenderPhone" placeholder="+1 (416) 555-0199">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setSenderTitle">Your Role / Title</label>
+              <input type="text" id="setSenderTitle" placeholder="Founder">
+            </div>
+            <div class="form-group">
+              <label for="setFormSubject">Default Contact Form Subject</label>
+              <input type="text" id="setFormSubject" placeholder="Quick idea for {{company}}">
+            </div>
+          </div>
+
+          <div class="bookmarklet-box">
+            <div class="bookmarklet-copy">
+              <strong>1-Click External Form Auto-Filler (Bookmarklet)</strong>
+              <p>Browsers prevent one webpage from modifying another domain directly. Add this bookmarklet to your browser bar—tap it on any venue's contact page to fill Name, Email, Phone, Subject &amp; your copied Pixar Pitch:</p>
+            </div>
+            <div class="bookmarklet-actions">
+              <a id="bookmarkletLink" class="btn btn-gold" href="#">⚡ Auto-Fill Contact Form</a>
+              <button id="btnCopyBookmarklet" class="btn btn-vellum" type="button">Copy Script</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: PIXAR PITCH BUILDER -->
+        <div class="settings-panel" id="stab-pixar">
+          <div class="var-bar">
+            <span class="var-label">Variables (tap to copy):</span>
+            <button type="button" class="var-chip" data-var="{{company}}">{{company}}</button>
+            <button type="button" class="var-chip" data-var="{{name}}">{{name}}</button>
+            <button type="button" class="var-chip" data-var="{{city}}">{{city}}</button>
+            <button type="button" class="var-chip" data-var="{{address}}">{{address}}</button>
+            <button type="button" class="var-chip" data-var="{{senderName}}">{{senderName}}</button>
+            <button type="button" class="var-chip" data-var="{{senderCompany}}">{{senderCompany}}</button>
+            <button type="button" class="var-chip" data-var="{{senderPhone}}">{{senderPhone}}</button>
+            <button type="button" class="var-chip" data-var="{{senderEmail}}">{{senderEmail}}</button>
+          </div>
+
+          <div class="pixar-grid">
+            <div class="form-group">
+              <label for="setPixar1">1. Once upon a time…</label>
+              <textarea id="setPixar1" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setPixar2">2. Every day…</label>
+              <textarea id="setPixar2" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setPixar3">3. One day…</label>
+              <textarea id="setPixar3" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setPixar4">4. Because of that…</label>
+              <textarea id="setPixar4" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setPixar5">5. Because of that…</label>
+              <textarea id="setPixar5" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="setPixar6">6. Until finally…</label>
+              <textarea id="setPixar6" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="setPixarExtra">7. Extra Message &amp; Call-To-Action (appended after Pixar Pitch)</label>
+            <textarea id="setPixarExtra" rows="3"></textarea>
+          </div>
+
+          <div class="preview-panel">
+            <span class="eyebrow">LIVE PIXAR PITCH PREVIEW</span>
+            <pre id="settingsPixarPreview" class="pitch-preview-text"></pre>
+          </div>
+        </div>
+
+        <!-- TAB 3: PROSPECTING EMAIL -->
+        <div class="settings-panel" id="stab-email">
+          <div class="form-group">
+            <label for="setEmailProvider">Email Client (Opens in New Tab)</label>
+            <select id="setEmailProvider">
+              <option value="gmail">Gmail Web (mail.google.com)</option>
+              <option value="outlook">Outlook Web (outlook.live.com)</option>
+              <option value="office365">Microsoft 365 Web (outlook.office.com)</option>
+              <option value="mailto">Default System Mail App (mailto:)</option>
+            </select>
+          </div>
+
+          <div class="var-bar">
+            <span class="var-label">Variables (tap to copy):</span>
+            <button type="button" class="var-chip" data-var="{{company}}">{{company}}</button>
+            <button type="button" class="var-chip" data-var="{{name}}">{{name}}</button>
+            <button type="button" class="var-chip" data-var="{{city}}">{{city}}</button>
+            <button type="button" class="var-chip" data-var="{{senderName}}">{{senderName}}</button>
+            <button type="button" class="var-chip" data-var="{{senderCompany}}">{{senderCompany}}</button>
+            <button type="button" class="var-chip" data-var="{{senderPhone}}">{{senderPhone}}</button>
+          </div>
+
+          <div class="form-group">
+            <label for="setEmailSubject">Prospecting Email Subject</label>
+            <input type="text" id="setEmailSubject">
+          </div>
+
+          <div class="form-group">
+            <label for="setEmailBody">Prospecting Email Body</label>
+            <textarea id="setEmailBody" rows="8"></textarea>
+          </div>
+
+          <div class="preview-panel">
+            <span class="eyebrow">LIVE EMAIL PREVIEW</span>
+            <div class="email-preview-subject"><strong>Subject:</strong> <span id="settingsEmailSubjPreview"></span></div>
+            <pre id="settingsEmailBodyPreview" class="pitch-preview-text"></pre>
+          </div>
+        </div>
+
+        <!-- TAB 4: WORKFLOW & DATA -->
+        <div class="settings-panel" id="stab-workflow">
+          <label class="toggle-row">
+            <input type="checkbox" id="setAutoStagePixar">
+            <div>
+              <strong>Auto-move to Partial when opening Pixar form</strong>
+              <span>Moves the prospect to the Partial tab right after copying the pitch and opening the contact form.</span>
+            </div>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="setAutoStageEmail">
+            <div>
+              <strong>Auto-move to Done when opening Prospecting Email</strong>
+              <span>Marks the prospect as Completed right after launching your email compose tab.</span>
+            </div>
+          </label>
+
+          <div class="danger-zone">
+            <div>
+              <strong>Templates &amp; Database Maintenance</strong>
+              <p>Reset pitch templates back to factory defaults or clear all stored leads.</p>
+            </div>
+            <div class="danger-actions">
+              <button id="btnResetTemplates" class="btn btn-vellum" type="button">Reset Templates</button>
+              <button id="btnClearAllLeads" class="btn btn-danger" type="button">Clear All Leads</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-actions settings-footer sheet-footer">
+        <button id="btnCancelSettings" class="btn btn-vellum" type="button">Cancel</button>
+        <button id="btnSaveSettings" class="btn btn-primary" type="button">Save Settings</button>
       </div>
     </div>
   </dialog>
