@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#F4F1EA">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -24,19 +24,37 @@
       </div>
 
       <div class="header-actions">
-        <label for="csvFileInput" class="btn btn-vellum btn-compact" title="Import CSV">
+        <label for="csvFileInput" class="btn btn-vellum btn-compact desktop-only-action" title="Import CSV">
           <span class="btn-ico">📥</span><span class="btn-lbl">Import</span>
         </label>
         <input type="file" id="csvFileInput" accept=".csv,text/csv" hidden>
-        <button id="btnExportCsv" class="btn btn-vellum btn-compact" type="button" title="Export CSV">
+
+        <button id="btnExportCsv" class="btn btn-vellum btn-compact desktop-only-action" type="button" title="Export CSV">
           <span class="btn-ico">📤</span><span class="btn-lbl">Export</span>
         </button>
+
         <button id="btnNewLead" class="btn btn-vellum btn-compact" type="button" title="Add New Lead">
           <span class="btn-ico">＋</span><span class="btn-lbl">Lead</span>
         </button>
+
         <button id="btnOpenSettings" class="btn btn-primary btn-compact" type="button" title="Settings (,)">
           <span class="btn-ico">⚙️</span><span class="btn-lbl">Settings</span>
         </button>
+
+        <!-- MOBILE MORE / CSV POPOVER MENU -->
+        <div class="mobile-more-wrap">
+          <button id="btnMobileMore" class="btn btn-vellum btn-compact btn-icon-only" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Import and Export Menu">
+            ⋯
+          </button>
+          <div id="mobileHeaderMenu" class="header-popover hidden" role="menu">
+            <button id="btnMenuImportCsv" class="popover-item" type="button" role="menuitem">
+              <span>📥</span><span>Import CSV Leads</span>
+            </button>
+            <button id="btnMenuExportCsv" class="popover-item" type="button" role="menuitem">
+              <span>📤</span><span>Export CSV Leads</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -68,6 +86,7 @@
           <div class="search-wrap">
             <span class="search-glyph" aria-hidden="true">⌕</span>
             <input type="search" id="inputSearch" placeholder="Search venue, name, city, phone..." autocomplete="off">
+            <button id="btnClearSearch" class="search-clear-btn hidden" type="button" aria-label="Clear search">✕</button>
           </div>
         </div>
 
@@ -98,7 +117,7 @@
         <div id="cockpitEmpty" class="cockpit-empty">
           <div class="empty-monogram">📜</div>
           <h3>Pipeline Ready</h3>
-          <p>Select a prospect from your queue or import a CSV file to begin dialing and sending Pixar pitches.</p>
+          <p>Select a prospect from your queue or import a CSV file to begin dialing and sending pitches.</p>
           <div class="empty-actions">
             <label for="csvFileInput" class="btn btn-primary">📥 Import CSV</label>
             <button id="btnEmptyNewLead" class="btn btn-vellum" type="button">+ Add Lead</button>
@@ -111,45 +130,54 @@
 
             <!-- HERO CONTACT & DIRECT DIAL CARD -->
             <div class="paper-card lead-hero-card">
-              <div class="lead-identity">
+              <div class="hero-top-row">
                 <div class="lead-badges">
                   <span id="leadStageBadge" class="stage-pill">Lead</span>
                   <span id="leadAttemptsBadge" class="meta-pill hidden">0 attempts</span>
                   <span id="leadCallbackBadge" class="meta-pill meta-pill-cb hidden"></span>
                 </div>
+                <div class="hero-top-actions">
+                  <button id="btnEditLead" class="btn-chip" type="button">✏️ Edit</button>
+                  <button id="btnMobileDeleteLead" class="btn-chip btn-chip-danger mobile-only-inline" type="button" aria-label="Remove Lead">🗑️</button>
+                </div>
+              </div>
+
+              <div class="lead-identity">
                 <h1 id="leadCompany">Company Name</h1>
                 <div class="lead-subtitle" id="leadSubtitle">Contact Name • Job Title</div>
                 <div class="lead-address" id="leadAddress"></div>
               </div>
 
               <div class="lead-call-zone">
-                <a id="btnCallLead" href="#" class="btn-call-trigger" title="Dial Phone Number (C)">
-                  <span class="call-icon" aria-hidden="true">📞</span>
-                  <div class="call-meta">
-                    <span class="call-action-label">TAP TO DIAL</span>
-                    <span class="call-phone-number" id="leadPhone">—</span>
-                  </div>
-                </a>
-                <div class="hero-mini-actions">
-                  <button id="btnCopyPhone" class="btn-chip" type="button">Copy #</button>
-                  <button id="btnEditLead" class="btn-chip" type="button">✏️ Edit Lead</button>
+                <div class="call-action-row">
+                  <a id="btnCallLead" href="#" class="btn-call-trigger" title="Dial Phone Number (C)">
+                    <span class="call-icon" aria-hidden="true">📞</span>
+                    <div class="call-meta">
+                      <span class="call-action-label">TAP TO DIAL</span>
+                      <span class="call-phone-number" id="leadPhone">—</span>
+                    </div>
+                  </a>
+                  <button id="btnCopyPhone" class="btn-copy-square" type="button" title="Copy Phone Number" aria-label="Copy phone number">📋</button>
                 </div>
               </div>
             </div>
 
             <!-- DUAL OUTREACH DECK: PIXAR PITCH & PROSPECTING EMAIL -->
             <div class="outreach-grid">
+
               <!-- 1. WEBSITE PIXAR PITCH -->
               <div class="paper-card outreach-card">
                 <div class="outreach-head">
-                  <div>
+                  <div class="outreach-title-block">
                     <span class="eyebrow">STEP 1 • WEBSITE FORM</span>
                     <h3>Pixar Pitch</h3>
+                    <div class="outreach-target-inline" id="leadFormUrlDisplay">—</div>
                   </div>
-                  <span id="pixarStatusTag" class="status-tag">Ready</span>
+                  <div class="outreach-head-right">
+                    <button id="btnTogglePixarPreview" class="btn-preview-toggle" type="button" aria-expanded="false">👁 Preview</button>
+                    <span id="pixarStatusTag" class="status-tag">Ready</span>
+                  </div>
                 </div>
-
-                <div class="outreach-target" id="leadFormUrlDisplay">—</div>
 
                 <button id="btnSendPixar" class="btn btn-gold btn-block btn-hero-action" type="button">
                   🚀 Copy Pitch &amp; Open Form ↗
@@ -164,40 +192,44 @@
                   <button class="btn-copy-pill" data-copy="formSubject" type="button">Subject</button>
                 </div>
 
-                <details class="pitch-preview-details">
-                  <summary>Preview rendered Pixar Pitch</summary>
+                <div id="pixarPreviewDrawer" class="pitch-preview-drawer hidden">
+                  <div class="preview-meta-row">
+                    <span id="pixarCharCount" class="preview-char-count"></span>
+                  </div>
                   <pre id="pixarPreviewBox" class="pitch-preview-text"></pre>
-                </details>
+                </div>
               </div>
 
               <!-- 2. PROSPECTING EMAIL -->
               <div class="paper-card outreach-card">
                 <div class="outreach-head">
-                  <div>
+                  <div class="outreach-title-block">
                     <span class="eyebrow">STEP 2 • DIRECT EMAIL</span>
-                    <h3>Prospecting Pitch</h3>
+                    <h3>Prospecting Email</h3>
+                    <div class="outreach-target-inline" id="leadEmailDisplay">—</div>
                   </div>
-                  <span id="emailStatusTag" class="status-tag">Ready</span>
+                  <div class="outreach-head-right">
+                    <button id="btnToggleEmailPreview" class="btn-preview-toggle" type="button" aria-expanded="false">👁 Preview</button>
+                    <span id="emailStatusTag" class="status-tag">Ready</span>
+                  </div>
                 </div>
-
-                <div class="outreach-target" id="leadEmailDisplay">—</div>
 
                 <a id="btnSendEmail" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block btn-hero-action">
                   ✉️ Open Prospecting Email ↗
                 </a>
 
-                <div class="quick-copy-strip">
+                <div class="quick-copy-strip" aria-label="Quick Copy Email Details">
                   <span class="quick-copy-label">Copy:</span>
                   <button class="btn-copy-pill" data-copy="leadEmail" type="button">Recipient</button>
                   <button class="btn-copy-pill" data-copy="emailSubject" type="button">Subject</button>
                   <button class="btn-copy-pill" data-copy="emailBody" type="button">Body</button>
+                  <button class="btn-copy-pill" data-copy="demoUrl" type="button">Demo Link</button>
                 </div>
 
-                <details class="pitch-preview-details">
-                  <summary>Preview rendered Email</summary>
+                <div id="emailPreviewDrawer" class="pitch-preview-drawer hidden">
                   <div class="email-preview-subject"><strong>Subj:</strong> <span id="emailSubjectPreview"></span></div>
                   <pre id="emailPreviewBox" class="pitch-preview-text"></pre>
-                </details>
+                </div>
               </div>
             </div>
 
@@ -207,7 +239,7 @@
                 <span class="notes-title">CALL SCRATCHPAD &amp; FIELD NOTES</span>
                 <span id="notesSaveIndicator" class="save-indicator">Saved</span>
               </div>
-              <textarea id="leadNotes" rows="3" placeholder="Record gatekeepers, objections, and next steps..."></textarea>
+              <textarea id="leadNotes" rows="2" placeholder="Record gatekeepers, training challenges, and next steps..."></textarea>
             </div>
 
             <!-- DISPOSITION DECK (DESKTOP INLINE / MOBILE PINNED DOCK) -->
@@ -233,7 +265,7 @@
                   <span class="disp-label">Call Back</span>
                   <span class="disp-hint">Leads</span>
                 </button>
-                <button class="disp-btn btn-del" id="btnDispDelete" type="button">
+                <button class="disp-btn btn-del desktop-only-disp" id="btnDispDelete" type="button">
                   <span class="disp-ico">🗑️</span>
                   <span class="disp-label">Remove</span>
                   <span class="disp-hint">Delete</span>
@@ -311,9 +343,12 @@
         </div>
       </div>
 
-      <div class="dialog-actions sheet-footer">
-        <button type="button" id="btnCancelForm" class="btn btn-vellum">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save Lead</button>
+      <div class="dialog-actions sheet-footer sheet-footer-split">
+        <button type="button" id="btnDeleteFromModal" class="btn btn-danger-outline hidden">🗑️ Delete</button>
+        <div class="footer-right-btns">
+          <button type="button" id="btnCancelForm" class="btn btn-vellum">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Lead</button>
+        </div>
       </div>
     </form>
   </dialog>
@@ -373,22 +408,22 @@
           <div class="form-row">
             <div class="form-group">
               <label for="setSenderName">Your Full Name (Auto-Fill)</label>
-              <input type="text" id="setSenderName" placeholder="e.g. Alex Mercer">
+              <input type="text" id="setSenderName" placeholder="e.g. Christian J.">
             </div>
             <div class="form-group">
-              <label for="setSenderCompany">Your Company / Agency</label>
-              <input type="text" id="setSenderCompany" placeholder="e.g. Northstar Hospitality">
+              <label for="setSenderCompany">Your Company / Studio</label>
+              <input type="text" id="setSenderCompany" placeholder="e.g. Empire Dev Studio">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label for="setSenderEmail">Your Email Address</label>
-              <input type="email" id="setSenderEmail" placeholder="alex@northstar.co">
+              <input type="email" id="setSenderEmail" placeholder="you@empiredevstudio.com">
             </div>
             <div class="form-group">
               <label for="setSenderPhone">Your Phone Number</label>
-              <input type="tel" id="setSenderPhone" placeholder="+1 (416) 555-0199">
+              <input type="tel" id="setSenderPhone" placeholder="+44 7700 900000">
             </div>
           </div>
 
@@ -399,14 +434,14 @@
             </div>
             <div class="form-group">
               <label for="setFormSubject">Default Contact Form Subject</label>
-              <input type="text" id="setFormSubject" placeholder="Quick idea for {{company}}">
+              <input type="text" id="setFormSubject" placeholder="Staff training idea for {{company}}">
             </div>
           </div>
 
           <div class="bookmarklet-box">
             <div class="bookmarklet-copy">
               <strong>1-Click External Form Auto-Filler (Bookmarklet)</strong>
-              <p>Browsers prevent one webpage from modifying another domain directly. Add this bookmarklet to your browser bar—tap it on any venue's contact page to fill Name, Email, Phone, Subject &amp; your copied Pixar Pitch:</p>
+              <p>Browsers prevent one webpage from modifying another domain directly. Save this bookmarklet—tap it on any venue's contact page to fill Name, Email, Phone, Subject &amp; your copied Pixar Pitch. (On mobile, tap <em>Copy Script</em> and paste into a bookmark URL.)</p>
             </div>
             <div class="bookmarklet-actions">
               <a id="bookmarkletLink" class="btn btn-gold" href="#">⚡ Auto-Fill Contact Form</a>
@@ -420,9 +455,10 @@
           <div class="var-bar">
             <span class="var-label">Variables (tap to copy):</span>
             <button type="button" class="var-chip" data-var="{{company}}">{{company}}</button>
+            <button type="button" class="var-chip" data-var="{{first_name}}">{{first_name}}</button>
             <button type="button" class="var-chip" data-var="{{name}}">{{name}}</button>
             <button type="button" class="var-chip" data-var="{{city}}">{{city}}</button>
-            <button type="button" class="var-chip" data-var="{{address}}">{{address}}</button>
+            <button type="button" class="var-chip" data-var="{{senderFirstName}}">{{senderFirstName}}</button>
             <button type="button" class="var-chip" data-var="{{senderName}}">{{senderName}}</button>
             <button type="button" class="var-chip" data-var="{{senderCompany}}">{{senderCompany}}</button>
             <button type="button" class="var-chip" data-var="{{senderPhone}}">{{senderPhone}}</button>
@@ -432,37 +468,40 @@
           <div class="pixar-grid">
             <div class="form-group">
               <label for="setPixar1">1. Once upon a time…</label>
-              <textarea id="setPixar1" rows="2"></textarea>
+              <textarea id="setPixar1" rows="3"></textarea>
             </div>
             <div class="form-group">
-              <label for="setPixar2">2. Every day…</label>
-              <textarea id="setPixar2" rows="2"></textarea>
+              <label for="setPixar2">2. Every day / The challenge…</label>
+              <textarea id="setPixar2" rows="3"></textarea>
             </div>
             <div class="form-group">
               <label for="setPixar3">3. One day…</label>
-              <textarea id="setPixar3" rows="2"></textarea>
+              <textarea id="setPixar3" rows="3"></textarea>
             </div>
             <div class="form-group">
               <label for="setPixar4">4. Because of that…</label>
-              <textarea id="setPixar4" rows="2"></textarea>
+              <textarea id="setPixar4" rows="3"></textarea>
             </div>
             <div class="form-group">
-              <label for="setPixar5">5. Because of that…</label>
-              <textarea id="setPixar5" rows="2"></textarea>
+              <label for="setPixar5">5. Because of that (Bigger idea)…</label>
+              <textarea id="setPixar5" rows="3"></textarea>
             </div>
             <div class="form-group">
               <label for="setPixar6">6. Until finally…</label>
-              <textarea id="setPixar6" rows="2"></textarea>
+              <textarea id="setPixar6" rows="3"></textarea>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="setPixarExtra">7. Extra Message &amp; Call-To-Action (appended after Pixar Pitch)</label>
-            <textarea id="setPixarExtra" rows="3"></textarea>
+            <label for="setPixarExtra">7. Intro, Demo Link &amp; Call-To-Action (appended after Pixar Pitch)</label>
+            <textarea id="setPixarExtra" rows="4"></textarea>
           </div>
 
           <div class="preview-panel">
-            <span class="eyebrow">LIVE PIXAR PITCH PREVIEW</span>
+            <div class="preview-meta-row">
+              <span class="eyebrow">LIVE PIXAR PITCH PREVIEW</span>
+              <span id="settingsPixarCount" class="preview-char-count"></span>
+            </div>
             <pre id="settingsPixarPreview" class="pitch-preview-text"></pre>
           </div>
         </div>
@@ -470,23 +509,25 @@
         <!-- TAB 3: PROSPECTING EMAIL -->
         <div class="settings-panel" id="stab-email">
           <div class="form-group">
-            <label for="setEmailProvider">Email Client (Opens in New Tab)</label>
+            <label for="setEmailProvider">Email Client</label>
             <select id="setEmailProvider">
               <option value="gmail">Gmail Web (mail.google.com)</option>
               <option value="outlook">Outlook Web (outlook.live.com)</option>
               <option value="office365">Microsoft 365 Web (outlook.office.com)</option>
-              <option value="mailto">Default System Mail App (mailto:)</option>
+              <option value="mailto">Phone Mail / System App (mailto: — Best on Mobile)</option>
             </select>
+            <span class="field-hint">Tip: Choose <strong>mailto:</strong> on phones to open Apple Mail / Gmail app directly.</span>
           </div>
 
           <div class="var-bar">
             <span class="var-label">Variables (tap to copy):</span>
             <button type="button" class="var-chip" data-var="{{company}}">{{company}}</button>
+            <button type="button" class="var-chip" data-var="{{first_name}}">{{first_name}}</button>
             <button type="button" class="var-chip" data-var="{{name}}">{{name}}</button>
             <button type="button" class="var-chip" data-var="{{city}}">{{city}}</button>
+            <button type="button" class="var-chip" data-var="{{senderFirstName}}">{{senderFirstName}}</button>
             <button type="button" class="var-chip" data-var="{{senderName}}">{{senderName}}</button>
             <button type="button" class="var-chip" data-var="{{senderCompany}}">{{senderCompany}}</button>
-            <button type="button" class="var-chip" data-var="{{senderPhone}}">{{senderPhone}}</button>
           </div>
 
           <div class="form-group">
@@ -496,7 +537,7 @@
 
           <div class="form-group">
             <label for="setEmailBody">Prospecting Email Body</label>
-            <textarea id="setEmailBody" rows="8"></textarea>
+            <textarea id="setEmailBody" rows="9"></textarea>
           </div>
 
           <div class="preview-panel">

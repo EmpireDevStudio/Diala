@@ -1,5 +1,5 @@
 /**
- * FLIPDIALLER — LIVING PAPER 3.5 (MOBILE-FIRST OUTREACH ENGINE)
+ * FLIPDIALLER — LIVING PAPER 3.6 (MOBILE-FIRST OUTREACH ENGINE)
  * Pipeline stages:
  *  - 'leads'     : Uncontacted, No Answer, or Call Back (stays in Leads list)
  *  - 'partial'   : Pixar Pitch sent via website contact form
@@ -9,40 +9,58 @@
 (() => {
   'use strict';
 
-  // --- 1. DEFAULT SETTINGS & PIXAR SPINE ---
-  const SETTINGS_KEY = 'FlipDiallerSettings_v3';
+  // --- 1. DEFAULT SETTINGS & EMPIRE DEV STUDIO PITCHES ---
+  const SETTINGS_KEY = 'FlipDiallerSettings_v4';
+  const DEFAULT_DEMO_URL = 'https://empiredevstudio.github.io/Demo-Home/';
 
   const DEFAULT_SETTINGS = {
-    senderName: 'Alex Mercer',
-    senderCompany: 'Northstar Hospitality',
-    senderEmail: 'alex@northstar.co',
-    senderPhone: '+1 (416) 555-0199',
+    senderName: 'Christian J.',
+    senderCompany: 'Empire Dev Studio',
+    senderEmail: 'EmpireDevStudio@gmail.com',
+    senderPhone: '',
     senderTitle: 'Founder',
-    formSubject: 'Quick idea for {{company}}',
+    formSubject: 'Staff Training | A Pixar Pitch',
 
-    pixar1: 'Once upon a time, standout venues like {{company}} in {{city}} built their reputation on memorable in-person hospitality and word-of-mouth.',
-    pixar2: 'Every day, high-value guests and private event planners search online for the best spot in {{city}} and book whichever venue responds fastest.',
-    pixar3: 'One day, many hospitality teams realize static contact forms and missed inquiries quietly cost them several prime bookings every month.',
-    pixar4: 'Because of that, forward-thinking spots in {{city}} started turning inbound inquiries into an instant, effortless guest experience.',
-    pixar5: 'Because of that, we partnered with local hospitality leaders to capture and convert more private events and repeat bookings without adding work for floor staff.',
-    pixar6: 'Until finally, filling slower nights and high-margin group bookings became predictable while the team stayed focused purely on guests.',
-    pixarExtra: 'Hi {{name}} — I\'m {{senderName}} with {{senderCompany}}. Would you be open to a quick 5-minute chat this week about {{company}}? You can reach me at {{senderPhone}} or {{senderEmail}}.',
+    pixar1:
+      'Once upon a time, running a standout bar meant knowing your team could nail every cocktail spec, pour consistently, and upsell with confidence, even during a packed Friday night rush.',
+    pixar2:
+      'Every day, managers lost hours chasing recipes, formatting spec sheets, and training new hires, only for dusty binders and buried PDFs to get ignored the moment service got busy.',
+    pixar3:
+      'One day, we turned a venue\'s existing recipes, SOPs, and training videos into a pocket-ready web app. Giving every bartender instant, zero-friction access right from their phone.',
+    pixar4:
+      'Because of that, onboarding new staff got faster, pour consistency tightened up, and managers got their admin hours back to focus on the floor.',
+    pixar5:
+      'Because of that, staff training stopped being a chore, turning quick pre-shift moments into sharper product knowledge, smoother service, and higher check averages.',
+    pixar6:
+      'Until finally, technology stopped sitting in a back-office folder and started pulling its weight behind the bar.',
+    pixarExtra:
+`I'm {{senderName}}, founder of {{senderCompany}} I build custom, mobile-first training hubs for hospitality venues like {{company}} so your team actually uses the specs you work hard to create. Rather than pitch you a wall of text, I built a live 60-second interactive demo you can test on your phone: https://empiredevstudio.github.io/Demo-Home/ (one rule: don't tap the spinning record until you've finished exploring).
+
+Worth a quick look? Take it for a spin and hit reply with your honest verdict. What's the #1 training headache at {{company}} right now?`,
 
     emailProvider: 'gmail',
-    emailSubject: 'Quick question for {{company}}',
+    emailSubject: 'Christian John | The pocket training demo we spoke about',
     emailBody:
-`Hi {{name}},
+`Hi,
 
-I came across {{company}} in {{city}} and wanted to reach out directly.
+It was really great speaking with you earlier.
 
-We help venues like yours capture more private event bookings and turn first-time visitors into repeat regulars without adding extra work to your team's plate.
+I'm {{senderFirstName}}, founder of {{senderCompany}}. We help hospitality venues turn their cocktail specs, SOPs, and training videos into a simple, pocket-ready web app, so new hires ramp up faster, pours stay consistent during a rush, and managers stop losing hours updating binders nobody reads.
 
-Would you be open to a brief 5-minute call this week?
+Instead of sending a pitch deck, I put together an interactive demo so you can feel how it works in 60 seconds:
+https://empiredevstudio.github.io/Demo-Home/
 
-Best regards,
+(One small catch: only tap the spinning record once you've finished exploring. The record will take you to a optional reply email that is just a dun way to engage further and "break the ice".)
+
+When you've had a quick scroll, I'd love your unfiltered take:
+1. Where does your team lose the most time with training or spec updates right now?
+2. What feels genuinely useful or is missing from the demo?
+Looking forward to hearing from you.
+
+Best,
+
 {{senderName}}
-{{senderTitle}}, {{senderCompany}}
-{{senderPhone}}`,
+{{senderTitle}} | {{senderCompany}}`,
 
     autoStagePixar: true,
     autoStageEmail: true
@@ -136,6 +154,8 @@ Best regards,
   // --- 4. DOM REFERENCES ---
   const el = {
     list: document.getElementById('contactList'),
+    inputSearch: document.getElementById('inputSearch'),
+    btnClearSearch: document.getElementById('btnClearSearch'),
     cockpitEmpty: document.getElementById('cockpitEmpty'),
     cockpitContent: document.getElementById('cockpitContent'),
     paneCockpit: document.getElementById('paneCockpit'),
@@ -145,6 +165,9 @@ Best regards,
     mobileNavTitle: document.getElementById('mobileNavTitle'),
     mobileQueueCounter: document.getElementById('mobileQueueCounter'),
     toast: document.getElementById('toast'),
+
+    btnMobileMore: document.getElementById('btnMobileMore'),
+    mobileHeaderMenu: document.getElementById('mobileHeaderMenu'),
 
     countLeads: document.getElementById('countLeads'),
     countPartial: document.getElementById('countPartial'),
@@ -163,11 +186,16 @@ Best regards,
     leadFormUrlDisplay: document.getElementById('leadFormUrlDisplay'),
     btnSendPixar: document.getElementById('btnSendPixar'),
     pixarStatusTag: document.getElementById('pixarStatusTag'),
+    btnTogglePixarPreview: document.getElementById('btnTogglePixarPreview'),
+    pixarPreviewDrawer: document.getElementById('pixarPreviewDrawer'),
+    pixarCharCount: document.getElementById('pixarCharCount'),
     pixarPreviewBox: document.getElementById('pixarPreviewBox'),
 
     leadEmailDisplay: document.getElementById('leadEmailDisplay'),
     btnSendEmail: document.getElementById('btnSendEmail'),
     emailStatusTag: document.getElementById('emailStatusTag'),
+    btnToggleEmailPreview: document.getElementById('btnToggleEmailPreview'),
+    emailPreviewDrawer: document.getElementById('emailPreviewDrawer'),
     emailSubjectPreview: document.getElementById('emailSubjectPreview'),
     emailPreviewBox: document.getElementById('emailPreviewBox'),
 
@@ -176,6 +204,7 @@ Best regards,
 
     dialogForm: document.getElementById('dialogLeadForm'),
     leadForm: document.getElementById('leadForm'),
+    btnDeleteFromModal: document.getElementById('btnDeleteFromModal'),
     dialogCallback: document.getElementById('dialogCallback'),
     dialogSettings: document.getElementById('dialogSettings')
   };
@@ -195,8 +224,11 @@ Best regards,
     const contactName = (c.name || '').trim();
     const firstName = contactName ? contactName.split(/\s+/)[0] : 'there';
 
+    const sName = (activeSettings.senderName || '').trim();
+    const sFirstName = sName ? sName.split(/\s+/)[0] : '';
+
     const vars = {
-      company: c.company || c.name || 'your team',
+      company: c.company || c.name || 'your venue',
       name: contactName || 'there',
       first_name: firstName,
       title: c.job_title || '',
@@ -204,7 +236,8 @@ Best regards,
       address: c.street_address || '',
       phone: c.phone || '',
       email: c.email || '',
-      senderName: activeSettings.senderName || '',
+      senderName: sName,
+      senderFirstName: sFirstName,
       senderCompany: activeSettings.senderCompany || '',
       senderEmail: activeSettings.senderEmail || '',
       senderPhone: activeSettings.senderPhone || '',
@@ -252,6 +285,19 @@ Best regards,
     }
   }
 
+  function extractDemoUrl(activeSettings = settings) {
+    const combined = `${activeSettings.emailBody || ''}\n${activeSettings.pixarExtra || ''}`;
+    const match = combined.match(/https?:\/\/[^\s)]+/i);
+    return match ? match[0] : DEFAULT_DEMO_URL;
+  }
+
+  function formatWordCharCount(text) {
+    const clean = (text || '').trim();
+    if (!clean) return '0 words • 0 chars';
+    const words = clean.split(/\s+/).length;
+    return `${words} words • ${clean.length.toLocaleString()} chars`;
+  }
+
   // --- 6. UTILITIES ---
   function esc(str) {
     return String(str || '')
@@ -269,21 +315,28 @@ Best regards,
     state.toastTimer = setTimeout(() => el.toast.classList.remove('visible'), 2500);
   }
 
-  async function copyText(text, label = 'Copied') {
-    if (!text) return showToast('Nothing to copy');
+  async function copyText(text, label = 'Copied', emptyMsg = 'Nothing to copy') {
+    if (!text || !String(text).trim()) {
+      showToast(emptyMsg);
+      return false;
+    }
     try {
       await navigator.clipboard.writeText(text);
       showToast(`✓ ${label} copied`);
+      return true;
     } catch {
       const ta = document.createElement('textarea');
       ta.value = text;
+      ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
       ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
+      ta.setSelectionRange(0, ta.value.length);
       document.execCommand('copy');
       document.body.removeChild(ta);
       showToast(`✓ ${label} copied`);
+      return true;
     }
   }
 
@@ -297,6 +350,7 @@ Best regards,
   // --- 7. RENDERING & FILTERING ---
   function applyFilters() {
     const q = state.search.toLowerCase().trim();
+    el.btnClearSearch.classList.toggle('hidden', !state.search);
 
     state.filtered = state.contacts.filter(c => {
       const matchesQuery = !q ||
@@ -332,8 +386,26 @@ Best regards,
   }
 
   function renderList() {
+    if (state.contacts.length === 0) {
+      el.list.innerHTML = `
+        <div class="list-empty-onboarding">
+          <div class="empty-monogram">📜</div>
+          <h3>Pipeline Ready</h3>
+          <p>Import a CSV lead list or add your first venue to start dialing and sending pitches.</p>
+          <div class="empty-actions">
+            <label for="csvFileInput" class="btn btn-primary">📥 Import CSV</label>
+            <button id="btnListEmptyAdd" class="btn btn-vellum" type="button">+ Add Lead</button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     if (state.filtered.length === 0) {
-      el.list.innerHTML = `<div class="list-empty">No prospects in this queue.</div>`;
+      const clearHtml = state.search
+        ? `<button id="btnEmptyClearSearch" class="btn btn-vellum" type="button" style="margin-top:10px;">Clear Search</button>`
+        : '';
+      el.list.innerHTML = `<div class="list-empty"><div>No prospects in this queue.</div>${clearHtml}</div>`;
       return;
     }
 
@@ -437,7 +509,7 @@ Best regards,
     }
 
     el.leadCompany.textContent = c.company || c.name || 'Unnamed Prospect';
-    el.leadSubtitle.textContent = [c.name, c.job_title].filter(Boolean).join(' • ') || 'Prospect Contact';
+    el.leadSubtitle.textContent = [c.name, c.job_title].filter(Boolean).join(' • ');
     el.leadAddress.textContent = [c.street_address, c.city, c.country].filter(Boolean).join(', ');
 
     const cleanNum = (c.phone || '').replace(/[^\d+]/g, '');
@@ -447,7 +519,7 @@ Best regards,
 
     // Pixar Form Card
     const hasForm = Boolean(c.contact_form_url && c.contact_form_url.trim());
-    el.leadFormUrlDisplay.textContent = hasForm ? c.contact_form_url : 'No contact URL on file (tap Edit Lead)';
+    el.leadFormUrlDisplay.textContent = hasForm ? c.contact_form_url : 'No contact URL on file (tap Edit)';
     el.btnSendPixar.disabled = !hasForm;
     el.btnSendPixar.classList.toggle('is-disabled', !hasForm);
 
@@ -462,11 +534,13 @@ Best regards,
       el.pixarStatusTag.className = 'status-tag';
     }
 
-    el.pixarPreviewBox.textContent = buildPixarPitch(c);
+    const renderedPixar = buildPixarPitch(c);
+    el.pixarCharCount.textContent = formatWordCharCount(renderedPixar);
+    el.pixarPreviewBox.textContent = renderedPixar;
 
     // Email Card
     const hasEmail = Boolean(c.email && c.email.trim());
-    el.leadEmailDisplay.textContent = hasEmail ? c.email : 'No email address on file (tap Edit Lead)';
+    el.leadEmailDisplay.textContent = hasEmail ? c.email : 'No email on file (tap Edit)';
     el.btnSendEmail.href = hasEmail ? buildEmailHref(c) : '#';
     el.btnSendEmail.classList.toggle('is-disabled', !hasEmail);
     if (settings.emailProvider === 'mailto') {
@@ -497,11 +571,13 @@ Best regards,
     if (!c || !c.contact_form_url) return;
 
     const pitch = buildPixarPitch(c);
-    await copyText(pitch, 'Pixar Pitch');
-
     let url = c.contact_form_url.trim();
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+    // Start clipboard copy and open tab synchronously inside user gesture for iOS Safari compatibility
+    const copyPromise = copyText(pitch, 'Pixar Pitch');
     window.open(url, '_blank', 'noopener,noreferrer');
+    await copyPromise;
 
     c.pixar_sent_at = new Date().toISOString();
     if (settings.autoStagePixar && c.stage === 'leads') {
@@ -538,7 +614,7 @@ Best regards,
 
   async function setDisposition(type) {
     const c = state.contacts.find(x => x.id === state.activeId);
-    if (!c) return;
+    if (!c) return false;
 
     const currentFilteredIdx = state.filtered.findIndex(x => x.id === c.id);
 
@@ -558,7 +634,7 @@ Best regards,
       await dbAPI.put(c);
       showToast(`Attempt #${c.attempts} logged — kept in Leads`);
     } else if (type === 'delete') {
-      if (!confirm(`Remove "${c.company || c.name}" permanently?`)) return;
+      if (!confirm(`Remove "${c.company || c.name}" permanently?`)) return false;
       await dbAPI.delete(c.id);
       state.contacts = state.contacts.filter(x => x.id !== c.id);
       state.activeId = null;
@@ -578,9 +654,11 @@ Best regards,
     } else if (window.innerWidth <= 820) {
       el.paneCockpit.classList.remove('mobile-visible');
     }
+
+    return true;
   }
 
-  // --- 9. NOTES AUTO-SAVE ---
+  // --- 9. NOTES AUTO-SAVE & MOBILE KEYBOARD HANDLING ---
   el.leadNotes.addEventListener('input', () => {
     clearTimeout(state.notesTimer);
     state.notesTimer = setTimeout(async () => {
@@ -591,6 +669,22 @@ Best regards,
       el.notesSaveIndicator.classList.add('visible');
       setTimeout(() => el.notesSaveIndicator.classList.remove('visible'), 1200);
     }, 350);
+  });
+
+  el.cockpitContent.addEventListener('focusin', (e) => {
+    if (window.innerWidth <= 820 && ['TEXTAREA', 'INPUT'].includes(e.target.tagName)) {
+      el.paneCockpit.classList.add('keyboard-open');
+      setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220);
+    }
+  });
+
+  el.cockpitContent.addEventListener('focusout', () => {
+    setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || !el.cockpitContent.contains(active) || !['TEXTAREA', 'INPUT'].includes(active.tagName)) {
+        el.paneCockpit.classList.remove('keyboard-open');
+      }
+    }, 120);
   });
 
   // --- 10. CSV IMPORT & EXPORT ---
@@ -701,7 +795,7 @@ Best regards,
     showToast(`✓ Imported ${imported} prospects`);
   });
 
-  document.getElementById('btnExportCsv').onclick = () => {
+  function exportCsvLeads() {
     if (state.contacts.length === 0) return showToast('No leads to export');
     const cols = [
       'name', 'phone', 'email', 'country', 'city', 'street_address',
@@ -719,7 +813,9 @@ Best regards,
     a.download = `flipdialler_leads_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
-  };
+  }
+
+  document.getElementById('btnExportCsv').onclick = exportCsvLeads;
 
   // --- 11. ADD / EDIT LEAD MODAL ---
   function openLeadModal(contact = null) {
@@ -734,6 +830,7 @@ Best regards,
     document.getElementById('formAddress').value = contact ? (contact.street_address || '') : '';
     document.getElementById('formCity').value = contact ? (contact.city || '') : '';
     document.getElementById('formLeadNotes').value = contact ? (contact.notes || '') : '';
+    el.btnDeleteFromModal.classList.toggle('hidden', !contact);
     el.dialogForm.showModal();
   }
 
@@ -769,6 +866,14 @@ Best regards,
     applyFilters();
     selectLead(c.id);
     showToast('✓ Prospect saved');
+  };
+
+  el.btnDeleteFromModal.onclick = async () => {
+    const id = document.getElementById('formId').value;
+    if (!id) return;
+    state.activeId = id;
+    const deleted = await setDisposition('delete');
+    if (deleted) el.dialogForm.close();
   };
 
   document.getElementById('btnNewLead').onclick = () => openLeadModal();
@@ -872,7 +977,9 @@ Best regards,
   function refreshSettingsPreviews() {
     const draft = collectDraftSettings();
     const previewContact = state.contacts.find(x => x.id === state.activeId);
-    document.getElementById('settingsPixarPreview').textContent = buildPixarPitch(previewContact, draft);
+    const pixarRendered = buildPixarPitch(previewContact, draft);
+    document.getElementById('settingsPixarPreview').textContent = pixarRendered;
+    document.getElementById('settingsPixarCount').textContent = formatWordCharCount(pixarRendered);
     document.getElementById('settingsEmailSubjPreview').textContent = interpolate(draft.emailSubject, previewContact, draft);
     document.getElementById('settingsEmailBodyPreview').textContent = interpolate(draft.emailBody, previewContact, draft);
     document.getElementById('bookmarkletLink').href = buildBookmarkletHref(draft);
@@ -941,11 +1048,62 @@ Best regards,
     chip.onclick = () => copyText(chip.dataset.var, chip.dataset.var);
   });
 
-  // --- 14. NAVIGATION, GESTURES & ACTION LISTENERS ---
+  // --- 14. NAVIGATION, POPOVERS, GESTURES & ACTION LISTENERS ---
   el.list.addEventListener('click', (e) => {
+    if (e.target.closest('#btnListEmptyAdd')) {
+      openLeadModal();
+      return;
+    }
+    if (e.target.closest('#btnEmptyClearSearch')) {
+      state.search = '';
+      el.inputSearch.value = '';
+      applyFilters();
+      return;
+    }
     const card = e.target.closest('.contact-card');
     if (card) selectLead(card.dataset.id, true);
   });
+
+  // Mobile Header More/CSV Menu
+  function setMobileMoreOpen(open) {
+    el.mobileHeaderMenu.classList.toggle('hidden', !open);
+    el.btnMobileMore.setAttribute('aria-expanded', String(open));
+  }
+
+  el.btnMobileMore.onclick = (e) => {
+    e.stopPropagation();
+    const isClosed = el.mobileHeaderMenu.classList.contains('hidden');
+    setMobileMoreOpen(isClosed);
+  };
+
+  document.getElementById('btnMenuImportCsv').onclick = () => {
+    setMobileMoreOpen(false);
+    document.getElementById('csvFileInput').click();
+  };
+
+  document.getElementById('btnMenuExportCsv').onclick = () => {
+    setMobileMoreOpen(false);
+    exportCsvLeads();
+  };
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.mobile-more-wrap')) {
+      setMobileMoreOpen(false);
+    }
+  });
+
+  // Preview Toggles
+  el.btnTogglePixarPreview.onclick = () => {
+    const isHidden = el.pixarPreviewDrawer.classList.toggle('hidden');
+    el.btnTogglePixarPreview.setAttribute('aria-expanded', String(!isHidden));
+    el.btnTogglePixarPreview.textContent = isHidden ? '👁 Preview' : 'Hide';
+  };
+
+  el.btnToggleEmailPreview.onclick = () => {
+    const isHidden = el.emailPreviewDrawer.classList.toggle('hidden');
+    el.btnToggleEmailPreview.setAttribute('aria-expanded', String(!isHidden));
+    el.btnToggleEmailPreview.textContent = isHidden ? '👁 Preview' : 'Hide';
+  };
 
   el.btnBackToList.onclick = () => el.paneCockpit.classList.remove('mobile-visible');
   el.btnPrevLead.onclick = () => stepLead(-1);
@@ -986,10 +1144,17 @@ Best regards,
     };
   });
 
-  document.getElementById('inputSearch').addEventListener('input', (e) => {
+  el.inputSearch.addEventListener('input', (e) => {
     state.search = e.target.value;
     applyFilters();
   });
+
+  el.btnClearSearch.onclick = () => {
+    state.search = '';
+    el.inputSearch.value = '';
+    applyFilters();
+    el.inputSearch.focus();
+  };
 
   el.btnSendPixar.onclick = launchPixarPitch;
   el.btnSendEmail.addEventListener('click', handleEmailLaunch);
@@ -997,6 +1162,7 @@ Best regards,
   document.getElementById('btnCopyPhone').onclick = () => {
     const c = state.contacts.find(x => x.id === state.activeId);
     if (c && c.phone) copyText(c.phone, 'Phone number');
+    else showToast('No phone number on file');
   };
 
   document.querySelectorAll('.btn-copy-pill').forEach(btn => {
@@ -1005,13 +1171,14 @@ Best regards,
       if (!c) return;
       const mode = btn.dataset.copy;
       if (mode === 'pitch') return copyText(buildPixarPitch(c), 'Pixar Pitch');
-      if (mode === 'senderName') return copyText(settings.senderName, 'Your Name');
-      if (mode === 'senderEmail') return copyText(settings.senderEmail, 'Your Email');
-      if (mode === 'senderPhone') return copyText(settings.senderPhone, 'Your Phone');
+      if (mode === 'senderName') return copyText(settings.senderName, 'Your Name', 'Set your name in Settings ⚙️');
+      if (mode === 'senderEmail') return copyText(settings.senderEmail, 'Your Email', 'Add your email in Settings ⚙️');
+      if (mode === 'senderPhone') return copyText(settings.senderPhone, 'Your Phone', 'Add your phone in Settings ⚙️');
       if (mode === 'formSubject') return copyText(interpolate(settings.formSubject, c), 'Form Subject');
-      if (mode === 'leadEmail') return copyText(c.email, 'Recipient Email');
+      if (mode === 'leadEmail') return copyText(c.email, 'Recipient Email', 'No recipient email on file');
       if (mode === 'emailSubject') return copyText(interpolate(settings.emailSubject, c), 'Email Subject');
       if (mode === 'emailBody') return copyText(interpolate(settings.emailBody, c), 'Email Body');
+      if (mode === 'demoUrl') return copyText(extractDemoUrl(), 'Demo Link');
     };
   });
 
@@ -1019,15 +1186,17 @@ Best regards,
   document.getElementById('btnDispComplete').onclick = () => setDisposition('completed');
   document.getElementById('btnDispNA').onclick = () => setDisposition('no_answer');
   document.getElementById('btnDispDelete').onclick = () => setDisposition('delete');
+  document.getElementById('btnMobileDeleteLead').onclick = () => setDisposition('delete');
 
   // --- 15. KEYBOARD SHORTCUTS ---
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setMobileMoreOpen(false);
     if (el.dialogForm.open || el.dialogCallback.open || el.dialogSettings.open) return;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
     if (e.key === '/') {
       e.preventDefault();
-      document.getElementById('inputSearch').focus();
+      el.inputSearch.focus();
     } else if (e.key === ',') {
       e.preventDefault();
       populateSettingsModal(settings);

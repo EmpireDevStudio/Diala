@@ -1,93 +1,73 @@
-﻿name,phone,email,country,city,street_address,postal_code,company,job_title,notes
+﻿name,phone,email,country,city,street_address,postal_code,company,job_title,contact_form_url,notes
+,+1 (866) 518-8028,name@domain.com,Canada,Toronto,"
+21 Toro Rd, North York, ON M3J 2A4",,Sun Auto Sales,,https://www.sunautosales.ca/contact/,Verified in Toronto (Car Dealership)
 ,+1 (416) 371-3888,sales@eliteautosales.ca,Canada,Toronto,"
-6295 Mississauga Rd #219, Mississauga, ON L5N 1A7",,ELITE AUTO,,Verified in Toronto (Car Dealership)
+6295 Mississauga Rd #219, Mississauga, ON L5N 1A7",,ELITE AUTO,,https://eliteautosales.ca/forms/contact-us,Verified in Toronto (Car Dealership)
+,+1 (416) 529-9333,ecocarscloud@gmail.com,Canada,Toronto,"
+1400 Aimco Blvd #21, Mississauga, ON L4W 1B2",,Eco Cars - Used Car Dealership in Mississauga,,,Verified in Toronto (Car Dealership)
+,+1 (416) 230-0918,sales@newcastleauto.ca,Canada,Mississauga,"
+6 Queen St N, Mississauga, ON L5N 1A1",,NewCastle Auto,,,Verified in Mississauga (Car Dealership)
+,+1 (905) 571-2777,autofreakgroup@gmail.com,Canada,Brampton,"
+126 Queen St E, Brampton, ON L6V 1B1",,AUTO FREAK,,https://autofreak.ca/forms/contact-us,Verified in Brampton (Car Dealership)
+,+1 (905) 796-2800,sales@caautosales.ca,Canada,Brampton,"
+273 Queen St W, Brampton, ON L6Y 1M7",,Ca Auto Sales,,https://caautosales.ca/forms/contact-us,Verified in Brampton (Car Dealership)
 ,+1 (905) 209-3999,guelphsales@cad4motors.ca,Canada,Markham,"
-9321 Markham Rd, Markham, ON L6E 0N1",,CAD4 Motors Markham,,Verified in Markham (Car Dealership)
+9321 Markham Rd, Markham, ON L6E 0N1",,CAD4 Motors Markham,,,Verified in Markham (Car Dealership)
+,+1 (888) 890-3901,acquisition@genesismarkham.ca,Canada,Markham,"
+7537 Woodbine Ave, Markham, ON L3R 2W1",,Genesis Markham,,https://www.genesismarkham.ca/en/about-us/contact-us,Verified in Markham (Car Dealership)
+,+1 (877) 335-1614,collisioncentre@mapletoyota.com,Canada,Vaughan,"
+110 Auto Vaughan Dr, Vaughan, ON L6A 4A1",,Maple Auto Mall,,https://www.zanchinauto.com/contactus.html,Verified in Vaughan (Car Dealership)
 ,+1 (905) 265-9997,sales@autoberry.ca,Canada,Vaughan,"
-17-3850 Steeles Ave W, Vaughan, ON L4L 4Y6, Woodbridge, ON L4L 4Y6",,Autoberry Canada,,Verified in Vaughan (Car Dealership)
+17-3850 Steeles Ave W, Vaughan, ON L4L 4Y6, Woodbridge, ON L4L 4Y6",,Autoberry Canada,,https://autoberry.ca/forms/contact-us,Verified in Vaughan (Car Dealership)
+,+1 (905) 417-9100,accessibility@zanchinauto.com,Canada,Vaughan,"
+88 Auto Vaughan Dr, Maple, ON L6A 4A1",,Maple Toyota,,https://www.mapletoyota.com/contactus.html,Verified in Vaughan (Car Dealership)
 ,+1 (905) 731-2499,hello@atlantisauto.ca,Canada,Richmond Hill,"
-125 16th Ave Unit 1, Richmond Hill, ON L4C 7A5",,ATLANTIS AUTO | Sales & Service,,Verified in Richmond Hill (Car Dealership)
-,+1 (416) 985-2277,info@planetmotors.ca,Canada,Richmond Hill,"
-30 Major Mackenzie Dr E, Richmond Hill, ON L4C 1G7",,Planet Motors,,Verified in Richmond Hill (Car Dealership)
+125 16th Ave Unit 1, Richmond Hill, ON L4C 7A5",,ATLANTIS AUTO | Sales & Service,,https://atlantisauto.ca/forms/contact-us,Verified in Richmond Hill (Car Dealership)
 ,+1 (647) 999-2277,mike@oakvilleautosales.com,Canada,Oakville,"
-1490 Speers Rd #1, Oakville, ON L6L 2X6",,OAKVILLE AUTO SALES,,Verified in Oakville (Car Dealership)
-,+1 (905) 339-0123,jaz_auto@hotmail.com,Canada,Oakville,"
-2092 Upper Middle Rd E, Oakville, ON L6H 7G5",,Jaz Auto Inc.,,Verified in Oakville (Car Dealership)
-,+1 (905) 302-2799,sales@medallionmotors.ca,Canada,Oakville,"
-646 Fourth Line Unit 3, Oakville, ON L6L 5B2",,Medallion Motors,,Verified in Oakville (Car Dealership)
-,+1 (905) 332-8575,sales@goodcarsonly.com,Canada,Burlington,"
-890 Appleby Line, Burlington, ON L7L 2Y8",,Good Cars Only,,Verified in Burlington (Car Dealership)
+1490 Speers Rd #1, Oakville, ON L6L 2X6",,OAKVILLE AUTO SALES,,https://www.oakvilleautosales.com/contacts/,Verified in Oakville (Car Dealership)
+,+1 (905) 617-6761,sales@visionautogroup.ca,Canada,Oakville,"
+458 Woody Rd, Oakville, ON L6K 3T6",,VISION AUTO GROUP,,https://visionautogroup.ca/forms/contact-us,Verified in Oakville (Car Dealership)
+,+1 (647) 409-8123,business@supercardealer.ca,Canada,Oakville,"
+636 Fourth Line Office 2b, Oakville, ON L6L 5B2",,Super General Auto | Car Dealer,,https://supercardealer.ca/contact-us/,Verified in Oakville (Car Dealership)
+Brian Velenosi,+1 (905) 332-8575,sales@goodcarsonly.com,Canada,Burlington,"
+890 Appleby Line, Burlington, ON L7L 2Y8",,Good Cars Only,Founder,,Verified in Burlington (Car Dealership)
+,+1 (905) 875-4700,info@legendarymotorcar.com,Canada,Halton Hills,"
+8220 Fifth Line, Georgetown, ON L7G 4S6",,Legendary Motorcar Company,,https://legendarymotorcar.com/contact,Verified in Halton Hills (Car Dealership)
+,+1 (905) 836-6777,info@autohousenewmarket.ca,Canada,Newmarket,"
+570 Sandford St, Newmarket, ON L3X 1T4",,Autohouse Newmarket.,,https://autohousenewmarket.ca/forms/contact-us,Verified in Newmarket (Car Dealership)
+,+1 (905) 479-9366,acquisition@genesisaurora.ca,Canada,Aurora,"
+305 Wellington St E, Aurora, ON L4G 6C3",,Genesis Aurora,,https://www.genesisaurora.ca/en/about-us/contact-us,Verified in Aurora (Car Dealership)
 ,+1 (416) 471-1412,tandgauto@gmail.com,Canada,Caledon,"
-18218 Duplicate Hurontario St, Caledon Village, ON L7K 0Y6",,T AND G AUTO,,Verified in Caledon (Car Dealership)
+18218 Duplicate Hurontario St, Caledon Village, ON L7K 0Y6",,T AND G AUTO,,https://tandgauto.ca/contact-us/,Verified in Caledon (Car Dealership)
+,+1 (613) 451-5911,info@5911carsales.ca,Canada,Caledon,"
+5866 Mayfield Rd, Caledon, ON L7C 0Z6",,5911 Car Sales,,https://5911carsales.ca/contact-us/,Verified in Caledon (Car Dealership)
+,+1 (905) 420-3325,info@cars101.ca,Canada,Pickering,"
+940 Brock Rd #1, Pickering, ON L1W 2A1",,CARS101,,https://cars101.ca/contact-us/,Verified in Pickering (Car Dealership)
 ,+1 (905) 683-7066,info@lakeridge.com,Canada,Ajax,"
-Achilles Rd, Ajax, ON L1T 4M4",,Lakeridge Auto Gallery,,Verified in Ajax (Car Dealership)
+Achilles Rd, Ajax, ON L1T 4M4",,Lakeridge Auto Gallery,,,Verified in Ajax (Car Dealership)
 ,+1 (647) 557-8458,sales@toplaneauto.ca,Canada,Ajax,"
-264 Fairall St, Ajax, ON L1S 1R6",,Toplane Auto Group,,Verified in Ajax (Car Dealership)
+264 Fairall St, Ajax, ON L1S 1R6",,Toplane Auto Group,,https://toplaneauto.ca/forms/contact-us,Verified in Ajax (Car Dealership)
+,+1 (905) 666-2088,support@lotranger.com,Canada,Whitby,"
+200 Dundas St W, Whitby, ON L1N 2M3",,The Car Shoppe,,https://www.thecarshoppe.ca/contact.asp,Verified in Whitby (Car Dealership)
+,+1 (905) 746-6219,bestdealas@gmail.com,Canada,Hamilton,"
+415 Concession St B, Hamilton, ON L9A 1B8",,Best Deal Auto,,https://bestdealhamilton.com/contact,Verified in Hamilton (Car Dealership)
+,+1 (905) 920-2311,admin@globalautomart.ca,Canada,Hamilton,"
+257 Centennial Pkwy N, Hamilton, ON L8E 2X3",,Global Automart Inc. Used Cars Hamilton Ontario,,,Verified in Hamilton (Car Dealership)
 ,+1 (289) 988-8088,sales@bestmotors.ca,Canada,Hamilton,"
-82 Centennial Pkwy N, Hamilton, ON L8E 1H7",,Best Motors,,Verified in Hamilton (Car Dealership)
+82 Centennial Pkwy N, Hamilton, ON L8E 1H7",,Best Motors,,https://bestmotors.ca/forms/contact-us,Verified in Hamilton (Car Dealership)
 ,+1 (905) 688-4971,moesz@live.com,Canada,St. Catharines,"
-265 Welland Ave, St. Catharines, ON L2R 2P7",,Moesz Auto Sales,,Verified in St. Catharines (Car Dealership)
+265 Welland Ave, St. Catharines, ON L2R 2P7",,Moesz Auto Sales,,https://moeszautosales.com/contact-us/,Verified in St. Catharines (Car Dealership)
+,+1 (905) 984-5094,gastonauto@cogeco.net,Canada,St. Catharines,"
+394 Ontario St, St. Catharines, ON L2R 5L8",,Gaston's Auto Sales,,https://gastonsautosales.com/contact-us/,Verified in St. Catharines (Car Dealership)
 ,+1 (905) 356-9131,sales@littlebroscarsales.com,Canada,Niagara Falls,"
-2828 St Paul Ave, Niagara Falls, ON L2J 2L4",,Little Brothers Car Sales,,Verified in Niagara Falls (Car Dealership)
-,+1 (289) 497-9600,info@niagaracars.ca,Canada,Niagara Falls,"
-8688 Lundy's Ln, Niagara Falls, ON L2H 1H4",,NIAGARA CARS,,Verified in Niagara Falls (Car Dealership)
+2828 St Paul Ave, Niagara Falls, ON L2J 2L4",,Little Brothers Car Sales,,,Verified in Niagara Falls (Car Dealership)
+,+1 (647) 786-8689,info@ontariograndmotors.com,Canada,Niagara Falls,"
+4807 Victoria Ave, Niagara Falls, ON L2E 4C4",,Ontario G Motors,,https://www.ontariograndmotors.com/?page_id=860,Verified in Niagara Falls (Car Dealership)
+,+1 (905) 735-4434,sales@wheelsautogroup.com,Canada,Welland,"
+459 Prince Charles Dr S, Welland, ON L3B 5X1",,Wheels Auto Group,,https://wheelsautogroup.com/contact-us,Verified in Welland (Car Dealership)
 ,+1 (289) 272-9979,sales@flynnauto.ca,Canada,Niagara-on-the-Lake,"
-107 Read Rd, Niagara-on-the-Lake, ON L0S 1J0",,Flynn Automotive,,Verified in Niagara-on-the-Lake (Car Dealership)
+107 Read Rd, Niagara-on-the-Lake, ON L0S 1J0",,Flynn Automotive,,,Verified in Niagara-on-the-Lake (Car Dealership)
 ,+1 (226) 270-7400,info@grimsbychev.com,Canada,Grimsby,"
-337 Main St E, Grimsby, ON L3M 5N9",,Grimsby Chevrolet Buick GMC,,Verified in Grimsby (Car Dealership)
-,+1 (519) 747-2844,primeauto325@gmail.com,Canada,Waterloo,"
-325 Weber St N, Waterloo, ON N2J 3H8",,Prime Auto Ltd,,Verified in Waterloo (Car Dealership)
-,+1 (519) 777-7766,info@londonautovalley.ca,Canada,London,"
-1187 Dundas St, London, ON N5W 3A9",,London Auto Valley,,Verified in London (Car Dealership)
-,+1 (519) 659-0888,leads@empireautogroup.ca,Canada,London,"
-2293 Dundas St, London, ON N5V 1R4",,Empire Auto Group,,Verified in London (Car Dealership)
-,+1 (519) 668-7111,sales@southwestautogroup.ca,Canada,London,"
-55 Southdale Rd E, London, ON N6C 4X5",,South West Auto Group,,Verified in London (Car Dealership)
-,+1 (226) 232-4648,woodstockusedcarcentre@gmail.com,Canada,Woodstock,"
-102 Ingersoll Rd, Woodstock, ON N4S 2P9",,Woodstock Used Car Centre,,Verified in Woodstock (Car Dealership)
-,+1 (519) 301-5633,nvsauto@outlook.com,Canada,Stratford,"
-607 Downie St, Stratford, ON N5A 1Y5",,NVS AUTO,,Verified in Stratford (Car Dealership)
-,+1 (519) 801-6431,melansonmotors@gmail.com,Canada,Stratford,"
-35 Jarvis St, Stratford, ON N5A 0A9",,Melanson Motors Inc. Classic Car Sales & Auto Detailing,,Verified in Stratford (Car Dealership)
-,+1 (519) 974-9358,info@automaxxwindsor.com,Canada,Windsor,"
-4200 Tecumseh Rd E, Windsor, ON N8W 1K1",,AutoMAXX Pre-Owned Car Center,,Verified in Windsor (Car Dealership)
-,+1 (519) 252-2277,info@rockymotors.com,Canada,Windsor,"
-975 Tecumseh Rd E, Windsor, ON N8X 2S7",,Rocky Motors,,Verified in Windsor (Car Dealership)
-,+1 (519) 915-3755,info@goldenautosales.ca,Canada,Windsor,"
-1725 Tecumseh Rd W, Windsor, ON N9B 1V3",,Golden Auto Sales,,Verified in Windsor (Car Dealership)
-,+1 (519) 563-9541,dndnautosales@gmail.com,Canada,Tecumseh,"
-2400 ON-3, Tecumseh, ON N0R 1L0",,DNDN Auto Sales,,Verified in Tecumseh (Car Dealership)
-,+1 (519) 956-7333,info@nalichmotors.com,Canada,Tecumseh,"
-11976 Tecumseh Rd E, Tecumseh, ON N8N 3C1",,Nalich Motors,,Verified in Tecumseh (Car Dealership)
-,+1 (613) 561-4857,PlatinumAutoSalesKingston@gmail.com,Canada,Kingston,"
-2212 Princess St, Kingston, ON K7M 3G2",,Platinum Auto Sales Kingston,,Verified in Kingston (Car Dealership)
-,+1 (613) 661-5910,sales@ventureauto.ca,Canada,Belleville,"
-6775 ON-62, Belleville, ON K8N 0L9",,Venture AutoSales,,Verified in Belleville (Car Dealership)
-,+1 (613) 968-7738,RYAN@WOODSAUTOSALES.COM,Canada,Belleville,"
-19A Foxboro Stirling Rd, Foxboro, ON K0K 2B0",,Woods Auto Sales And Service,,Verified in Belleville (Car Dealership)
-Peterborough Ca,+1 (705) 741-2886,Messages@autosource.ca,Canada,Peterborough,"
-1838 Ashburnham Dr, Peterborough, ON K9L 1P9",,John Dewar's Autosource,Owner,Verified in Peterborough (Car Dealership)
-,+1 (705) 743-9881,support@lotranger.com,Canada,Peterborough,"
-801 Clonsilla Ave, Peterborough, ON K9J 0K5",,Paul Tinney Auto Sales,,Verified in Peterborough (Car Dealership)
-,+1 (613) 938-8514,sales@alexanderauto.ca,Canada,Cornwall,"
-1759 Vincent Massey Dr, Cornwall, ON K6H 5R6",,Alexander Auto,,Verified in Cornwall (Car Dealership)
-,+1 (705) 738-2886,info@lakesideautosales.ca,Canada,Kawartha Lakes,"
-3380 Kawartha Lakes County Rd 36, Bobcaygeon, ON K0M 1A0",,Lakeside Auto Sales,,Verified in Kawartha Lakes (Car Dealership)
-,+1 (705) 728-2277,canadasmotors@gmail.com,Canada,Barrie,"
-572 Yonge St, Barrie, ON L4N 4E4",,Canada's Motors Place,,Verified in Barrie (Car Dealership)
-,+1 (705) 615-9821,sales@cars-canada.ca,Canada,Barrie,"
-306 Yonge St, Barrie, ON L4N 4C7",,CARS CANADA,,Verified in Barrie (Car Dealership)
-,+1 (705) 797-1100,info@eckertautosales.ca,Canada,Barrie,"
-192 Essa Rd, Barrie, ON L4N 3L1",,Eckert Auto Sales,,Verified in Barrie (Car Dealership)
-,+1 (705) 698-0923,admin@easyrideautos.ca,Canada,Innisfil,"
-2068 Commerce Park Dr, Innisfil, ON L9S 4A3",,Easy Ride Autos,,Verified in Innisfil (Car Dealership)
-,+1 (705) 436-6642,Sales@Nubridge.ca,Canada,Innisfil,"
-6938 Yonge St, Innisfil, ON L9S 4P2",,Nubridge Auto Center Inc,,Verified in Innisfil (Car Dealership)
-,+1 (705) 327-8919,LA.motors305@gmail.com,Canada,Orillia,"
-305 West Street S, Orillia, ON L3V 5H2",,LA Motors,,Verified in Orillia (Car Dealership)
-,+1 (705) 327-2885,sales@freemansautosource.com,Canada,Orillia,"
-444 Laclie St, Orillia, ON L3V 4P8",,Freeman's Auto Source,,Verified in Orillia (Car Dealership)
-,+1 (705) 474-9949,openroadsautosales@gmail.com,Canada,North Bay,"
-1753 Seymour St, North Bay, ON P1A 0C6",,AllRoads Auto Sales,,Verified in North Bay (Car Dealership)
-,+1 (705) 945-9780,sales@steeltownmotors.com,Canada,Sault Ste. Marie,"
-275 Northern Ave E, Sault Ste. Marie, ON P6B 4H9",,Steeltown Motors,,Verified in Sault Ste. Marie (Car Dealership)
+337 Main St E, Grimsby, ON L3M 5N9",,Grimsby Chevrolet Buick GMC,,,Verified in Grimsby (Car Dealership)
+,+1 (519) 579-4995,sales@fitzgeraldmotors.com,Canada,Kitchener,"
+380 Courtland Ave E, Kitchener, ON N2G 2W2",,Fitzgerald Motors Inc.,,,Verified in Kitchener (Car Dealership)

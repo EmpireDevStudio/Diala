@@ -1,195 +1,133 @@
-﻿name,phone,email,country,city,street_address,postal_code,company,job_title,notes
+﻿name,phone,email,country,city,street_address,postal_code,company,job_title,contact_form_url,notes
 ,+1 (866) 686-9660,customerinfo@tdsscanada.ca,Canada,Mississauga,"
-2283 Argentia Rd Unit 16, Mississauga, ON L5N 5Z2",,Top Defence Security Services Inc. - Security Guard Company in Ontario,,Verified in Mississauga (Security Service)
-,+1 (905) 901-0411,info@eagleforcesecurity.ca,Canada,Mississauga,"
-2345 Argentia Rd, Mississauga, ON L5N 2X7",,EagleForce Security,,Verified in Mississauga (Security Service)
+2283 Argentia Rd Unit 16, Mississauga, ON L5N 5Z2",,Top Defence Security Services Inc. - Security Guard Company in Ontario,,,Verified in Mississauga (Security Service)
+,+1 (905) 858-8211,Info@Vistasecurity.com,Canada,Mississauga,"
+2410 Meadowpine Blvd #107, Mississauga, ON L5N 6S2",,Vista Security & Investigations,,,Verified in Mississauga (Security Service)
 ,+1 (905) 455-1595,info@empiresecuritygroup.ca,Canada,Mississauga,"
-6700 Century Ave Ste 345, Mississauga, ON L5N 1V8",,Empire Security Group,,Verified in Mississauga (Security Service)
+6700 Century Ave Ste 345, Mississauga, ON L5N 1V8",,Empire Security Group,,https://empiresecuritygroup.ca/contact/,Verified in Mississauga (Security Service)
 ,+1 (647) 613-3006,info@grandsecurity.ca,Canada,Mississauga,"
-55 Village Centre Pl, Mississauga, ON L4Z 1V9",,Grand Security Inc,,Verified in Mississauga (Security Service)
+55 Village Centre Pl, Mississauga, ON L4Z 1V9",,Grand Security Inc,,https://www.grandsecurity.ca/contact/,Verified in Mississauga (Security Service)
 ,+1 (226) 978-7406,info@secureshieldsecurity.ca,Canada,Mississauga,"
-100 Matheson Blvd E Unit 102, Mississauga, ON L4Z 3P8",,Secure Shield Security,,Verified in Mississauga (Security Service)
-,+1 (647) 784-6770,info@flashsecurity.ca,Canada,Mississauga,"
-5200 Dixie Rd Unit 207, Mississauga, ON L4W 1E4",,Flash Security Services Ltd,,Verified in Mississauga (Security Service)
-,+1 (800) 807-2318,sales@tacticalguardforce.ca,Canada,Brampton,"
-8 Automatic Rd Unit 4C, Brampton, ON L6S 5N4",,Tactical Guard Force Security Services,,Verified in Brampton (Security Service)
-,+1 (855) 367-2900,office@guardscanada.com,Canada,Brampton,"
-50 Burnhamthorpe Rd W #86, Mississauga, ON L5B 3C2",,Guards Canada,,Verified in Brampton (Security Service)
+100 Matheson Blvd E Unit 102, Mississauga, ON L4Z 3P8",,Secure Shield Security,,https://secureshieldsecurity.ca/contact-us/,Verified in Mississauga (Security Service)
+Commercial Propert,+1 (800) 807-6995,sales@tacticalguardforce.ca,Canada,Mississauga,"
+1100 Central Pkwy W Unit 15ll, Mississauga, ON L5C 4E5",,Tactical Guard Force Security Services,Owner,https://www.tacticalguardforce.ca/contact-us/,Verified in Mississauga (Security Service)
+,+1 (437) 734-2345,info@chromiumguard.com,Canada,Mississauga,"
+90 Burnhamthorpe Rd W #1400, Mississauga, ON L5B 3C3",,Chromium Guard,,https://chromiumguard.com/contact,Verified in Mississauga (Security Service)
+,+1 (416) 771-2471,info@nordshield.ca,Canada,Brampton,"
+2355 Derry Rd E #27, Mississauga, ON L5S 1V6",,Nordshield Security Inc.,,https://nordshield.ca/contact-us/,Verified in Brampton (Security Service)
 ,+1 (437) 604-2202,info@thehightechsecurity.ca,Canada,Brampton,"
-1300 Steeles Ave E Unit 225, Brampton, ON L6T 4T2",,High-Tech Security Services,,Verified in Brampton (Security Service)
+1300 Steeles Ave E Unit 225, Brampton, ON L6T 4T2",,High-Tech Security Services,,,Verified in Brampton (Security Service)
 ,+1 (647) 569-8937,contact@goodlucksecurity.ca,Canada,Brampton,"
-44 Queen St E, Brampton, ON L6V 1A3",,Good luck security Inc.,,Verified in Brampton (Security Service)
+44 Queen St E, Brampton, ON L6V 1A3",,Good luck security Inc.,,https://goodlucksecurity.ca/contact/,Verified in Brampton (Security Service)
+,+1 (437) 999-3305,info@betterlifesecurity.com,Canada,Brampton,"
+10 George St N Unit 118, Brampton, ON L6X 1R2",,Better Life Security Inc.,,https://www.betterlifesecurity.com/contact-us.php,Verified in Brampton (Security Service)
 ,+1 (416) 550-9959,service@orionsecurity.ca,Canada,Brampton,"
-284 Queen St E, Brampton, ON L6V 1C2",,Orion Services,,Verified in Brampton (Security Service)
+284 Queen St E, Brampton, ON L6V 1C2",,Orion Services,,,Verified in Brampton (Security Service)
+,+1 (844) 804-8273,info@diligentsecurity.ca,Canada,Brampton,"
+2720 N Park Dr #49, Brampton, ON L6S 0C5",,Diligent Security Services Brampton | Security Guard Services,,https://www.diligentsecurity.ca/contact-us/,Verified in Brampton (Security Service)
+,+1 (905) 415-1291,contact@firstsecurity.ca,Canada,Markham,"
+190 Don Park Rd #5, Markham, ON L3R 2V8",,First Security Protection Services Inc.,,http://www.firstsecurity.ca/contact-us/,Verified in Markham (Security Service)
 ,+1 (877) 751-6075,info@northpowersecurity.com,Canada,Markham,"
-3601 Hwy 7 #1004, Markham, ON L3R 0M3",,NorthPower Security Solutions,,Verified in Markham (Security Service)
+3601 Hwy 7 #1004, Markham, ON L3R 0M3",,NorthPower Security Solutions,,https://northpowersecurity.com/contact/,Verified in Markham (Security Service)
 ,+1 (416) 319-0077,admin@girsecurity.ca,Canada,Markham,"
-250 Ferrier St Unit F, Markham, ON L3R 2Z5",,Guard In Response Security Services Inc.,,Verified in Markham (Security Service)
+250 Ferrier St Unit F, Markham, ON L3R 2Z5",,Guard In Response Security Services Inc.,,https://girsecurity.ca/contact/,Verified in Markham (Security Service)
 ,+1 (416) 900-3749,info@securitypass.ca,Canada,Markham,"
-10, 9275 Markham Rd Suite #300, Markham, ON L6E 0H9",,Security Pass Inc.,,Verified in Markham (Security Service)
+10, 9275 Markham Rd Suite #300, Markham, ON L6E 0H9",,Security Pass Inc.,,https://securitypass.ca/contact/,Verified in Markham (Security Service)
+,+1 (403) 992-1672,info@sterlingpatrol.com,Canada,Markham,"
+4261 Hwy 7, Unionville, ON L3R 9W6",,Sterling Security LTD,,https://sterlingpatrol.com/contact/,Verified in Markham (Security Service)
 ,+1 (647) 637-1116,info@jasonssecurity.ca,Canada,Vaughan,"
-28 Roytec Rd, Vaughan, ON L4L 8E4",,Jason’s security Inc.,,Verified in Vaughan (Security Service)
+28 Roytec Rd, Vaughan, ON L4L 8E4",,Jason’s security Inc.,,https://www.jasonssecurity.ca/contact/,Verified in Vaughan (Security Service)
 ,+1 (647) 745-4052,theeaglecorp@gmail.com,Canada,Vaughan,"
-115 Woodstream Blvd Unit 17, Woodbridge, ON L4L 7Y8",,Eagle Security Services Corporation,,Verified in Vaughan (Security Service)
+115 Woodstream Blvd Unit 17, Woodbridge, ON L4L 7Y8",,Eagle Security Services Corporation,,https://www.theeaglesecurity.ca/contact.html,Verified in Vaughan (Security Service)
 ,+1 (877) 887-7110,info@supremesecurityservices.ca,Canada,Vaughan,"
-3100 Steeles Ave W Unit 206, Concord, ON L4K 3B8",,Supreme Security Services,,Verified in Vaughan (Security Service)
+3100 Steeles Ave W Unit 206, Concord, ON L4K 3B8",,Supreme Security Services,,https://supremesecurityservices.ca/contact-us/,Verified in Vaughan (Security Service)
+,+1 (437) 887-0857,info@mercurygroup-ss.com,Canada,Vaughan,"
+7777 Weston Rd Unit 236, Vaughan, ON L4L 0G9",,Mercury Group Security Services,,,Verified in Vaughan (Security Service)
+,+1 (647) 982-1385,office@nfsecurity.ca,Canada,Vaughan,"
+64 Jardin Dr Unit 2B, Concord, ON L4K 3P3",,Northern Force Security Inc.,,https://nfsecurity.ca/contacts/,Verified in Vaughan (Security Service)
 ,+1 (905) 230-9100,info@casasecurity.ca,Canada,Vaughan,"
-27 Roytec Rd Unit 7C, Woodbridge, ON L4L 8E3",,Casa Security Inc.,,Verified in Vaughan (Security Service)
-,+1 (855) 293-0888,info@valguard.ca,Canada,Vaughan,"
-411 Confederation Pkwy #1, Concord, ON L4K 0A8",,Valguard Security Inc.,,Verified in Vaughan (Security Service)
-,+1 (647) 792-2288,info@icsecuritysystems.ca,Canada,Richmond Hill,"
-10225 Yonge St, Richmond Hill, ON L4C 3B2",,ICSS Richmond Hill,,Verified in Richmond Hill (Security Service)
+27 Roytec Rd Unit 7C, Woodbridge, ON L4L 8E3",,Casa Security Inc.,,https://casasecurity.ca/contact/,Verified in Vaughan (Security Service)
+,+1 (905) 264-1333,quote@citiguard.ca,Canada,Vaughan,"
+4370 Steeles Ave W, Woodbridge, ON L4L 4Y4",,Citiguard Security,,https://citiguardsecurityservices.ca/contact-us/,Verified in Vaughan (Security Service)
+,+1 (416) 771-0414,info@securebyoss.ca,Canada,Richmond Hill,"
+165 Kersey Crescent, Richmond Hill, ON L4C 8X9",,Ontario Security Systems,,https://securebyoss.ca/contact/,Verified in Richmond Hill (Security Service)
 ,+1 (905) 604-2761,helpdesk@magicshield.ca,Canada,Richmond Hill,"
-1455 16th Ave, Richmond Hill, ON L4B 3G6",,Magic Shield Security and Private Investigation,,Verified in Richmond Hill (Security Service)
+1455 16th Ave, Richmond Hill, ON L4B 3G6",,Magic Shield Security and Private Investigation,,https://www.magicshield.ca/contact.html,Verified in Richmond Hill (Security Service)
 ,+1 (905) 650-6855,info@bullseyesecurity.ca,Canada,Richmond Hill,"
-70 East Beaver Creek Rd, Richmond Hill, ON L4B 1B3",,BULLSEYE SECURITY,,Verified in Richmond Hill (Security Service)
+70 East Beaver Creek Rd, Richmond Hill, ON L4B 1B3",,BULLSEYE SECURITY,,https://bullseyesecurity.ca/contact-us/,Verified in Richmond Hill (Security Service)
 ,+1 (416) 302-0227,info@nobletonsecurity.com,Canada,Oakville,"
-407 Speers Rd Unit 204D, Oakville, ON L6K 3T5",,Nobleton Security,,Verified in Oakville (Security Service)
+407 Speers Rd Unit 204D, Oakville, ON L6K 3T5",,Nobleton Security,,https://www.nobletonsecurity.com/contact,Verified in Oakville (Security Service)
+,+1 (905) 825-6496,inquiry@lormarsecurity.com,Canada,Oakville,"
+700 Third Line Unit 76, Oakville, ON L6L 4B1",,Lormar Security Protection Inc.,,https://www.lormarsecurity.com/contact,Verified in Oakville (Security Service)
 ,+1 (877) 222-6772,hamilton@teamsignal.com,Canada,Burlington,"
-2177 Plains Rd E, Burlington, ON L7R 3R3",,Signal of Hamilton/Halton/Niagara/Peel,,Verified in Burlington (Security Service)
+2177 Plains Rd E, Burlington, ON L7R 3R3",,Signal of Hamilton/Halton/Niagara/Peel,,https://locations.teamsignal.com/ca/on/hamilton/276,Verified in Burlington (Security Service)
 ,+1 (905) 333-4404,info@midnightprotection.com,Canada,Burlington,"
-1376 Plains Rd E, Burlington, ON L7R 3P8",,Midnight Protection Services,,Verified in Burlington (Security Service)
-,+1 (416) 697-7105,info@baigsecurity.com,Canada,Milton,"
-55 Ontario St S, Milton, ON L9T 2M3",,Baig Secured Security,,Verified in Milton (Security Service)
+1376 Plains Rd E, Burlington, ON L7R 3P8",,Midnight Protection Services,,https://www.midnightprotection.ca/contact-us,Verified in Burlington (Security Service)
 ,+1 (437) 974-3034,info@weassuresecurity.com,Canada,Newmarket,"
-892 Srigley St, Newmarket, ON L3Y 1X7",,We Assure Security,,Verified in Newmarket (Security Service)
-,+1 (416) 835-7580,Smarthomesight@Gmail.com,Canada,Newmarket,"
-643 Bondi Ave, Newmarket, ON L3Y 8S8",,Smart-Home-Sight,,Verified in Newmarket (Security Service)
+892 Srigley St, Newmarket, ON L3Y 1X7",,We Assure Security,,https://www.weassuresecurity.com/,Verified in Newmarket (Security Service)
+,+1 (647) 948-8768,info@securecanada.net,Canada,Newmarket,"
+17075 Leslie St Unit 9, Newmarket, ON L3Y 8E1",,SECURE CANADA INC,,https://securecanada.net/contact-us,Verified in Newmarket (Security Service)
+,+1 (888) 963-5633,info@pitbullsecuritysolutions.ca,Canada,Newmarket,"
+925 Isaac Phillips Way, Newmarket, ON L3X 0M7",,Pitbull Security Solutions LTD,,https://pitbullsecuritysolutions.ca/contact-us/,Verified in Newmarket (Security Service)
 ,+1 (647) 834-6132,info@secureandfix.ca,Canada,Newmarket,"
-185 Deerfield Rd, Newmarket, ON L3Y 0G7",,Secure and Fix,,Verified in Newmarket (Security Service)
+185 Deerfield Rd, Newmarket, ON L3Y 0G7",,Secure and Fix,,https://secureandfix.ca/contact/,Verified in Newmarket (Security Service)
+,+1 (437) 314-3303,info@northeyesecurity.ca,Canada,Newmarket,,,Northeye Security,,https://northeyesecurity.ca/,Verified in Newmarket (Security Service)
 ,+1 (416) 622-4274,csi@csicity.com,Canada,Ajax,"
-487 Westney Rd S Unit 10, Ajax, ON L1S 6W7",,CSI Security Services,,Verified in Ajax (Security Service)
+487 Westney Rd S Unit 10, Ajax, ON L1S 6W7",,CSI Security Services,,https://www.csicity.com/contact-us/,Verified in Ajax (Security Service)
 ,+1 (647) 986-2767,info@strategicallyappliedtactics.com,Canada,Ajax,"
-84 Hurley Rd, Ajax, ON L1S 1N6",,S.A.T SECURITY MANAGEMENT,,Verified in Ajax (Security Service)
+84 Hurley Rd, Ajax, ON L1S 1N6",,S.A.T SECURITY MANAGEMENT,,http://strategicallyappliedtactics.com/contact-us.html,Verified in Ajax (Security Service)
 ,+1 (416) 721-4207,info@execsecurity.ca,Canada,Ajax,"
-180 Station St Ste S0029, Ajax, ON L1S 1R9",,Exec Security Systems- Security System Installations and Services,,Verified in Ajax (Security Service)
+180 Station St Ste S0029, Ajax, ON L1S 1R9",,Exec Security Systems- Security System Installations and Services,,https://execsecurity.ca/contact-us/,Verified in Ajax (Security Service)
 ,+1 (416) 471-7574,Frsps.Gta@gmail.com,Canada,Ajax,"
-100 City Centre Dr, Mississauga, ON L5B 2C9",,FIRST RESPONSE SECURITY GTA Protective Services,,Verified in Ajax (Security Service)
+100 City Centre Dr, Mississauga, ON L5B 2C9",,FIRST RESPONSE SECURITY GTA Protective Services,,,Verified in Ajax (Security Service)
 ,+1 (289) 996-2547,whitby.smart.security@gmail.com,Canada,Whitby,"
-113 Portage Trail, Whitby, ON L1N 9N4",,Whitby Smart Security,,Verified in Whitby (Security Service)
-,+1 (888) 789-0846,info@canadianprotectionagency.com,Canada,Whitby,"
-105 Consumers Dr, Whitby, ON L1N 5T3",,Canadian Protection Agency,,Verified in Whitby (Security Service)
+113 Portage Trail, Whitby, ON L1N 9N4",,Whitby Smart Security,,https://whitbywatch.ca/,Verified in Whitby (Security Service)
 ,+1 (647) 922-9884,info@ultimatesecuritygta.com,Canada,Whitby,"
-Dundas St E, Whitby, ON L1N 2K2",,Ultimate Security,,Verified in Whitby (Security Service)
+Dundas St E, Whitby, ON L1N 2K2",,Ultimate Security,,https://ultimatesecuritygta.com/contact/,Verified in Whitby (Security Service)
+,+1 (888) 789-0846,info@canadianprotectionagency.com,Canada,Whitby,"
+105 Consumers Dr, Whitby, ON L1N 5T3",,Canadian Protection Agency,,https://www.canadianprotectionagency.com/,Verified in Whitby (Security Service)
+,+1 (647) 667-8633,info@technoguarde.com,Canada,Whitby,"
+75 Woodstone Pl, Whitby, ON L1R 1S8",,Techno Guarde,,https://technoguarde.com/contacts/,Verified in Whitby (Security Service)
 ,+1 (289) 404-8014,info@atlassecurityinvestigation.com,Canada,Oshawa,"
-111 Simcoe St N #204C, Oshawa, ON L1G 4S4",,Atlas Security & Investigation Inc.,,Verified in Oshawa (Security Service)
+111 Simcoe St N #204C, Oshawa, ON L1G 4S4",,Atlas Security & Investigation Inc.,,https://atlassecurityinvestigation.com/contact-us/,Verified in Oshawa (Security Service)
 ,+1 (888) 717-4447,Privacy@aus.com,Canada,Oshawa,"
-214 King St E 2nd Floor, Oshawa, ON L1H 1C7",,Allied Universal Security Services,,Verified in Oshawa (Security Service)
+214 King St E 2nd Floor, Oshawa, ON L1H 1C7",,Allied Universal Security Services,,https://ausecurity.ca/contact,Verified in Oshawa (Security Service)
+,+1 (905) 901-0411,info@eagleforcesecurity.ca,Canada,Clarington,"
+2345 Argentia Rd, Mississauga, ON L5N 2X7",,EagleForce Security,,,Verified in Clarington (Security Service)
+,+1 (343) 800-7059,Vanguardprotection329@gmail.com,Canada,Clarington,"
+2233 Argentia Rd #327, Mississauga, ON L5N 2X7",,Vanguard Protection & Security Services INC.,,https://vanguardprotection.ca/contact-us/,Verified in Clarington (Security Service)
+,+1 (905) 285-0696,admin@hayatsecurity.com,Canada,Clarington,,,Hayat Security Services,,https://hayatsecurity.com/contact-us,Verified in Clarington (Security Service)
 ,+1 (647) 378-4740,info@strategicsecuritydefense.com,Canada,Clarington,"
-5995 Glen Erin Dr, Mississauga, ON L5M 5P7",,Strategic Security Defense,,Verified in Clarington (Security Service)
-,+1 (905) 285-0696,admin@hayatsecurity.com,Canada,Clarington,,,Hayat Security Services,,Verified in Clarington (Security Service)
+5995 Glen Erin Dr, Mississauga, ON L5M 5P7",,Strategic Security Defense,,,Verified in Clarington (Security Service)
+,+1 (888) 753-5663,info@csasecuritygroup.ca,Canada,Clarington,"
+Plaza One, 2000 Argentia Rd #105, Mississauga, ON L5N 1V9",,CSA Security Inc.,,https://www.csasecuritygroup.ca/contact.html,Verified in Clarington (Security Service)
 ,+1 (365) 524-3203,info@npssecurity.ca,Canada,St. Catharines,"
-43 Church St, St. Catharines, ON L2R 7E1",,Nationguard protection services,,Verified in St. Catharines (Security Service)
-,+1 (289) 407-1655,info@securesview.com,Canada,Niagara Falls,"
-4647 McDougall Crescent, Niagara Falls, ON L2E 1B6",,Secure View,,Verified in Niagara Falls (Security Service)
+43 Church St, St. Catharines, ON L2R 7E1",,Nationguard protection services,,,Verified in St. Catharines (Security Service)
+,+1 (888) 391-5507,dispatch@adv-security.ca,Canada,St. Catharines,"
+205 King St suite 201, St. Catharines, ON L2R 3J5",,Advance Security Services Co.,,https://adv-security.ca/contact/,Verified in St. Catharines (Security Service)
 ,+1 (416) 916-6767,niagarainfo@paladinsecurity.com,Canada,Niagara Falls,"
-5673 North St #304C, Niagara Falls, ON L2G 1J4",,Paladin Security Niagara Falls,,Verified in Niagara Falls (Security Service)
+5673 North St #304C, Niagara Falls, ON L2G 1J4",,Paladin Security Niagara Falls,,https://paladinsecurity.com/about-us/why-paladin/,Verified in Niagara Falls (Security Service)
 ,+1 (866) 845-5211,info@canadianprotectionservices.ca,Canada,Niagara Falls,"
-4786 Queen St, Niagara Falls, ON L2E 2M3",,Canadian Protection Services Niagara,,Verified in Niagara Falls (Security Service)
+4786 Queen St, Niagara Falls, ON L2E 2M3",,Canadian Protection Services Niagara,,https://www.canadianprotectionservices.ca/,Verified in Niagara Falls (Security Service)
+,+1 (844) 360-1234,mark@force.ca,Canada,Niagara Falls,"
+4065 Stanley Ave Unit 3, Niagara Falls, ON L2E 4Z1",,Force Security Inc.,,,Verified in Niagara Falls (Security Service)
+,+1 (905) 321-0840,info@canalsidesecurity.ca,Canada,Niagara Falls,,,Canal Side Security,,,Verified in Niagara Falls (Security Service)
+,+1 (289) 407-1655,info@securesview.com,Canada,Niagara-on-the-Lake,"
+4647 McDougall Crescent, Niagara Falls, ON L2E 1B6",,Secure View,,https://www.securesview.com/contact-us,Verified in Niagara-on-the-Lake (Security Service)
 ,+1 (905) 688-3223,service@allianceniagara.ca,Canada,Niagara-on-the-Lake,"
-46 Niagara St #1, St. Catharines, ON L2R 4K9",,Alliance Security Niagara,,Verified in Niagara-on-the-Lake (Security Service)
-,+1 (416) 451-1024,inquiries@deltasecurityservice.com,Canada,Grimsby,"
-1500 Meyerside Dr, Mississauga, ON L5T 1V4",,Delta Security Services,,Verified in Grimsby (Security Service)
+46 Niagara St #1, St. Catharines, ON L2R 4K9",,Alliance Security Niagara,,https://www.alliancesecurityniagara.ca/contact-us/,Verified in Niagara-on-the-Lake (Security Service)
+,+1 (647) 914-0435,info@kingstonsecurityservices.ca,Canada,Grimsby,,,Kingston Security Services,,,Verified in Grimsby (Security Service)
+,+1 (647) 784-6770,info@flashsecurity.ca,Canada,Grimsby,"
+5200 Dixie Rd Unit 207, Mississauga, ON L4W 1E4",,Flash Security Services Ltd,,https://flashsecurity.ca/contact-us/,Verified in Grimsby (Security Service)
+,+1 (855) 437-4707,info@millenniumsecurityservices.ca,Canada,Brantford,"
+466 Elgin St #1, Brantford, ON N3S 7P8",,Millennium Security Services,,https://www.millenniumsecurityservices.ca/contact-us/,Verified in Brantford (Security Service)
 ,+1 (519) 770-6634,survailpro@rogers.com,Canada,Brantford,"
-148 Henry St, Brantford, ON N3S 5C7",,Survail Protection and Investigative Services,,Verified in Brantford (Security Service)
+148 Henry St, Brantford, ON N3S 5C7",,Survail Protection and Investigative Services,,https://survailpro.ca/contact,Verified in Brantford (Security Service)
+,+1 (833) 340-7011,Info@SecuredByPSI.ca,Canada,Brantford,"
+245 King George Rd Ste 262, Brantford, ON N3R 7N7",,Protection Security Investigations,,,Verified in Brantford (Security Service)
 ,+1 (519) 752-5058,info@damar.net,Canada,Brantford,"
-4-34 Dalkeith Dr, Brantford, ON N3P 1N6",,Damar Security Systems BRANTFORD,,Verified in Brantford (Security Service)
+4-34 Dalkeith Dr, Brantford, ON N3P 1N6",,Damar Security Systems BRANTFORD,,https://damarsecuritysystems.com/contact-us/,Verified in Brantford (Security Service)
 ,+1 (877) 725-7422,info@alphasecurityservices.ca,Canada,Brantford,"
-279 Kenilworth Ave N, Hamilton, ON L8H 4S8",,Alpha Security Services,,Verified in Brantford (Security Service)
-,+1 (226) 627-3924,info@apex24.ca,Canada,Kitchener,"
-614 Doon S Dr, Kitchener, ON N2P 2X4",,Apex24 Security,,Verified in Kitchener (Security Service)
-,+1 (519) 953-7611,info@swiftsecurityservices.ca,Canada,Kitchener,"
-385 Frederick St #13, Kitchener, ON N2H 2P2",,Swift Security Services,,Verified in Kitchener (Security Service)
-Christian Strike,+1 (519) 783-1371,info@vigilantsecurityservices.org,Canada,Kitchener,"
-31 Mcbrine Dr, Kitchener, ON N2R 1J1",,Vigilant Security Services Inc.,Founder,Verified in Kitchener (Security Service)
-,+1 (519) 223-2332,info@inneractivesecurity.com,Canada,Kitchener,"
-1121 King St E, Kitchener, ON N2G 2N3",,Inneractive Security Services,,Verified in Kitchener (Security Service)
-,+1 (519) 745-1111,security@barbercollins.ca,Canada,Waterloo,"
-245 Labrador Dr #1, Waterloo, ON N2K 4M8",,Barber-Collins Security Services Ltd,,Verified in Waterloo (Security Service)
-,+1 (647) 204-3942,operations@edmondprotection.com,Canada,Waterloo,"
-180 Northfield Dr W, Waterloo, ON N2L 0C7",,Edmond Protection and Consulting,,Verified in Waterloo (Security Service)
-,+1 (519) 900-9057,info@securityfirst.ltd,Canada,Cambridge,"
-679 Coronation Blvd, Cambridge, ON N1R 3G5",,Security First LTD.,,Verified in Cambridge (Security Service)
-,+1 (226) 227-7966,info@spyonsecurity.com,Canada,Cambridge,"
-Concession Rd, Cambridge, ON N3H 4E4",,Spyon Security Corp,,Verified in Cambridge (Security Service)
-,+1 (548) 557-4000,info@jsbsecurityservices.com,Canada,Guelph,,,JSB security services,,Verified in Guelph (Security Service)
-,+1 (226) 400-2052,sales@jrsecurity.ca,Canada,Guelph,"
-655 St David St N, Fergus, ON N1M 2K6",,JR Security Solutions,,Verified in Guelph (Security Service)
-,+1 (888) 489-3410,info@fssecurity.ca,Canada,Guelph,"
-120 Matheson Blvd E #102, Mississauga, ON L4Z 1X1",,FS Security Services,,Verified in Guelph (Security Service)
-,+1 (647) 767-5197,info@phoenixsecurity.ca,Canada,Guelph,"
-1315 Derry Rd E, Mississauga, ON L5T 1B6",,Phoenix Security,,Verified in Guelph (Security Service)
-,+1 (519) 933-7544,brad@dominionsecurityservices.com,Canada,London,"
-301 Oxford St W, London, ON N6H 5C4",,Dominion Security Services,,Verified in London (Security Service)
-,+1 (519) 200-4130,info@canadiansecurity.co,Canada,London,"
-553 Southdale Rd E Ste 205, London, ON N6E 1A2",,Canadian Security Solutions,,Verified in London (Security Service)
-,+1 (519) 868-9111,Info@westsecures.com,Canada,London,"
-380 Wellington St Tower B, 6th Floor, London, ON N6A 5B5",,WestSecure Services Inc.,,Verified in London (Security Service)
-,+1 (226) 667-9987,operations@legendarysecurity.ca,Canada,London,"
-301, 408 Queens Ave 3rd Floor, London, ON N6B 1X9",,Legendary Security Inc.,,Verified in London (Security Service)
-Harman Badesh,+1 (226) 228-7746,info@nexzen.ca,Canada,Woodstock,"
-819 Frontenac Crescent, Woodstock, ON N4V 0A8",,NexZen Safety Solutions Inc.,CEO,Verified in Woodstock (Security Service)
-,+1 (519) 421-3783,doug@nitehawk.ca,Canada,Woodstock,"
-370 Mill St, Woodstock, ON N4S 7V6",,Nitehawk Security,,Verified in Woodstock (Security Service)
-,+1 (877) 906-0535,Admin@crownsecuritysolutions.ca,Canada,Woodstock,,,Crown Security Solutions Ltd.,,Verified in Woodstock (Security Service)
-,+1 (519) 602-4414,info@hexaport.io,Canada,Woodstock,"
-470 Industrial Ave, Woodstock, ON N4S 7L1",,Hexaport,,Verified in Woodstock (Security Service)
-,+1 (800) 807-6995,sales@tacticalguardforce.ca,Canada,Stratford,"
-1100 Central Pkwy W Unit 15ll, Mississauga, ON L5C 4E5",,Tactical Guard Force Security Services,,Verified in Stratford (Security Service)
-,+1 (519) 817-4733,fatehsecurities@outlook.com,Canada,Windsor,"
-4355 County Rd 42, Windsor, ON N9A 6J3",,Fateh Security Services,,Verified in Windsor (Security Service)
-,+1 (519) 800-3947,info@acssecuritygroup.com,Canada,Windsor,"
-2473 Ouellette Ave Ste 4, Windsor, ON N8X 1L5",,ACS Security Group,,Verified in Windsor (Security Service)
-,+1 (226) 946-2345,info@securityguardgroup.ca,Canada,Windsor,"
-6, 2557 Dougall Ave Suite 304, Windsor, ON N8X 1T5",,Security Guard Group Limited,,Verified in Windsor (Security Service)
-,+1 (519) 945-9975,windsorinfo@paladinsecurity.com,Canada,Windsor,"
-2885 Lauzon Pkwy #116, Windsor, ON N8T 3H5",,Paladin Security Windsor,,Verified in Windsor (Security Service)
-,+1 (866) 900-0205,info@safeguardyourself.ca,Canada,Tecumseh,"
-1520 Lesperance Rd, Tecumseh, ON N8N 1Y1",,SafeGuard,,Verified in Tecumseh (Security Service)
-,+1 (519) 328-7322,rps.sarnia@gmail.com,Canada,Sarnia,"
-805 Christina St N, Point Edward, ON N7V 1A4",,Royal Protective Services,,Verified in Sarnia (Security Service)
-,+1 (519) 336-6171,sarniainfo@paladinsecurity.com,Canada,Sarnia,"
-466 Christina St N, Sarnia, ON N7T 5W2",,Paladin Security Sarnia,,Verified in Sarnia (Security Service)
-,+1 (519) 542-2100,sales@a1security.com,Canada,Sarnia,"
-1166 London Rd, Sarnia, ON N7S 1P4",,A-1 Security Systems And Communications Inc.,,Verified in Sarnia (Security Service)
-,+1 (519) 332-1234,info@damar.net,Canada,Sarnia,"
-506 Christina St N, Sarnia, ON N7T 5W2",,Damar Security Systems,,Verified in Sarnia (Security Service)
-,+1 (343) 700-3435,info@taurussecurity.ca,Canada,Ottawa,"
-135 Laurier Ave W, Ottawa, ON K1P 5J2",,Taurus Security Services,,Verified in Ottawa (Security Service)
-,+1 (905) 330-5515,info@thefalconsecurity.com,Canada,Ottawa,"
-2255 St. Laurent Blvd #125, Ottawa, ON K1G 4K3",,Falcon Security Services,,Verified in Ottawa (Security Service)
-,+1 (613) 981-0144,info@westboroprotection.ca,Canada,Ottawa,"
-20 Rochester St #54, Ottawa, ON K1R 7V3",,Westboro Protection Services,,Verified in Ottawa (Security Service)
-,+1 (514) 228-0376,info@leadersecurityprotection.com,Canada,Ottawa,"
-116 Albert St #300, Ottawa, ON K1P 5G3",,Leader Security Protection (Ottawa),,Verified in Ottawa (Security Service)
-,+1 (613) 344-0055,kingstoninfo@paladinsecurity.com,Canada,Kingston,"
-1479 John Counter Blvd Ste 105, Kingston, ON K7M 7J3",,Paladin Security Kingston,,Verified in Kingston (Security Service)
-,+1 (437) 600-1237,general@northwestsecurity.ca,Canada,Kingston,"
-1201 Division St, Kingston, ON K7K 6X4",,Northwest Security Services,,Verified in Kingston (Security Service)
-,+1 (647) 564-1111,info@northamericansecurity.ca,Canada,Belleville,"
-205 N Front St Unit# 300, Belleville, ON K8P 3C3",,North American Security Services,,Verified in Belleville (Security Service)
-,+1 (705) 745-5008,watchguardsecurity@hotmail.com,Canada,Peterborough,"
-Water St, Peterborough, ON K9J 2V1",,Watchguard Security Systems,,Verified in Peterborough (Security Service)
-,+1 (416) 455-0860,silverlinepatrolteam@gmail.com,Canada,Peterborough,,,Silverline Patrol & Security Corp. Services Peterborough,,Verified in Peterborough (Security Service)
-,+1 (613) 938-1212,sales@rangard.ca,Canada,Cornwall,"
-433 Tollgate Rd W, Cornwall, ON K6H 0B4",,Rangard Security & Electronics Systems Inc,,Verified in Cornwall (Security Service)
-,+1 (613) 704-1463,info@secureway.ca,Canada,Brockville,"
-333 California Ave #11, Brockville, ON K6V 7N5",,Secureway Locksmith & Security Solutions,,Verified in Brockville (Security Service)
-,+1 (647) 767-7810,training@1northwestsecurity.com,Canada,Brockville,"
-120 Orenda Rd, Brampton, ON L6W 1W2",,Northwest Security Services Ontario,,Verified in Brockville (Security Service)
-,+1 (343) 337-6209,info@gforcesecurity.ca,Canada,Brockville,"
-Unit #156 2nd Floor, 2960 Drew Road, Mississauga, ON L4T 0A5, Mississauga, ON L4T 0A5",,G Force Security,,Verified in Brockville (Security Service)
-,+1 (909) 951-8070,sorora.co@gmail.com,Canada,Cobourg,"
-739 D'Arcy St, Cobourg, ON K9A 0G1",,Sorora safety,,Verified in Cobourg (Security Service)
-,+1 (705) 418-1112,jobs@magnasecurity.ca,Canada,Barrie,"
-136 Bayfield St Unit 104, Barrie, ON L4M 3B3",,Magna Security Group Inc - Barrie,,Verified in Barrie (Security Service)
-,+1 (905) 206-2380,support@webware.io,Canada,Innisfil,"
-6981 Millcreek Dr unit 34, Mississauga, ON L5N 6B8",,Protection Against Crime (P.A.C) Security,,Verified in Innisfil (Security Service)
-,+1 (705) 908-0132,info@smithsecurity.ca,Canada,Orillia,"
-3 Royce Ave, Orillia, ON L3V 5H8",,Smith Security Inc. - Security Guard Services & Security Guard Training Orillia,,Verified in Orillia (Security Service)
-,+1 (800) 762-2304,general@northwestsecurity.ca,Canada,Greater Sudbury,"
-2140 Regent St, Sudbury, ON P3E 4Z6",,Northwest Security Services,,Verified in Greater Sudbury (Security Service)
-,+1 (807) 623-7417,general@northwestsecurity.ca,Canada,Greater Sudbury,"
-1499 Marcus Dr, Sudbury, ON P3B 4K6",,1Northwest Security Services,,Verified in Greater Sudbury (Security Service)
-,+1 (249) 879-1695,admin@truenorthsecurityservices.ca,Canada,Greater Sudbury,,,True North Security Services,,Verified in Greater Sudbury (Security Service)
-,+1 (888) 819-5270,info@sentrysecuritygroup.ca,Canada,Greater Sudbury,,,Sentry Security Group,,Verified in Greater Sudbury (Security Service)
+279 Kenilworth Ave N, Hamilton, ON L8H 4S8",,Alpha Security Services,,https://www.alphasecurityservices.ca/contact,Verified in Brantford (Security Service)
+,+1 (416) 399-1142,admin@sigmasecurityservices.ca,Canada,Brantford,"
+50 Delta Park Blvd unit-6, Brampton, ON L6T 5E8",,Sigma Security Services,,https://sigmasecurityservices.ca/contact-us,Verified in Brantford (Security Service)
