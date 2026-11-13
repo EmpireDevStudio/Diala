@@ -10,7 +10,8 @@
   'use strict';
 
   // --- 1. DEFAULT SETTINGS & EMPIRE DEV STUDIO PITCHES ---
-  const SETTINGS_KEY = 'FlipDiallerSettings_v4';
+  const SETTINGS_KEY = 'FlipDiallerSettings_v5';
+  const LEGACY_SETTINGS_KEY = 'FlipDiallerSettings_v4';
   const DEFAULT_DEMO_URL = 'https://empiredevstudio.github.io/Demo-Home/';
 
   const DEFAULT_SETTINGS = {
@@ -21,22 +22,25 @@
     senderTitle: 'Founder',
     formSubject: 'Staff Training | A Pixar Pitch',
 
-    pixar1:
-      'Once upon a time, running a standout bar meant knowing your team could nail every cocktail spec, pour consistently, and upsell with confidence, even during a packed Friday night rush.',
-    pixar2:
-      'Every day, managers lost hours chasing recipes, formatting spec sheets, and training new hires, only for dusty binders and buried PDFs to get ignored the moment service got busy.',
-    pixar3:
-      'One day, we turned a venue\'s existing recipes, SOPs, and training videos into a pocket-ready web app. Giving every bartender instant, zero-friction access right from their phone.',
-    pixar4:
-      'Because of that, onboarding new staff got faster, pour consistency tightened up, and managers got their admin hours back to focus on the floor.',
-    pixar5:
-      'Because of that, staff training stopped being a chore, turning quick pre-shift moments into sharper product knowledge, smoother service, and higher check averages.',
-    pixar6:
-      'Until finally, technology stopped sitting in a back-office folder and started pulling its weight behind the bar.',
-    pixarExtra:
-`I'm {{senderName}}, founder of {{senderCompany}} I build custom, mobile-first training hubs for hospitality venues like {{company}} so your team actually uses the specs you work hard to create. Rather than pitch you a wall of text, I built a live 60-second interactive demo you can test on your phone: https://empiredevstudio.github.io/Demo-Home/ (one rule: don't tap the spinning record until you've finished exploring).
+    pixarIntro:
+      'Hi, I\'m {{senderFirstName}}, founder of {{senderCompany}}. Thank you for your time and attention today. To be completely transparent, what\'s below is a "Pixar Pitch" it\'s designed to be short, fun, and engaging, and I hope it\'s a unique addition to your day:',
 
-Worth a quick look? Take it for a spin and hit reply with your honest verdict. What's the #1 training headache at {{company}} right now?`,
+    pixar1:
+      'Once upon a time, running a standout hospitality venue like {{company}} meant hoping your cocktail specs, SOPs, and training standards held up on every shift, even in the middle of a packed rush.',
+    pixar2:
+      'Every day, managers lost hours updating binders nobody reads, while new hires took too long to ramp up and pours drifted whenever service got busy.',
+    pixar3:
+      'One day, managers started turning their cocktail specs, SOPs, and training videos into one simple, pocket-ready web app right on their team\'s phones.',
+    pixar4:
+      'Because of that, new hires ramped up faster, pours stayed consistent during a rush, and managers stopped losing hours chasing paperwork.',
+    pixar5:
+      'Because of that, training stopped feeling like a chore—and started showing up in smoother service, sharper staff, and better guest experiences.',
+    pixar6:
+      'Until finally, instead of specs sitting in a back-office binder, venues had something their team actually wanted to open.',
+    pixarExtra:
+`Instead of sending a pitch deck, I put together a 60-second interactive demo so you can feel how it works firsthand.
+
+Would you be open to me sending the demo link over and sharing a bit more info on how this could work for {{company}}?`,
 
     emailProvider: 'gmail',
     emailSubject: 'Christian John | The pocket training demo we spoke about',
@@ -50,7 +54,7 @@ I'm {{senderFirstName}}, founder of {{senderCompany}}. We help hospitality venue
 Instead of sending a pitch deck, I put together an interactive demo so you can feel how it works in 60 seconds:
 https://empiredevstudio.github.io/Demo-Home/
 
-(One small catch: only tap the spinning record once you've finished exploring. The record will take you to a optional reply email that is just a dun way to engage further and "break the ice".)
+(One small catch: only tap the spinning record once you've finished exploring. The record will take you to a optional reply email that is just a fun way to engage further and "break the ice".)
 
 When you've had a quick scroll, I'd love your unfiltered take:
 1. Where does your team lose the most time with training or spec updates right now?
@@ -70,8 +74,27 @@ Best,
 
   function loadSettings() {
     try {
-      const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      return { ...DEFAULT_SETTINGS, ...saved };
+      const savedRaw = localStorage.getItem(SETTINGS_KEY);
+      if (savedRaw) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(savedRaw) };
+      }
+
+      // Migrate sender profile & workflow preferences from v4 while applying the new Pixar Pitch copy
+      const legacyRaw = localStorage.getItem(LEGACY_SETTINGS_KEY);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw);
+        const migrated = { ...DEFAULT_SETTINGS };
+        [
+          'senderName', 'senderCompany', 'senderEmail', 'senderPhone',
+          'senderTitle', 'emailProvider', 'autoStagePixar', 'autoStageEmail'
+        ].forEach((k) => {
+          if (legacy[k] !== undefined) migrated[k] = legacy[k];
+        });
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+
+      return { ...DEFAULT_SETTINGS };
     } catch {
       return { ...DEFAULT_SETTINGS };
     }
@@ -251,6 +274,7 @@ Best,
 
   function buildPixarPitch(contact, activeSettings = settings) {
     const beats = [
+      activeSettings.pixarIntro,
       activeSettings.pixar1,
       activeSettings.pixar2,
       activeSettings.pixar3,
@@ -922,6 +946,7 @@ Best,
     senderPhone: document.getElementById('setSenderPhone'),
     senderTitle: document.getElementById('setSenderTitle'),
     formSubject: document.getElementById('setFormSubject'),
+    pixarIntro: document.getElementById('setPixarIntro'),
     pixar1: document.getElementById('setPixar1'),
     pixar2: document.getElementById('setPixar2'),
     pixar3: document.getElementById('setPixar3'),
@@ -944,6 +969,7 @@ Best,
       senderPhone: settingInputs.senderPhone.value,
       senderTitle: settingInputs.senderTitle.value,
       formSubject: settingInputs.formSubject.value,
+      pixarIntro: settingInputs.pixarIntro.value,
       pixar1: settingInputs.pixar1.value,
       pixar2: settingInputs.pixar2.value,
       pixar3: settingInputs.pixar3.value,

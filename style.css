@@ -1017,6 +1017,10 @@ html, body {
   flex: 1;
 }
 
+.settings-body {
+  min-height: 0;
+}
+
 .sheet-footer {
   display: flex;
   justify-content: flex-end;
@@ -1068,6 +1072,7 @@ html, body {
 /* Settings Tabs */
 .settings-tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 5px;
   padding: 9px 18px;
   border-bottom: 1px solid var(--border-hairline);
