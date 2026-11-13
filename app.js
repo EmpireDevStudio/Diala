@@ -54,7 +54,7 @@ It was really great speaking with you earlier.
 I'm {{senderFirstName}}, founder of {{senderCompany}}. We help hospitality venues turn their cocktail specs, SOPs, and training videos into a simple, pocket-ready web app, so new hires ramp up faster, pours stay consistent during a rush, and managers stop losing hours updating binders nobody reads.
 
 Instead of sending a pitch deck, I put together an interactive demo so you can feel how it works in 60 seconds:
-https://empiredevstudio.github.io/Demo-Home/
+<a href="https://empiredevstudio.github.io/Demo-Home/">https://empiredevstudio.github.io/Demo-Home/</a>
 
 (One small catch: only tap the spinning record once you've finished exploring. The record will take you to a optional reply email that is just a fun way to engage further and "break the ice".)
 
