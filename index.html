@@ -59,23 +59,31 @@
     </header>
 
     <!-- WORKBENCH WRAPPER -->
-    <main class="workbench">
+    <main class="workbench" id="workbench">
 
       <!-- PANE 1: PIPELINE LIST & SEARCH -->
       <aside class="pane pane-list" id="paneList">
         <div class="list-sticky-top">
           <div class="segmented-control" role="tablist" aria-label="Pipeline Stages">
-            <button class="filter-btn active" data-stage="leads" role="tab" type="button">
-              <span>Leads</span>
-              <span class="badge" id="countLeads">0</span>
+            <button class="filter-btn active" data-stage="prospects" role="tab" type="button">
+              <span>Prospects</span>
+              <span class="badge" id="countProspects">0</span>
+            </button>
+            <button class="filter-btn" data-stage="followup" role="tab" type="button">
+              <span>Follow-Up</span>
+              <span class="badge badge-blue" id="countFollowup">0</span>
             </button>
             <button class="filter-btn" data-stage="partial" role="tab" type="button">
               <span>Partial</span>
               <span class="badge badge-gold" id="countPartial">0</span>
             </button>
             <button class="filter-btn" data-stage="completed" role="tab" type="button">
-              <span>Done</span>
+              <span>Emailed</span>
               <span class="badge badge-green" id="countCompleted">0</span>
+            </button>
+            <button class="filter-btn" data-stage="onboarded" role="tab" type="button">
+              <span>Onboarded</span>
+              <span class="badge badge-emerald" id="countOnboarded">0</span>
             </button>
             <button class="filter-btn" data-stage="all" role="tab" type="button">
               <span>All</span>
@@ -83,7 +91,7 @@
             </button>
           </div>
 
-          <div class="search-wrap">
+          <div class="search-wrap" id="listSearchWrap">
             <span class="search-glyph" aria-hidden="true">⌕</span>
             <input type="search" id="inputSearch" placeholder="Search venue, name, city, phone..." autocomplete="off">
             <button id="btnClearSearch" class="search-clear-btn hidden" type="button" aria-label="Clear search">✕</button>
@@ -128,11 +136,20 @@
         <div id="cockpitContent" class="cockpit-scroll hidden">
           <div class="cockpit-inner">
 
+            <!-- ONBOARDED BANNER (SHOWN IF VIEWING AN ONBOARDED RECORD FROM 'ALL' TAB) -->
+            <div id="onboardedCockpitBanner" class="paper-card onboarded-jump-banner hidden">
+              <div>
+                <strong>🏆 Onboarded Business</strong>
+                <span>View full company profile, logo, primary/secondary contacts &amp; team cards.</span>
+              </div>
+              <button id="btnJumpToBusinessProfile" class="btn btn-emerald" type="button">Open Business Profile →</button>
+            </div>
+
             <!-- HERO CONTACT & DIRECT DIAL CARD -->
             <div class="paper-card lead-hero-card">
               <div class="hero-top-row">
                 <div class="lead-badges">
-                  <span id="leadStageBadge" class="stage-pill">Lead</span>
+                  <span id="leadStageBadge" class="stage-pill">Prospect</span>
                   <span id="leadAttemptsBadge" class="meta-pill hidden">0 attempts</span>
                   <span id="leadCallbackBadge" class="meta-pill meta-pill-cb hidden"></span>
                 </div>
@@ -253,17 +270,22 @@
                 <button class="disp-btn btn-complete" id="btnDispComplete" type="button">
                   <span class="disp-ico">✅</span>
                   <span class="disp-label">Emailed</span>
-                  <span class="disp-hint">Done (E)</span>
+                  <span class="disp-hint">Emailed (E)</span>
                 </button>
                 <button class="disp-btn btn-na" id="btnDispNA" type="button">
                   <span class="disp-ico">🔕</span>
                   <span class="disp-label">No Ans</span>
-                  <span class="disp-hint">Leads (N)</span>
+                  <span class="disp-hint">Follow-Up (N)</span>
                 </button>
                 <button class="disp-btn btn-cb" id="btnDispCB" type="button">
                   <span class="disp-ico">📅</span>
                   <span class="disp-label">Call Back</span>
-                  <span class="disp-hint">Leads</span>
+                  <span class="disp-hint">Follow-Up</span>
+                </button>
+                <button class="disp-btn btn-onboard" id="btnDispOnboard" type="button">
+                  <span class="disp-ico">🏆</span>
+                  <span class="disp-label">Onboard</span>
+                  <span class="disp-hint">Profile (O)</span>
                 </button>
                 <button class="disp-btn btn-del desktop-only-disp" id="btnDispDelete" type="button">
                   <span class="disp-ico">🗑️</span>
@@ -273,6 +295,199 @@
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      <!-- PANE 3: ONBOARDED BUSINESS PROFILES WORKSPACE -->
+      <section class="pane pane-onboarded hidden" id="paneOnboarded" aria-label="Onboarded Business Profiles">
+
+        <!-- VIEW A: PROFILE CARDS DIRECTORY -->
+        <div id="onboardedDirectory" class="onboarded-directory">
+          <div class="onboarded-dir-header">
+            <div class="dir-title-block">
+              <div class="dir-eyebrow-row">
+                <span class="eyebrow">CLIENT ACCOUNTS</span>
+                <span class="badge badge-emerald" id="onboardedDirCount">0</span>
+              </div>
+              <h2>Onboarded Businesses</h2>
+              <p>Select any business card to expand its full profile, website logo, and team directory.</p>
+            </div>
+            <div class="dir-actions">
+              <div class="search-wrap dir-search-wrap">
+                <span class="search-glyph" aria-hidden="true">⌕</span>
+                <input type="search" id="inputOnboardedSearch" placeholder="Search businesses, contacts, cities..." autocomplete="off">
+                <button id="btnClearOnboardedSearch" class="search-clear-btn hidden" type="button" aria-label="Clear onboarded search">✕</button>
+              </div>
+              <button id="btnNewOnboarded" class="btn btn-emerald" type="button">＋ New Business Profile</button>
+            </div>
+          </div>
+
+          <div id="onboardedGrid" class="onboarded-grid"></div>
+        </div>
+
+        <!-- VIEW B: EXPANDED FULL BUSINESS PROFILE PAGE -->
+        <div id="onboardedProfileView" class="onboarded-profile-view hidden">
+          <div class="profile-sticky-nav">
+            <button id="btnBackToOnboardedDir" class="nav-back-btn" type="button">
+              <span class="nav-chevron">‹</span>
+              <span>Onboarded</span>
+            </button>
+
+            <div class="profile-nav-center">
+              <span id="onboardedNavTitle" class="nav-title">Business Profile</span>
+              <span id="onboardedSaveIndicator" class="profile-save-pill">Saved ✓</span>
+            </div>
+
+            <div class="profile-nav-actions">
+              <select id="onboardedStageSelect" class="stage-mini-select" aria-label="Account Pipeline Stage">
+                <option value="onboarded">🏆 Onboarded</option>
+                <option value="prospects">📋 Prospects</option>
+                <option value="followup">📅 Follow-Up</option>
+                <option value="partial">🧩 Partial</option>
+                <option value="completed">✅ Emailed</option>
+              </select>
+              <div class="nav-stepper">
+                <button id="btnPrevOnboarded" class="stepper-btn" type="button" aria-label="Previous Profile">‹</button>
+                <button id="btnNextOnboarded" class="stepper-btn" type="button" aria-label="Next Profile">›</button>
+              </div>
+              <button id="btnDeleteOnboarded" class="btn-chip btn-chip-danger" type="button" title="Delete Business Profile">🗑️</button>
+            </div>
+          </div>
+
+          <div class="profile-scroll" id="profileScroll">
+            <div class="profile-inner">
+
+              <!-- MAIN BUSINESS OVERVIEW CARD -->
+              <div class="paper-card business-profile-card">
+                <div class="business-hero-row">
+                  <div class="business-logo-studio">
+                    <div class="business-logo-frame" id="profLogoFrame">
+                      <img id="profLogoImg" class="hidden" alt="Business Logo">
+                      <span id="profLogoFallback" class="logo-monogram">FD</span>
+                    </div>
+                    <div class="logo-controls">
+                      <label for="profLogoUploadInput" class="btn-chip">📷 Upload</label>
+                      <input type="file" id="profLogoUploadInput" accept="image/*" hidden>
+                      <button id="btnEditLogoUrl" class="btn-chip" type="button">🔗 URL</button>
+                      <button id="btnRefreshLogo" class="btn-chip" type="button" title="Reset to Website Logo">↻</button>
+                    </div>
+                  </div>
+
+                  <div class="business-core-fields">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="profCompany">Business / Venue Name *</label>
+                        <input type="text" id="profCompany" placeholder="e.g. Library Bar">
+                      </div>
+                      <div class="form-group">
+                        <label for="profOnboardedDate">Onboarded Date</label>
+                        <input type="date" id="profOnboardedDate">
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="profBusinessType">Venue Type / Category</label>
+                        <input type="text" id="profBusinessType" placeholder="e.g. Cocktail Bar, Hotel, Restaurant">
+                      </div>
+                      <div class="form-group">
+                        <label for="profAccountStatus">Account Status</label>
+                        <select id="profAccountStatus">
+                          <option value="active">🟢 Active Client</option>
+                          <option value="onboarding">🟡 Setup / Onboarding</option>
+                          <option value="vip">⭐ VIP Partner</option>
+                          <option value="paused">⏸ Paused</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="profile-divider"></div>
+
+                <!-- BUSINESS CHANNELS & LOCATION -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="profWebsite">Business Website (Auto-fetches Logo)</label>
+                    <div class="input-with-action">
+                      <input type="url" id="profWebsite" placeholder="https://example.com">
+                      <a id="btnOpenProfWebsite" href="#" target="_blank" rel="noopener noreferrer" class="btn-input-action" title="Open Website">↗</a>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="profAppUrl">Pocket App / Demo Link</label>
+                    <div class="input-with-action">
+                      <input type="url" id="profAppUrl" placeholder="https://...">
+                      <a id="btnOpenProfAppUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn-input-action" title="Open App">↗</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="profEmail">Main Business Email</label>
+                    <div class="input-with-action">
+                      <input type="email" id="profEmail" placeholder="hello@venue.com">
+                      <a id="btnEmailProf" href="#" class="btn-input-action" title="Email Business">✉️</a>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="profPhone">Main Business Phone</label>
+                    <div class="input-with-action">
+                      <input type="tel" id="profPhone" placeholder="+1 (555) 000-0000">
+                      <a id="btnCallProf" href="#" class="btn-input-action" title="Call Business">📞</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="profFormUrl">Contact / Support Page URL</label>
+                    <div class="input-with-action">
+                      <input type="url" id="profFormUrl" placeholder="https://example.com/contact">
+                      <a id="btnOpenProfFormUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn-input-action" title="Open Link">↗</a>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="profAddress">Street Address</label>
+                    <input type="text" id="profAddress" placeholder="100 Front St W">
+                  </div>
+                </div>
+
+                <div class="form-row form-row-3">
+                  <div class="form-group">
+                    <label for="profCity">City</label>
+                    <input type="text" id="profCity" placeholder="Toronto">
+                  </div>
+                  <div class="form-group">
+                    <label for="profPostal">Postal / ZIP Code</label>
+                    <input type="text" id="profPostal" placeholder="M5J 1E3">
+                  </div>
+                  <div class="form-group">
+                    <label for="profCountry">Country</label>
+                    <input type="text" id="profCountry" placeholder="Canada">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="profNotes">Business Notes &amp; Account Overview</label>
+                  <textarea id="profNotes" rows="3" placeholder="Menu cycles, cocktail spec priorities, onboarding milestones, billing notes, venue quirks..."></textarea>
+                </div>
+              </div>
+
+              <!-- TEAM & EMPLOYEE CARDS SECTION -->
+              <div class="team-section-header">
+                <div>
+                  <span class="eyebrow">TEAM DIRECTORY</span>
+                  <h3>Contacts &amp; Employees <span class="badge" id="employeeCountBadge">2</span></h3>
+                </div>
+                <button id="btnAddEmployee" class="btn btn-primary" type="button">＋ Add Employee Card</button>
+              </div>
+
+              <div id="employeeCardsList" class="employee-cards-list"></div>
+
+            </div>
           </div>
         </div>
       </section>
@@ -299,26 +514,43 @@
             <input type="text" id="formCompany" required>
           </div>
           <div class="form-group">
-            <label for="formName">Contact Name</label>
-            <input type="text" id="formName">
+            <label for="formStage">Pipeline Stage</label>
+            <select id="formStage">
+              <option value="prospects">Prospects (New)</option>
+              <option value="followup">Follow-Up (No Ans / CB)</option>
+              <option value="partial">Partial (Pixar Sent)</option>
+              <option value="completed">Emailed</option>
+              <option value="onboarded">Onboarded</option>
+            </select>
           </div>
         </div>
 
         <div class="form-row">
+          <div class="form-group">
+            <label for="formName">Contact Name</label>
+            <input type="text" id="formName">
+          </div>
           <div class="form-group">
             <label for="formTitleField">Job Title</label>
             <input type="text" id="formTitleField">
           </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label for="formPhone">Phone Number</label>
             <input type="tel" id="formPhone">
+          </div>
+          <div class="form-group">
+            <label for="formEmail">Email Address</label>
+            <input type="email" id="formEmail">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="formEmail">Email Address</label>
-            <input type="email" id="formEmail">
+            <label for="formWebsite">Website (for Logo &amp; Profile)</label>
+            <input type="url" id="formWebsite" placeholder="https://example.com">
           </div>
           <div class="form-group">
             <label for="formContactUrl">Website Contact Form URL</label>
@@ -361,7 +593,7 @@
         <h3>Schedule Call Back</h3>
       </div>
       <div class="sheet-body">
-        <p class="dialog-desc">Lead stays in the <strong>Leads</strong> queue with a scheduled reminder badge.</p>
+        <p class="dialog-desc">Lead moves out of Prospects into <strong>Follow-Up</strong> with a scheduled reminder badge.</p>
 
         <div class="callback-pills">
           <button class="btn btn-vellum" data-cb-hours="2" type="button">⏱ In 2 Hours</button>
@@ -565,8 +797,8 @@
           <label class="toggle-row">
             <input type="checkbox" id="setAutoStageEmail">
             <div>
-              <strong>Auto-move to Done when opening Prospecting Email</strong>
-              <span>Marks the prospect as Completed right after launching your email compose tab.</span>
+              <strong>Auto-move to Emailed when opening Prospecting Email</strong>
+              <span>Marks the prospect as Emailed right after launching your email compose tab.</span>
             </div>
           </label>
 

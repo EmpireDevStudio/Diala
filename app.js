@@ -1,9 +1,11 @@
 /**
- * FLIPDIALLER — LIVING PAPER 3.6 (MOBILE-FIRST OUTREACH ENGINE)
+ * FLIPDIALLER — LIVING PAPER 3.7 (STAGE PIPELINE + ONBOARDED PROFILES)
  * Pipeline stages:
- *  - 'leads'     : Uncontacted, No Answer, or Call Back (stays in Leads list)
+ *  - 'prospects' : Brand new / un-dispositioned leads (every lead starts here)
+ *  - 'followup'  : No Answer or Call Back (moves out of Prospects once dispositioned)
  *  - 'partial'   : Pixar Pitch sent via website contact form
  *  - 'completed' : Prospecting Email sent
+ *  - 'onboarded' : Onboarded client -> Full Business Profile, Website Logo & Employee Cards
  */
 
 (() => {
@@ -79,7 +81,6 @@ Best,
         return { ...DEFAULT_SETTINGS, ...JSON.parse(savedRaw) };
       }
 
-      // Migrate sender profile & workflow preferences from v4 while applying the new Pixar Pitch copy
       const legacyRaw = localStorage.getItem(LEGACY_SETTINGS_KEY);
       if (legacyRaw) {
         const legacy = JSON.parse(legacyRaw);
@@ -142,25 +143,103 @@ Best,
     })
   };
 
-  function normalizeStage(stage) {
-    if (stage === 'partial' || stage === 'pixar_sent') return 'partial';
-    if (stage === 'completed' || stage === 'contacted') return 'completed';
-    return 'leads';
+  function normalizeStage(stage, raw = {}) {
+    const s = String(stage || '').toLowerCase().trim();
+    if (s === 'partial' || s === 'pixar_sent') return 'partial';
+    if (s === 'completed' || s === 'contacted' || s === 'emailed') return 'completed';
+    if (s === 'onboarded' || s === 'client') return 'onboarded';
+    if (s === 'followup' || s === 'follow-up' || s === 'callback' || s === 'no_answer') return 'followup';
+    if (s === 'leads') {
+      if ((raw.attempts && raw.attempts > 0) || raw.callback_at) return 'followup';
+      return 'prospects';
+    }
+    return 'prospects';
+  }
+
+  function createEmployeeRecord(roleType = 'employee', seed = {}) {
+    return {
+      id: seed.id || ('emp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+      roleType: roleType === 'primary' || roleType === 'secondary' ? roleType : 'employee',
+      name: seed.name || '',
+      title: seed.title || '',
+      phone: seed.phone || '',
+      email: seed.email || '',
+      dob: seed.dob || '',
+      preferred_contact: seed.preferred_contact || '',
+      availability: seed.availability || '',
+      notes: seed.notes || ''
+    };
+  }
+
+  function ensureDefaultEmployees(contact) {
+    const list = Array.isArray(contact.employees)
+      ? contact.employees.map(e => createEmployeeRecord(e.roleType, e))
+      : [];
+
+    let primary = list.find(e => e.roleType === 'primary');
+    if (!primary) {
+      primary = createEmployeeRecord('primary', {
+        name: contact.name || '',
+        title: contact.job_title || '',
+        phone: contact.phone || '',
+        email: contact.email || ''
+      });
+      list.unshift(primary);
+    }
+
+    let secondary = list.find(e => e.roleType === 'secondary');
+    if (!secondary) {
+      secondary = createEmployeeRecord('secondary');
+      const pIdx = list.indexOf(primary);
+      list.splice(pIdx + 1, 0, secondary);
+    }
+
+    const others = list.filter(e => e !== primary && e !== secondary);
+    contact.employees = [primary, secondary, ...others];
+    return contact.employees;
+  }
+
+  function normalizeWebsiteFromUrl(url) {
+    if (!url || !url.trim()) return '';
+    try {
+      const normalized = /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
+      return new URL(normalized).origin;
+    } catch {
+      return '';
+    }
   }
 
   function normalizeContact(c) {
-    return {
+    const stage = normalizeStage(c.stage, c);
+    const contact = {
       ...c,
-      stage: normalizeStage(c.stage),
+      stage,
       job_title: c.job_title || c.title || '',
+      website: c.website || '',
       contact_form_url: c.contact_form_url || '',
+      app_url: c.app_url || '',
+      custom_logo_url: c.custom_logo_url || '',
+      business_type: c.business_type || '',
+      account_status: c.account_status || 'active',
+      onboarded_at: c.onboarded_at || '',
       street_address: c.street_address || '',
       city: c.city || '',
       country: c.country || '',
       postal_code: c.postal_code || '',
       attempts: c.attempts || 0,
-      callback_at: c.callback_at || null
+      callback_at: c.callback_at || null,
+      employees: Array.isArray(c.employees) ? c.employees : null
     };
+
+    if (contact.stage === 'onboarded') {
+      if (!contact.onboarded_at) contact.onboarded_at = new Date().toISOString().slice(0, 10);
+      if (!contact.website && contact.contact_form_url) {
+        contact.website = normalizeWebsiteFromUrl(contact.contact_form_url);
+      }
+      ensureDefaultEmployees(contact);
+    }
+
+    return contact;
   }
 
   // --- 3. STATE ---
@@ -168,14 +247,18 @@ Best,
     contacts: [],
     filtered: [],
     activeId: null,
-    stageFilter: 'leads',
+    activeOnboardedId: null,
+    stageFilter: 'prospects',
     search: '',
+    onboardedSearch: '',
     notesTimer: null,
+    profileSaveTimer: null,
     toastTimer: null
   };
 
   // --- 4. DOM REFERENCES ---
   const el = {
+    workbench: document.getElementById('workbench'),
     list: document.getElementById('contactList'),
     inputSearch: document.getElementById('inputSearch'),
     btnClearSearch: document.getElementById('btnClearSearch'),
@@ -192,10 +275,15 @@ Best,
     btnMobileMore: document.getElementById('btnMobileMore'),
     mobileHeaderMenu: document.getElementById('mobileHeaderMenu'),
 
-    countLeads: document.getElementById('countLeads'),
+    countProspects: document.getElementById('countProspects'),
+    countFollowup: document.getElementById('countFollowup'),
     countPartial: document.getElementById('countPartial'),
     countCompleted: document.getElementById('countCompleted'),
+    countOnboarded: document.getElementById('countOnboarded'),
     countAll: document.getElementById('countAll'),
+
+    onboardedCockpitBanner: document.getElementById('onboardedCockpitBanner'),
+    btnJumpToBusinessProfile: document.getElementById('btnJumpToBusinessProfile'),
 
     leadStageBadge: document.getElementById('leadStageBadge'),
     leadAttemptsBadge: document.getElementById('leadAttemptsBadge'),
@@ -224,6 +312,55 @@ Best,
 
     leadNotes: document.getElementById('leadNotes'),
     notesSaveIndicator: document.getElementById('notesSaveIndicator'),
+
+    // Onboarded Workspace
+    paneOnboarded: document.getElementById('paneOnboarded'),
+    onboardedDirectory: document.getElementById('onboardedDirectory'),
+    inputOnboardedSearch: document.getElementById('inputOnboardedSearch'),
+    btnClearOnboardedSearch: document.getElementById('btnClearOnboardedSearch'),
+    onboardedDirCount: document.getElementById('onboardedDirCount'),
+    btnNewOnboarded: document.getElementById('btnNewOnboarded'),
+    onboardedGrid: document.getElementById('onboardedGrid'),
+
+    onboardedProfileView: document.getElementById('onboardedProfileView'),
+    btnBackToOnboardedDir: document.getElementById('btnBackToOnboardedDir'),
+    onboardedNavTitle: document.getElementById('onboardedNavTitle'),
+    onboardedSaveIndicator: document.getElementById('onboardedSaveIndicator'),
+    onboardedStageSelect: document.getElementById('onboardedStageSelect'),
+    btnPrevOnboarded: document.getElementById('btnPrevOnboarded'),
+    btnNextOnboarded: document.getElementById('btnNextOnboarded'),
+    btnDeleteOnboarded: document.getElementById('btnDeleteOnboarded'),
+    profileScroll: document.getElementById('profileScroll'),
+
+    profLogoImg: document.getElementById('profLogoImg'),
+    profLogoFallback: document.getElementById('profLogoFallback'),
+    profLogoUploadInput: document.getElementById('profLogoUploadInput'),
+    btnEditLogoUrl: document.getElementById('btnEditLogoUrl'),
+    btnRefreshLogo: document.getElementById('btnRefreshLogo'),
+
+    profCompany: document.getElementById('profCompany'),
+    profOnboardedDate: document.getElementById('profOnboardedDate'),
+    profBusinessType: document.getElementById('profBusinessType'),
+    profAccountStatus: document.getElementById('profAccountStatus'),
+    profWebsite: document.getElementById('profWebsite'),
+    btnOpenProfWebsite: document.getElementById('btnOpenProfWebsite'),
+    profAppUrl: document.getElementById('profAppUrl'),
+    btnOpenProfAppUrl: document.getElementById('btnOpenProfAppUrl'),
+    profEmail: document.getElementById('profEmail'),
+    btnEmailProf: document.getElementById('btnEmailProf'),
+    profPhone: document.getElementById('profPhone'),
+    btnCallProf: document.getElementById('btnCallProf'),
+    profFormUrl: document.getElementById('profFormUrl'),
+    btnOpenProfFormUrl: document.getElementById('btnOpenProfFormUrl'),
+    profAddress: document.getElementById('profAddress'),
+    profCity: document.getElementById('profCity'),
+    profPostal: document.getElementById('profPostal'),
+    profCountry: document.getElementById('profCountry'),
+    profNotes: document.getElementById('profNotes'),
+
+    employeeCountBadge: document.getElementById('employeeCountBadge'),
+    btnAddEmployee: document.getElementById('btnAddEmployee'),
+    employeeCardsList: document.getElementById('employeeCardsList'),
 
     dialogForm: document.getElementById('dialogLeadForm'),
     leadForm: document.getElementById('leadForm'),
@@ -322,7 +459,7 @@ Best,
     return `${words} words • ${clean.length.toLocaleString()} chars`;
   }
 
-  // --- 6. UTILITIES ---
+  // --- 6. UTILITIES & WEBSITE LOGO RESOLVER ---
   function esc(str) {
     return String(str || '')
       .replace(/&/g, '&amp;')
@@ -371,8 +508,150 @@ Best,
     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
+  function formatDisplayDate(isoDate) {
+    if (!isoDate) return '—';
+    const parts = isoDate.split('-');
+    if (parts.length !== 3) return isoDate;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    if (isNaN(d.getTime())) return isoDate;
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatDobPill(dobStr) {
+    if (!dobStr) return '';
+    const parts = dobStr.split('-');
+    if (parts.length !== 3) return '';
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const day = Number(parts[2]);
+    if (!y || !m || !day) return '';
+    const now = new Date();
+    let age = now.getFullYear() - y;
+    const mDiff = (now.getMonth() + 1) - m;
+    if (mDiff < 0 || (mDiff === 0 && now.getDate() < day)) age--;
+    const monthShort = new Date(y, m - 1, day).toLocaleString([], { month: 'short' });
+    return age >= 0 && age < 120 ? `🎂 ${monthShort} ${day} (${age})` : `🎂 ${monthShort} ${day}`;
+  }
+
+  function getMonogram(name) {
+    const clean = (name || '').trim();
+    if (!clean) return 'BZ';
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    return clean.slice(0, 2).toUpperCase();
+  }
+
+  const GENERIC_EMAIL_DOMAINS = new Set([
+    'gmail.com', 'googlemail.com', 'yahoo.com', 'outlook.com',
+    'hotmail.com', 'live.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com'
+  ]);
+
+  function getDomainFromContact(c) {
+    const candidates = [c.website, c.contact_form_url];
+    for (const raw of candidates) {
+      if (!raw || !raw.trim()) continue;
+      try {
+        const u = new URL(/^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`);
+        if (u.hostname && u.hostname.includes('.')) {
+          return u.hostname.replace(/^www\./i, '');
+        }
+      } catch {}
+    }
+
+    if (c.email && c.email.includes('@')) {
+      const domain = c.email.split('@')[1].trim().toLowerCase();
+      if (domain && domain.includes('.') && !GENERIC_EMAIL_DOMAINS.has(domain)) {
+        return domain;
+      }
+    }
+    return '';
+  }
+
+  function getLogoCandidates(c) {
+    const list = [];
+    if (c.custom_logo_url && c.custom_logo_url.trim()) {
+      list.push(c.custom_logo_url.trim());
+    }
+    const domain = getDomainFromContact(c);
+    if (domain) {
+      list.push(`https://logo.clearbit.com/${encodeURIComponent(domain)}`);
+      list.push(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`);
+    }
+    return list;
+  }
+
+  function applyLogoToElement(imgEl, fallbackEl, contact) {
+    fallbackEl.textContent = getMonogram(contact.company || contact.name);
+    const candidates = getLogoCandidates(contact);
+
+    if (candidates.length === 0) {
+      imgEl.classList.add('hidden');
+      imgEl.removeAttribute('src');
+      fallbackEl.classList.remove('hidden');
+      return;
+    }
+
+    let idx = 0;
+    const tryNext = () => {
+      if (idx >= candidates.length) {
+        imgEl.classList.add('hidden');
+        fallbackEl.classList.remove('hidden');
+        return;
+      }
+      const src = candidates[idx++];
+      imgEl.classList.remove('hidden');
+      fallbackEl.classList.add('hidden');
+      imgEl.src = src;
+    };
+
+    imgEl.onerror = () => tryNext();
+    imgEl.onload = () => {
+      if (imgEl.naturalWidth <= 1 || imgEl.naturalHeight <= 1) {
+        tryNext();
+      } else {
+        imgEl.classList.remove('hidden');
+        fallbackEl.classList.add('hidden');
+      }
+    };
+    tryNext();
+  }
+
+  function sanitizeHref(url) {
+    if (!url || !url.trim()) return '#';
+    const trimmed = url.trim();
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  }
+
   // --- 7. RENDERING & FILTERING ---
+  function updateCounts() {
+    el.countProspects.textContent = state.contacts.filter(c => c.stage === 'prospects').length;
+    el.countFollowup.textContent = state.contacts.filter(c => c.stage === 'followup').length;
+    el.countPartial.textContent = state.contacts.filter(c => c.stage === 'partial').length;
+    el.countCompleted.textContent = state.contacts.filter(c => c.stage === 'completed').length;
+    el.countOnboarded.textContent = state.contacts.filter(c => c.stage === 'onboarded').length;
+    el.countAll.textContent = state.contacts.length;
+  }
+
+  function syncStageTabButtons() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.stage === state.stageFilter);
+    });
+  }
+
   function applyFilters() {
+    updateCounts();
+    syncStageTabButtons();
+
+    const isOnboardedMode = state.stageFilter === 'onboarded';
+    el.workbench.classList.toggle('is-onboarded-mode', isOnboardedMode);
+    el.paneOnboarded.classList.toggle('hidden', !isOnboardedMode);
+
+    if (isOnboardedMode) {
+      el.paneCockpit.classList.remove('mobile-visible');
+      renderOnboardedWorkspace();
+      return;
+    }
+
     const q = state.search.toLowerCase().trim();
     el.btnClearSearch.classList.toggle('hidden', !state.search);
 
@@ -389,7 +668,6 @@ Best,
       return c.stage === state.stageFilter;
     });
 
-    updateCounts();
     renderList();
 
     if (state.activeId && !state.contacts.some(c => c.id === state.activeId)) {
@@ -398,15 +676,11 @@ Best,
     if (!state.activeId && state.filtered.length > 0 && window.innerWidth > 820) {
       state.activeId = state.filtered[0].id;
     }
+    if (state.activeId && !state.filtered.some(c => c.id === state.activeId)) {
+      state.activeId = state.filtered.length > 0 && window.innerWidth > 820 ? state.filtered[0].id : null;
+    }
 
     renderActiveCockpit();
-  }
-
-  function updateCounts() {
-    el.countLeads.textContent = state.contacts.filter(c => c.stage === 'leads').length;
-    el.countPartial.textContent = state.contacts.filter(c => c.stage === 'partial').length;
-    el.countCompleted.textContent = state.contacts.filter(c => c.stage === 'completed').length;
-    el.countAll.textContent = state.contacts.length;
   }
 
   function renderList() {
@@ -433,15 +707,22 @@ Best,
       return;
     }
 
+    const stageLabels = {
+      prospects: 'Prospect',
+      followup: 'Follow-Up',
+      partial: 'Partial',
+      completed: 'Emailed',
+      onboarded: 'Onboarded'
+    };
+
     el.list.innerHTML = state.filtered.map(c => {
-      const stageLabels = { leads: 'Lead', partial: 'Partial', completed: 'Done' };
       const title = c.company || c.name || 'Unnamed Prospect';
       const subParts = [c.company && c.name ? c.name : c.job_title, c.city].filter(Boolean);
       const tags = [];
       if (c.contact_form_url) tags.push('<span class="mini-tag">Form</span>');
       if (c.email) tags.push('<span class="mini-tag">Email</span>');
       if (c.attempts) tags.push(`<span class="mini-tag">Att:${c.attempts}</span>`);
-      if (c.callback_at && c.stage === 'leads') {
+      if (c.callback_at && c.stage === 'followup') {
         tags.push(`<span class="mini-tag mini-tag-cb">CB</span>`);
       }
 
@@ -450,7 +731,7 @@ Best,
           <div class="card-main">
             <div class="card-top">
               <div class="card-title">${esc(title)}</div>
-              <span class="card-stage-dot dot-${c.stage}">${stageLabels[c.stage]}</span>
+              <span class="card-stage-dot dot-${c.stage}">${stageLabels[c.stage] || 'Prospect'}</span>
             </div>
             <div class="card-sub">${esc(subParts.join(' • ') || 'Prospect')}</div>
             <div class="card-meta">
@@ -509,12 +790,16 @@ Best,
     el.cockpitEmpty.classList.add('hidden');
     el.cockpitContent.classList.remove('hidden');
 
+    el.onboardedCockpitBanner.classList.toggle('hidden', c.stage !== 'onboarded');
+
     const stageMap = {
-      leads: { text: 'Lead Queue', cls: '' },
+      prospects: { text: 'Prospect Queue', cls: '' },
+      followup: { text: 'Follow-Up Queue', cls: 'is-followup' },
       partial: { text: 'Partial • Pixar Sent', cls: 'is-partial' },
-      completed: { text: 'Completed • Emailed', cls: 'is-completed' }
+      completed: { text: 'Emailed • Outreach Sent', cls: 'is-completed' },
+      onboarded: { text: 'Onboarded Client', cls: 'is-onboarded' }
     };
-    const st = stageMap[c.stage] || stageMap.leads;
+    const st = stageMap[c.stage] || stageMap.prospects;
     el.leadStageBadge.textContent = st.text;
     el.leadStageBadge.className = `stage-pill ${st.cls}`;
 
@@ -525,7 +810,7 @@ Best,
       el.leadAttemptsBadge.classList.add('hidden');
     }
 
-    if (c.callback_at && c.stage === 'leads') {
+    if (c.callback_at && c.stage === 'followup') {
       el.leadCallbackBadge.textContent = `📅 CB: ${formatCallbackShort(c.callback_at)}`;
       el.leadCallbackBadge.classList.remove('hidden');
     } else {
@@ -589,7 +874,324 @@ Best,
     el.leadNotes.value = c.notes || '';
   }
 
-  // --- 8. OUTREACH LAUNCH & DISPOSITIONS ---
+  // --- 8. ONBOARDED DIRECTORY & FULL BUSINESS PROFILE ---
+  function getOnboardedList() {
+    const q = state.onboardedSearch.toLowerCase().trim();
+    const list = state.contacts.filter(c => c.stage === 'onboarded');
+    if (!q) return list;
+    return list.filter(c => {
+      const empMatch = (c.employees || []).some(emp =>
+        (emp.name && emp.name.toLowerCase().includes(q)) ||
+        (emp.email && emp.email.toLowerCase().includes(q)) ||
+        (emp.phone && emp.phone.toLowerCase().includes(q)) ||
+        (emp.title && emp.title.toLowerCase().includes(q))
+      );
+      return empMatch ||
+        (c.company && c.company.toLowerCase().includes(q)) ||
+        (c.city && c.city.toLowerCase().includes(q)) ||
+        (c.website && c.website.toLowerCase().includes(q)) ||
+        (c.email && c.email.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.toLowerCase().includes(q));
+    });
+  }
+
+  function renderOnboardedWorkspace() {
+    const activeProfile = state.activeOnboardedId
+      ? state.contacts.find(c => c.id === state.activeOnboardedId && c.stage === 'onboarded')
+      : null;
+
+    if (!activeProfile) {
+      state.activeOnboardedId = null;
+      el.onboardedDirectory.classList.remove('hidden');
+      el.onboardedProfileView.classList.add('hidden');
+      renderOnboardedDirectory();
+    } else {
+      el.onboardedDirectory.classList.add('hidden');
+      el.onboardedProfileView.classList.remove('hidden');
+      renderOnboardedProfile(activeProfile);
+    }
+  }
+
+  function renderOnboardedDirectory() {
+    const allOnboarded = state.contacts.filter(c => c.stage === 'onboarded');
+    const filtered = getOnboardedList();
+    el.onboardedDirCount.textContent = allOnboarded.length;
+    el.btnClearOnboardedSearch.classList.toggle('hidden', !state.onboardedSearch);
+
+    if (allOnboarded.length === 0) {
+      el.onboardedGrid.innerHTML = `
+        <div class="paper-card onboarded-empty">
+          <div class="empty-monogram">🏆</div>
+          <h3>No Onboarded Businesses Yet</h3>
+          <p>When a prospect converts, click <strong>Onboard</strong> in the dialer cockpit—or create a new client profile directly to track their logo, business info, and team contacts.</p>
+          <button id="btnEmptyAddOnboarded" class="btn btn-emerald" type="button">＋ Create First Business Profile</button>
+        </div>
+      `;
+      return;
+    }
+
+    if (filtered.length === 0) {
+      el.onboardedGrid.innerHTML = `
+        <div class="paper-card onboarded-empty">
+          <h3>No Matching Businesses</h3>
+          <p>Try clearing your search filter to view all ${allOnboarded.length} onboarded accounts.</p>
+          <button id="btnClearOnboardedEmpty" class="btn btn-vellum" type="button">Clear Search</button>
+        </div>
+      `;
+      return;
+    }
+
+    const statusMap = {
+      active: '🟢 Active',
+      onboarding: '🟡 Onboarding',
+      vip: '⭐ VIP',
+      paused: '⏸ Paused'
+    };
+
+    el.onboardedGrid.innerHTML = filtered.map(c => {
+      ensureDefaultEmployees(c);
+      const primary = c.employees.find(e => e.roleType === 'primary');
+      const filledTeam = c.employees.filter(e => e.name || e.phone || e.email).length;
+      const domain = getDomainFromContact(c);
+      const websiteLabel = c.website ? c.website.replace(/^https?:\/\/(www\.)?/i, '') : (domain || 'No website yet');
+      const locationStr = [c.city, c.country].filter(Boolean).join(', ');
+
+      return `
+        <article class="paper-card profile-card" data-onboarded-id="${esc(c.id)}" tabindex="0" role="button">
+          <div class="profile-card-head">
+            <div class="profile-card-logo">
+              <img class="card-logo-img hidden" data-logo-for="${esc(c.id)}" alt="${esc(c.company)} logo">
+              <span class="logo-monogram-sm" data-fallback-for="${esc(c.id)}">${esc(getMonogram(c.company || c.name))}</span>
+            </div>
+            <div class="profile-card-title-wrap">
+              <h3>${esc(c.company || c.name || 'Unnamed Business')}</h3>
+              <div class="profile-card-badges">
+                <span class="onboarded-date-pill">Onboarded ${esc(formatDisplayDate(c.onboarded_at))}</span>
+                <span class="status-mini-pill">${statusMap[c.account_status] || '🟢 Active'}</span>
+                ${c.business_type ? `<span class="status-mini-pill">${esc(c.business_type)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-card-details">
+            <div class="profile-detail-line"><span>🌐</span><span>${esc(websiteLabel)}</span></div>
+            <div class="profile-detail-line"><span>📞</span><span>${esc(c.phone || 'No business phone')}</span></div>
+            <div class="profile-detail-line"><span>✉️</span><span>${esc(c.email || 'No business email')}</span></div>
+            ${locationStr ? `<div class="profile-detail-line"><span>📍</span><span>${esc(locationStr)}</span></div>` : ''}
+          </div>
+
+          <div class="profile-card-footer">
+            <span class="profile-primary-chip">
+              👤 ${primary && primary.name ? esc(primary.name) : 'Primary contact pending'} • 👥 ${filledTeam}/${c.employees.length}
+            </span>
+            <span class="profile-open-cta">Open Profile ›</span>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    filtered.forEach(c => {
+      const img = el.onboardedGrid.querySelector(`[data-logo-for="${CSS.escape(c.id)}"]`);
+      const fb = el.onboardedGrid.querySelector(`[data-fallback-for="${CSS.escape(c.id)}"]`);
+      if (img && fb) applyLogoToElement(img, fb, c);
+    });
+  }
+
+  function renderOnboardedProfile(c) {
+    ensureDefaultEmployees(c);
+
+    const list = getOnboardedList();
+    const idx = list.findIndex(x => x.id === c.id);
+    el.btnPrevOnboarded.disabled = idx <= 0;
+    el.btnNextOnboarded.disabled = idx === -1 || idx >= list.length - 1;
+
+    el.onboardedNavTitle.textContent = c.company || 'Business Profile';
+    el.onboardedStageSelect.value = c.stage;
+
+    applyLogoToElement(el.profLogoImg, el.profLogoFallback, c);
+
+    el.profCompany.value = c.company || '';
+    el.profOnboardedDate.value = c.onboarded_at || '';
+    el.profBusinessType.value = c.business_type || '';
+    el.profAccountStatus.value = c.account_status || 'active';
+
+    el.profWebsite.value = c.website || '';
+    el.profAppUrl.value = c.app_url || '';
+    el.profEmail.value = c.email || '';
+    el.profPhone.value = c.phone || '';
+    el.profFormUrl.value = c.contact_form_url || '';
+    el.profAddress.value = c.street_address || '';
+    el.profCity.value = c.city || '';
+    el.profPostal.value = c.postal_code || '';
+    el.profCountry.value = c.country || '';
+    el.profNotes.value = c.notes || '';
+
+    syncProfileActionLinks(c);
+    renderEmployeeCards(c);
+  }
+
+  function syncProfileActionLinks(c) {
+    const webHref = c.website && c.website.trim() ? sanitizeHref(c.website) : '#';
+    el.btnOpenProfWebsite.href = webHref;
+    el.btnOpenProfWebsite.classList.toggle('is-disabled', webHref === '#');
+
+    const appHref = c.app_url && c.app_url.trim() ? sanitizeHref(c.app_url) : '#';
+    el.btnOpenProfAppUrl.href = appHref;
+    el.btnOpenProfAppUrl.classList.toggle('is-disabled', appHref === '#');
+
+    const formHref = c.contact_form_url && c.contact_form_url.trim() ? sanitizeHref(c.contact_form_url) : '#';
+    el.btnOpenProfFormUrl.href = formHref;
+    el.btnOpenProfFormUrl.classList.toggle('is-disabled', formHref === '#');
+
+    const emailHref = c.email && c.email.trim() ? `mailto:${c.email.trim()}` : '#';
+    el.btnEmailProf.href = emailHref;
+    el.btnEmailProf.classList.toggle('is-disabled', emailHref === '#');
+
+    const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
+    el.btnCallProf.href = cleanPhone ? `tel:${cleanPhone}` : '#';
+    el.btnCallProf.classList.toggle('is-disabled', !cleanPhone);
+  }
+
+  function renderEmployeeCards(c) {
+    ensureDefaultEmployees(c);
+    el.employeeCountBadge.textContent = c.employees.length;
+
+    const roleMeta = {
+      primary: { label: 'Primary Contact', cls: 'role-primary', cardCls: 'is-primary' },
+      secondary: { label: 'Secondary Contact', cls: 'role-secondary', cardCls: 'is-secondary' },
+      employee: { label: 'Employee', cls: 'role-employee', cardCls: 'is-employee' }
+    };
+
+    el.employeeCardsList.innerHTML = c.employees.map((emp, index) => {
+      const rm = roleMeta[emp.roleType] || roleMeta.employee;
+      const summaryText = [emp.name, emp.title].filter(Boolean).join(' — ');
+      const cleanTel = (emp.phone || '').replace(/[^\d+]/g, '');
+      const dobText = formatDobPill(emp.dob);
+
+      return `
+        <div class="paper-card employee-card ${rm.cardCls}" data-emp-card="${esc(emp.id)}">
+          <div class="employee-card-head">
+            <div class="employee-role-left">
+              <span class="role-pill ${rm.cls}">${rm.label}</span>
+              <span class="employee-header-summary ${summaryText ? '' : 'is-empty'}" data-emp-summary="${esc(emp.id)}">
+                ${summaryText ? esc(summaryText) : `Awaiting ${rm.label.toLowerCase()} details...`}
+              </span>
+            </div>
+
+            <div class="employee-quick-actions">
+              <span class="dob-pill ${dobText ? '' : 'hidden'}" data-emp-dob-pill="${esc(emp.id)}">${esc(dobText)}</span>
+              <a class="btn-chip ${cleanTel ? '' : 'is-disabled'}" data-emp-call="${esc(emp.id)}" href="${cleanTel ? `tel:${cleanTel}` : '#'}">📞 Call</a>
+              <a class="btn-chip ${emp.email ? '' : 'is-disabled'}" data-emp-mail="${esc(emp.id)}" href="${emp.email ? `mailto:${emp.email}` : '#'}">✉️ Email</a>
+              ${emp.roleType === 'employee'
+                ? `<button type="button" class="btn-chip btn-chip-danger" data-remove-emp="${esc(emp.id)}" title="Remove Employee #${index + 1}">🗑️</button>`
+                : ''
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" data-emp-id="${esc(emp.id)}" data-emp-field="name" value="${esc(emp.name)}" placeholder="e.g. Jordan Taylor">
+            </div>
+            <div class="form-group">
+              <label>Role / Job Title</label>
+              <input type="text" data-emp-id="${esc(emp.id)}" data-emp-field="title" value="${esc(emp.title)}" placeholder="e.g. General Manager, Head Bartender">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Best Contact Number</label>
+              <input type="tel" data-emp-id="${esc(emp.id)}" data-emp-field="phone" value="${esc(emp.phone)}" placeholder="+1 (555) 000-0000">
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" data-emp-id="${esc(emp.id)}" data-emp-field="email" value="${esc(emp.email)}" placeholder="name@venue.com">
+            </div>
+          </div>
+
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label>Date of Birth (DOB)</label>
+              <input type="date" data-emp-id="${esc(emp.id)}" data-emp-field="dob" value="${esc(emp.dob)}">
+            </div>
+            <div class="form-group">
+              <label>Preferred Contact Method</label>
+              <select data-emp-id="${esc(emp.id)}" data-emp-field="preferred_contact">
+                <option value="" ${!emp.preferred_contact ? 'selected' : ''}>Select preference...</option>
+                <option value="phone" ${emp.preferred_contact === 'phone' ? 'selected' : ''}>📞 Phone Call</option>
+                <option value="sms" ${emp.preferred_contact === 'sms' ? 'selected' : ''}>💬 SMS / Text</option>
+                <option value="whatsapp" ${emp.preferred_contact === 'whatsapp' ? 'selected' : ''}>💚 WhatsApp</option>
+                <option value="email" ${emp.preferred_contact === 'email' ? 'selected' : ''}>✉️ Email</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Shift / Best Time to Reach</label>
+              <input type="text" data-emp-id="${esc(emp.id)}" data-emp-field="availability" value="${esc(emp.availability)}" placeholder="e.g. Tue–Sat 1–4 PM">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Employee Notes</label>
+            <textarea rows="2" data-emp-id="${esc(emp.id)}" data-emp-field="notes" placeholder="Preferences, training responsibilities, personal rapport notes...">${esc(emp.notes)}</textarea>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function scheduleProfileSave(c) {
+    el.onboardedSaveIndicator.textContent = 'Saving...';
+    el.onboardedSaveIndicator.classList.remove('just-saved');
+    clearTimeout(state.profileSaveTimer);
+    state.profileSaveTimer = setTimeout(async () => {
+      await dbAPI.put(c);
+      updateCounts();
+      el.onboardedSaveIndicator.textContent = 'Saved ✓';
+      el.onboardedSaveIndicator.classList.add('just-saved');
+      setTimeout(() => el.onboardedSaveIndicator.classList.remove('just-saved'), 1000);
+    }, 280);
+  }
+
+  function openOnboardedProfileById(id) {
+    const c = state.contacts.find(x => x.id === id);
+    if (!c) return;
+    if (c.stage !== 'onboarded') {
+      c.stage = 'onboarded';
+      c.onboarded_at = c.onboarded_at || new Date().toISOString().slice(0, 10);
+      if (!c.website && c.contact_form_url) c.website = normalizeWebsiteFromUrl(c.contact_form_url);
+      ensureDefaultEmployees(c);
+      dbAPI.put(c);
+    }
+    state.stageFilter = 'onboarded';
+    state.activeOnboardedId = id;
+    applyFilters();
+    el.profileScroll.scrollTop = 0;
+  }
+
+  function createNewOnboardedBusiness() {
+    const name = prompt('Enter the Business / Venue Name:');
+    if (!name || !name.trim()) return;
+    const c = normalizeContact({
+      id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      company: name.trim(),
+      stage: 'onboarded',
+      onboarded_at: new Date().toISOString().slice(0, 10),
+      account_status: 'active',
+      attempts: 0,
+      callback_at: null
+    });
+    state.contacts.unshift(c);
+    dbAPI.put(c).then(() => {
+      state.stageFilter = 'onboarded';
+      state.activeOnboardedId = c.id;
+      applyFilters();
+      showToast('✓ Onboarded business profile created');
+    });
+  }
+
+  // --- 9. OUTREACH LAUNCH & DISPOSITIONS ---
   async function launchPixarPitch() {
     const c = state.contacts.find(x => x.id === state.activeId);
     if (!c || !c.contact_form_url) return;
@@ -598,13 +1200,12 @@ Best,
     let url = c.contact_form_url.trim();
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
-    // Start clipboard copy and open tab synchronously inside user gesture for iOS Safari compatibility
     const copyPromise = copyText(pitch, 'Pixar Pitch');
     window.open(url, '_blank', 'noopener,noreferrer');
     await copyPromise;
 
     c.pixar_sent_at = new Date().toISOString();
-    if (settings.autoStagePixar && c.stage === 'leads') {
+    if (settings.autoStagePixar && (c.stage === 'prospects' || c.stage === 'followup')) {
       c.stage = 'partial';
       await dbAPI.put(c);
       applyFilters();
@@ -623,12 +1224,12 @@ Best,
     }
 
     c.email_sent_at = new Date().toISOString();
-    if (settings.autoStageEmail) {
+    if (settings.autoStageEmail && c.stage !== 'onboarded') {
       c.stage = 'completed';
       await dbAPI.put(c);
       setTimeout(() => {
         applyFilters();
-        showToast('✓ Email opened & marked Done');
+        showToast('✓ Email opened & moved to Emailed');
       }, 150);
     } else {
       await dbAPI.put(c);
@@ -651,16 +1252,25 @@ Best,
       c.stage = 'completed';
       c.email_sent_at = c.email_sent_at || new Date().toISOString();
       await dbAPI.put(c);
-      showToast('Marked Done (Email Sent)');
+      showToast('Moved to Emailed');
     } else if (type === 'no_answer') {
       c.attempts = (c.attempts || 0) + 1;
-      c.stage = 'leads';
+      c.last_attempt_at = new Date().toISOString();
+      c.stage = 'followup';
       await dbAPI.put(c);
-      showToast(`Attempt #${c.attempts} logged — kept in Leads`);
+      showToast(`Attempt #${c.attempts} logged — moved to Follow-Up`);
+    } else if (type === 'onboarded') {
+      c.stage = 'onboarded';
+      c.onboarded_at = c.onboarded_at || new Date().toISOString().slice(0, 10);
+      if (!c.website && c.contact_form_url) c.website = normalizeWebsiteFromUrl(c.contact_form_url);
+      ensureDefaultEmployees(c);
+      await dbAPI.put(c);
+      showToast('🏆 Moved to Onboarded! Business Profile ready');
     } else if (type === 'delete') {
       if (!confirm(`Remove "${c.company || c.name}" permanently?`)) return false;
       await dbAPI.delete(c.id);
       state.contacts = state.contacts.filter(x => x.id !== c.id);
+      if (state.activeOnboardedId === c.id) state.activeOnboardedId = null;
       state.activeId = null;
       showToast('Lead removed');
     }
@@ -669,10 +1279,7 @@ Best,
 
     if (state.filtered.length > 0) {
       const nextIdx = Math.min(Math.max(currentFilteredIdx, 0), state.filtered.length - 1);
-      if (type === 'no_answer' && state.filtered.length > 1) {
-        const nextLead = state.filtered[(currentFilteredIdx + 1) % state.filtered.length];
-        selectLead(nextLead.id, false);
-      } else if (!state.filtered.some(x => x.id === state.activeId)) {
+      if (!state.filtered.some(x => x.id === state.activeId)) {
         selectLead(state.filtered[nextIdx].id, false);
       }
     } else if (window.innerWidth <= 820) {
@@ -682,7 +1289,7 @@ Best,
     return true;
   }
 
-  // --- 9. NOTES AUTO-SAVE & MOBILE KEYBOARD HANDLING ---
+  // --- 10. NOTES AUTO-SAVE & MOBILE KEYBOARD HANDLING ---
   el.leadNotes.addEventListener('input', () => {
     clearTimeout(state.notesTimer);
     state.notesTimer = setTimeout(async () => {
@@ -711,7 +1318,272 @@ Best,
     }, 120);
   });
 
-  // --- 10. CSV IMPORT & EXPORT ---
+  // --- 11. ONBOARDED PROFILE EVENT BINDINGS ---
+  el.inputOnboardedSearch.addEventListener('input', (e) => {
+    state.onboardedSearch = e.target.value;
+    renderOnboardedDirectory();
+  });
+
+  el.btnClearOnboardedSearch.onclick = () => {
+    state.onboardedSearch = '';
+    el.inputOnboardedSearch.value = '';
+    renderOnboardedDirectory();
+    el.inputOnboardedSearch.focus();
+  };
+
+  el.btnNewOnboarded.onclick = createNewOnboardedBusiness;
+
+  el.onboardedGrid.addEventListener('click', (e) => {
+    if (e.target.closest('#btnEmptyAddOnboarded')) {
+      createNewOnboardedBusiness();
+      return;
+    }
+    if (e.target.closest('#btnClearOnboardedEmpty')) {
+      state.onboardedSearch = '';
+      el.inputOnboardedSearch.value = '';
+      renderOnboardedDirectory();
+      return;
+    }
+    const card = e.target.closest('.profile-card');
+    if (card) openOnboardedProfileById(card.dataset.onboardedId);
+  });
+
+  el.onboardedGrid.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const card = e.target.closest('.profile-card');
+      if (card) {
+        e.preventDefault();
+        openOnboardedProfileById(card.dataset.onboardedId);
+      }
+    }
+  });
+
+  el.btnBackToOnboardedDir.onclick = () => {
+    state.activeOnboardedId = null;
+    renderOnboardedWorkspace();
+  };
+
+  el.btnPrevOnboarded.onclick = () => {
+    const list = getOnboardedList();
+    const idx = list.findIndex(x => x.id === state.activeOnboardedId);
+    if (idx > 0) openOnboardedProfileById(list[idx - 1].id);
+  };
+
+  el.btnNextOnboarded.onclick = () => {
+    const list = getOnboardedList();
+    const idx = list.findIndex(x => x.id === state.activeOnboardedId);
+    if (idx !== -1 && idx < list.length - 1) openOnboardedProfileById(list[idx + 1].id);
+  };
+
+  el.onboardedStageSelect.addEventListener('change', async (e) => {
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c) return;
+    c.stage = e.target.value;
+    await dbAPI.put(c);
+    if (c.stage !== 'onboarded') {
+      state.activeOnboardedId = null;
+      state.stageFilter = c.stage;
+      state.activeId = c.id;
+      applyFilters();
+      showToast(`Moved to ${c.stage}`);
+    }
+  });
+
+  el.btnDeleteOnboarded.onclick = async () => {
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c) return;
+    if (!confirm(`Delete "${c.company || c.name}" and all its employee records permanently?`)) return;
+    await dbAPI.delete(c.id);
+    state.contacts = state.contacts.filter(x => x.id !== c.id);
+    state.activeOnboardedId = null;
+    applyFilters();
+    showToast('Business profile removed');
+  };
+
+  // Logo Upload / URL / Refresh
+  el.profLogoUploadInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!file || !c) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = async () => {
+        const maxSide = 256;
+        const scale = Math.min(1, maxSide / Math.max(img.width || 1, img.height || 1));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        c.custom_logo_url = canvas.toDataURL('image/png');
+        await dbAPI.put(c);
+        applyLogoToElement(el.profLogoImg, el.profLogoFallback, c);
+        showToast('✓ Custom logo saved');
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  el.btnEditLogoUrl.onclick = async () => {
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c) return;
+    const current = c.custom_logo_url && !c.custom_logo_url.startsWith('data:') ? c.custom_logo_url : '';
+    const next = prompt('Paste a direct image URL for the business logo (or leave blank to auto-fetch from website):', current);
+    if (next === null) return;
+    c.custom_logo_url = next.trim();
+    await dbAPI.put(c);
+    applyLogoToElement(el.profLogoImg, el.profLogoFallback, c);
+    showToast(c.custom_logo_url ? '✓ Logo URL updated' : '✓ Using website logo');
+  };
+
+  el.btnRefreshLogo.onclick = async () => {
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c) return;
+    c.custom_logo_url = '';
+    await dbAPI.put(c);
+    applyLogoToElement(el.profLogoImg, el.profLogoFallback, c);
+    showToast('↻ Refreshed logo from website');
+  };
+
+  // Auto-save Main Business Profile Inputs
+  const profileBindings = [
+    [el.profCompany, 'company'],
+    [el.profOnboardedDate, 'onboarded_at'],
+    [el.profBusinessType, 'business_type'],
+    [el.profAccountStatus, 'account_status'],
+    [el.profWebsite, 'website'],
+    [el.profAppUrl, 'app_url'],
+    [el.profEmail, 'email'],
+    [el.profPhone, 'phone'],
+    [el.profFormUrl, 'contact_form_url'],
+    [el.profAddress, 'street_address'],
+    [el.profCity, 'city'],
+    [el.profPostal, 'postal_code'],
+    [el.profCountry, 'country'],
+    [el.profNotes, 'notes']
+  ];
+
+  let logoDebounceTimer = null;
+  profileBindings.forEach(([inputEl, field]) => {
+    const eventName = inputEl.tagName === 'SELECT' || inputEl.type === 'date' ? 'change' : 'input';
+    inputEl.addEventListener(eventName, () => {
+      const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+      if (!c) return;
+      c[field] = inputEl.value;
+      if (field === 'company') {
+        el.onboardedNavTitle.textContent = c.company || 'Business Profile';
+      }
+      if (['website', 'app_url', 'contact_form_url', 'email', 'phone'].includes(field)) {
+        syncProfileActionLinks(c);
+      }
+      if (field === 'website' || field === 'contact_form_url' || field === 'company') {
+        clearTimeout(logoDebounceTimer);
+        logoDebounceTimer = setTimeout(() => {
+          applyLogoToElement(el.profLogoImg, el.profLogoFallback, c);
+        }, 450);
+      }
+      scheduleProfileSave(c);
+    });
+  });
+
+  // Add Employee Card
+  el.btnAddEmployee.onclick = async () => {
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c) return;
+    ensureDefaultEmployees(c);
+    const emp = createEmployeeRecord('employee');
+    c.employees.push(emp);
+    await dbAPI.put(c);
+    renderEmployeeCards(c);
+    const newCard = el.employeeCardsList.querySelector(`[data-emp-card="${CSS.escape(emp.id)}"]`);
+    if (newCard) {
+      newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const firstInput = newCard.querySelector('input');
+      if (firstInput) firstInput.focus();
+    }
+    showToast('✓ Employee card added');
+  };
+
+  // Delegate Employee Card Inputs & Deletes without losing focus
+  el.employeeCardsList.addEventListener('input', handleEmployeeFieldEdit);
+  el.employeeCardsList.addEventListener('change', handleEmployeeFieldEdit);
+
+  function handleEmployeeFieldEdit(e) {
+    const target = e.target;
+    const empId = target.dataset.empId;
+    const field = target.dataset.empField;
+    if (!empId || !field) return;
+
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c || !Array.isArray(c.employees)) return;
+    const emp = c.employees.find(x => x.id === empId);
+    if (!emp) return;
+
+    emp[field] = target.value;
+
+    if (emp.roleType === 'primary') {
+      if (field === 'name') c.name = emp.name;
+      if (field === 'title') c.job_title = emp.title;
+    }
+
+    if (field === 'name' || field === 'title') {
+      const summaryEl = el.employeeCardsList.querySelector(`[data-emp-summary="${CSS.escape(empId)}"]`);
+      if (summaryEl) {
+        const text = [emp.name, emp.title].filter(Boolean).join(' — ');
+        const roleTxt = emp.roleType === 'primary'
+          ? 'primary contact'
+          : (emp.roleType === 'secondary' ? 'secondary contact' : 'employee');
+        summaryEl.textContent = text || `Awaiting ${roleTxt} details...`;
+        summaryEl.classList.toggle('is-empty', !text);
+      }
+    }
+    if (field === 'phone') {
+      const callLink = el.employeeCardsList.querySelector(`[data-emp-call="${CSS.escape(empId)}"]`);
+      if (callLink) {
+        const cleanTel = (emp.phone || '').replace(/[^\d+]/g, '');
+        callLink.href = cleanTel ? `tel:${cleanTel}` : '#';
+        callLink.classList.toggle('is-disabled', !cleanTel);
+      }
+    }
+    if (field === 'email') {
+      const mailLink = el.employeeCardsList.querySelector(`[data-emp-mail="${CSS.escape(empId)}"]`);
+      if (mailLink) {
+        mailLink.href = emp.email ? `mailto:${emp.email}` : '#';
+        mailLink.classList.toggle('is-disabled', !emp.email);
+      }
+    }
+    if (field === 'dob') {
+      const dobPill = el.employeeCardsList.querySelector(`[data-emp-dob-pill="${CSS.escape(empId)}"]`);
+      if (dobPill) {
+        const dobText = formatDobPill(emp.dob);
+        dobPill.textContent = dobText;
+        dobPill.classList.toggle('hidden', !dobText);
+      }
+    }
+
+    scheduleProfileSave(c);
+  }
+
+  el.employeeCardsList.addEventListener('click', async (e) => {
+    const removeBtn = e.target.closest('[data-remove-emp]');
+    if (!removeBtn) return;
+    const empId = removeBtn.dataset.removeEmp;
+    const c = state.contacts.find(x => x.id === state.activeOnboardedId);
+    if (!c || !Array.isArray(c.employees)) return;
+    const emp = c.employees.find(x => x.id === empId);
+    if (!emp || emp.roleType !== 'employee') return;
+    if (!confirm(`Remove employee card "${emp.name || 'Unnamed Employee'}"?`)) return;
+    c.employees = c.employees.filter(x => x.id !== empId);
+    await dbAPI.put(c);
+    renderEmployeeCards(c);
+    showToast('Employee card removed');
+  });
+
+  // --- 12. CSV IMPORT & EXPORT ---
   function parseCSV(text) {
     const cleanText = text.replace(/^\uFEFF/, '');
     const rows = [];
@@ -774,9 +1646,11 @@ Best,
       postal: col(['postal_code', 'zip', 'postcode']),
       company: col(['company', 'business', 'organization', 'venue']),
       title: col(['job_title', 'title', 'role']),
-      formUrl: col(['contact_form_url', 'contact_url', 'website', 'url', 'form_url']),
+      website: col(['website', 'site', 'domain', 'homepage']),
+      formUrl: col(['contact_form_url', 'contact_url', 'url', 'form_url']),
       notes: col(['notes', 'comments', 'memo']),
-      stage: col(['stage', 'status'])
+      stage: col(['stage', 'status']),
+      onboardedAt: col(['onboarded_at', 'onboarded_date'])
     };
 
     let imported = 0;
@@ -791,7 +1665,8 @@ Best,
 
       if (!company && !name && !phone && !email) continue;
 
-      const contact = {
+      const rawStage = get('stage');
+      const contact = normalizeContact({
         id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         company,
         name,
@@ -802,12 +1677,14 @@ Best,
         street_address: get('address'),
         postal_code: get('postal'),
         job_title: get('title'),
+        website: get('website'),
         contact_form_url: get('formUrl'),
         notes: get('notes'),
-        stage: normalizeStage(get('stage')),
+        stage: rawStage || 'prospects',
+        onboarded_at: get('onboardedAt'),
         attempts: 0,
         callback_at: null
-      };
+      });
 
       await dbAPI.put(contact);
       state.contacts.push(contact);
@@ -823,8 +1700,8 @@ Best,
     if (state.contacts.length === 0) return showToast('No leads to export');
     const cols = [
       'name', 'phone', 'email', 'country', 'city', 'street_address',
-      'postal_code', 'company', 'job_title', 'contact_form_url',
-      'notes', 'stage', 'attempts', 'callback_at'
+      'postal_code', 'company', 'job_title', 'website', 'contact_form_url',
+      'notes', 'stage', 'attempts', 'callback_at', 'onboarded_at', 'business_type', 'account_status'
     ];
     const lines = [cols.join(',')];
     state.contacts.forEach(c => {
@@ -841,15 +1718,19 @@ Best,
 
   document.getElementById('btnExportCsv').onclick = exportCsvLeads;
 
-  // --- 11. ADD / EDIT LEAD MODAL ---
+  // --- 13. ADD / EDIT LEAD MODAL ---
   function openLeadModal(contact = null) {
     document.getElementById('formTitle').textContent = contact ? 'Edit Prospect' : 'Add New Prospect';
     document.getElementById('formId').value = contact ? contact.id : '';
     document.getElementById('formCompany').value = contact ? (contact.company || '') : '';
+    document.getElementById('formStage').value = contact
+      ? contact.stage
+      : (state.stageFilter === 'onboarded' ? 'onboarded' : 'prospects');
     document.getElementById('formName').value = contact ? (contact.name || '') : '';
     document.getElementById('formTitleField').value = contact ? (contact.job_title || '') : '';
     document.getElementById('formPhone').value = contact ? (contact.phone || '') : '';
     document.getElementById('formEmail').value = contact ? (contact.email || '') : '';
+    document.getElementById('formWebsite').value = contact ? (contact.website || '') : '';
     document.getElementById('formContactUrl').value = contact ? (contact.contact_form_url || '') : '';
     document.getElementById('formAddress').value = contact ? (contact.street_address || '') : '';
     document.getElementById('formCity').value = contact ? (contact.city || '') : '';
@@ -864,31 +1745,44 @@ Best,
     let c = state.contacts.find(x => x.id === id);
 
     if (!c) {
-      c = {
+      c = normalizeContact({
         id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-        stage: 'leads',
+        stage: 'prospects',
         attempts: 0,
-        callback_at: null,
-        country: '',
-        postal_code: ''
-      };
+        callback_at: null
+      });
       state.contacts.unshift(c);
     }
 
     c.company = document.getElementById('formCompany').value.trim();
+    c.stage = document.getElementById('formStage').value;
     c.name = document.getElementById('formName').value.trim();
     c.job_title = document.getElementById('formTitleField').value.trim();
     c.phone = document.getElementById('formPhone').value.trim();
     c.email = document.getElementById('formEmail').value.trim();
+    c.website = document.getElementById('formWebsite').value.trim();
     c.contact_form_url = document.getElementById('formContactUrl').value.trim();
     c.street_address = document.getElementById('formAddress').value.trim();
     c.city = document.getElementById('formCity').value.trim();
     c.notes = document.getElementById('formLeadNotes').value.trim();
 
+    if (c.stage === 'onboarded') {
+      c.onboarded_at = c.onboarded_at || new Date().toISOString().slice(0, 10);
+      if (!c.website && c.contact_form_url) c.website = normalizeWebsiteFromUrl(c.contact_form_url);
+      ensureDefaultEmployees(c);
+    }
+
     await dbAPI.put(c);
     el.dialogForm.close();
+
+    if (c.stage === 'onboarded' && state.stageFilter === 'onboarded') {
+      state.activeOnboardedId = c.id;
+    }
+
     applyFilters();
-    selectLead(c.id);
+    if (state.stageFilter !== 'onboarded') {
+      selectLead(c.id);
+    }
     showToast('✓ Prospect saved');
   };
 
@@ -909,7 +1803,7 @@ Best,
   document.getElementById('btnCancelForm').onclick = () => el.dialogForm.close();
   document.getElementById('btnCloseLeadX').onclick = () => el.dialogForm.close();
 
-  // --- 12. CALLBACK SCHEDULER ---
+  // --- 14. CALLBACK SCHEDULER ---
   document.getElementById('btnDispCB').onclick = () => {
     document.getElementById('inputCustomCallback').value = '';
     el.dialogCallback.showModal();
@@ -920,12 +1814,12 @@ Best,
     const c = state.contacts.find(x => x.id === state.activeId);
     if (!c) return;
     const date = isoCustom ? new Date(isoCustom) : new Date(Date.now() + hours * 3600000);
-    c.stage = 'leads';
+    c.stage = 'followup';
     c.callback_at = date.toISOString();
     await dbAPI.put(c);
     el.dialogCallback.close();
     applyFilters();
-    showToast('✓ Call Back scheduled — kept in Leads');
+    showToast('✓ Call Back scheduled — moved to Follow-Up');
   }
 
   document.querySelectorAll('[data-cb-hours]').forEach(btn => {
@@ -938,7 +1832,7 @@ Best,
     scheduleCallback(0, val);
   };
 
-  // --- 13. SETTINGS MODAL & BOOKMARKLET ---
+  // --- 15. SETTINGS MODAL & BOOKMARKLET ---
   const settingInputs = {
     senderName: document.getElementById('setSenderName'),
     senderCompany: document.getElementById('setSenderCompany'),
@@ -1046,6 +1940,7 @@ Best,
     await dbAPI.clear();
     state.contacts = [];
     state.activeId = null;
+    state.activeOnboardedId = null;
     applyFilters();
     el.dialogSettings.close();
     el.paneCockpit.classList.remove('mobile-visible');
@@ -1074,7 +1969,7 @@ Best,
     chip.onclick = () => copyText(chip.dataset.var, chip.dataset.var);
   });
 
-  // --- 14. NAVIGATION, POPOVERS, GESTURES & ACTION LISTENERS ---
+  // --- 16. NAVIGATION, POPOVERS, GESTURES & ACTION LISTENERS ---
   el.list.addEventListener('click', (e) => {
     if (e.target.closest('#btnListEmptyAdd')) {
       openLeadModal();
@@ -1089,6 +1984,10 @@ Best,
     const card = e.target.closest('.contact-card');
     if (card) selectLead(card.dataset.id, true);
   });
+
+  el.btnJumpToBusinessProfile.onclick = () => {
+    if (state.activeId) openOnboardedProfileById(state.activeId);
+  };
 
   // Mobile Header More/CSV Menu
   function setMobileMoreOpen(open) {
@@ -1163,9 +2062,10 @@ Best,
 
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       state.stageFilter = btn.dataset.stage;
+      if (state.stageFilter === 'onboarded') {
+        state.activeOnboardedId = null;
+      }
       applyFilters();
     };
   });
@@ -1211,10 +2111,11 @@ Best,
   document.getElementById('btnDispPartial').onclick = () => setDisposition('partial');
   document.getElementById('btnDispComplete').onclick = () => setDisposition('completed');
   document.getElementById('btnDispNA').onclick = () => setDisposition('no_answer');
+  document.getElementById('btnDispOnboard').onclick = () => setDisposition('onboarded');
   document.getElementById('btnDispDelete').onclick = () => setDisposition('delete');
   document.getElementById('btnMobileDeleteLead').onclick = () => setDisposition('delete');
 
-  // --- 15. KEYBOARD SHORTCUTS ---
+  // --- 17. KEYBOARD SHORTCUTS ---
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setMobileMoreOpen(false);
     if (el.dialogForm.open || el.dialogCallback.open || el.dialogSettings.open) return;
@@ -1222,12 +2123,24 @@ Best,
 
     if (e.key === '/') {
       e.preventDefault();
-      el.inputSearch.focus();
-    } else if (e.key === ',') {
+      if (state.stageFilter === 'onboarded' && !state.activeOnboardedId) {
+        el.inputOnboardedSearch.focus();
+      } else {
+        el.inputSearch.focus();
+      }
+      return;
+    }
+
+    if (e.key === ',') {
       e.preventDefault();
       populateSettingsModal(settings);
       el.dialogSettings.showModal();
-    } else if (e.key === 'j' || e.key === 'ArrowDown') {
+      return;
+    }
+
+    if (state.stageFilter === 'onboarded') return;
+
+    if (e.key === 'j' || e.key === 'ArrowDown') {
       stepLead(1);
     } else if (e.key === 'k' || e.key === 'ArrowUp') {
       stepLead(-1);
@@ -1240,10 +2153,12 @@ Best,
       setDisposition('completed');
     } else if (e.key === 'n' || e.key === 'N') {
       setDisposition('no_answer');
+    } else if (e.key === 'o' || e.key === 'O') {
+      setDisposition('onboarded');
     }
   });
 
-  // --- 16. BOOTSTRAP ---
+  // --- 18. BOOTSTRAP ---
   initDB().then(async () => {
     state.contacts = await dbAPI.getAll();
     applyFilters();
