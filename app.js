@@ -459,6 +459,38 @@ Best,
     return `${words} words • ${clean.length.toLocaleString()} chars`;
   }
 
+  function renderLinkedText(element, text) {
+    const content = String(text || '');
+    const urlPattern = /https?:\/\/[^\s<>"']+/gi;
+    let lastIndex = 0;
+    let match;
+
+    element.replaceChildren();
+
+    while ((match = urlPattern.exec(content)) !== null) {
+      const visibleUrl = match[0].replace(/[.,!?;:]+$/, '');
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(visibleUrl);
+      } catch {
+        continue;
+      }
+
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') continue;
+
+      element.append(document.createTextNode(content.slice(lastIndex, match.index)));
+      const link = document.createElement('a');
+      link.href = parsedUrl.href;
+      link.textContent = visibleUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      element.append(link);
+      lastIndex = match.index + visibleUrl.length;
+    }
+
+    element.append(document.createTextNode(content.slice(lastIndex)));
+  }
+
   // --- 6. UTILITIES & WEBSITE LOGO RESOLVER ---
   function esc(str) {
     return String(str || '')
@@ -870,7 +902,7 @@ Best,
     }
 
     el.emailSubjectPreview.textContent = interpolate(settings.emailSubject, c);
-    el.emailPreviewBox.textContent = interpolate(settings.emailBody, c);
+    renderLinkedText(el.emailPreviewBox, interpolate(settings.emailBody, c));
     el.leadNotes.value = c.notes || '';
   }
 
@@ -1901,7 +1933,10 @@ Best,
     document.getElementById('settingsPixarPreview').textContent = pixarRendered;
     document.getElementById('settingsPixarCount').textContent = formatWordCharCount(pixarRendered);
     document.getElementById('settingsEmailSubjPreview').textContent = interpolate(draft.emailSubject, previewContact, draft);
-    document.getElementById('settingsEmailBodyPreview').textContent = interpolate(draft.emailBody, previewContact, draft);
+    renderLinkedText(
+      document.getElementById('settingsEmailBodyPreview'),
+      interpolate(draft.emailBody, previewContact, draft)
+    );
     document.getElementById('bookmarkletLink').href = buildBookmarkletHref(draft);
   }
 
